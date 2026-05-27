@@ -1,0 +1,114 @@
+[
+  {
+    "speaker": "AGENT",
+    "start_ts": 0.0,
+    "end_ts": 5.5,
+    "text": "வணக்கம், ஸ்டார் ஹெல்த் இன்சூரன்ஸ் வாடிக்கையாளர் சேவை. நான் கார்த்திக். உங்களுக்கு எப்படி உதவ முடியும்?",
+    "language": "ta"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 6.0,
+    "end_ts": 15.0,
+    "text": "வணக்கம் சார், என் பெயர் லக்ஷ்மி. என் கணவருக்கு family health policy இருக்கு, இரண்டு வாரம் முன்னாடி அவருக்கு bypass surgery ஆச்சு, அதோட claim status எப்படி இருக்குன்னு கேக்கணும்.",
+    "language": "ta"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 16.0,
+    "end_ts": 21.0,
+    "text": "சரி மேடம், உங்களுக்கு உதவ முடியும். தயவுசெய்து policy number மற்றும் claim reference number சொல்லுங்க.",
+    "language": "ta"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 22.0,
+    "end_ts": 30.0,
+    "text": "Policy number P/171000/01/2023/567890, claim number CL-2026-44512. Apollo Hospital, Chennai-ல் cashless treatment பண்ண சொன்னாங்க, ஆனா approval இன்னும் வரல.",
+    "language": "ta"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 31.0,
+    "end_ts": 44.0,
+    "text": "ஒரு நிமிஷம் மேடம் நான் check பண்றேன். உங்க claim file ஆகி இருக்கு, ஆனா approval pending-ல இருக்கு ஏன்னா hospital அனுப்பிய discharge summary-ல primary diagnosis clear-ஆ இல்ல. Underwriting team additional documents கேக்கிறாங்க — stress test report, angiography images, மற்றும் treating cardiologist-கிட்ட certificate.",
+    "language": "ta"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 45.0,
+    "end_ts": 56.0,
+    "text": "என்ன சார் இது! Cashless approval-னா hospital-லயே settle பண்றோம்னு சொன்னாங்க. நாங்க இப்போ five lakh rupees deposit கட்டி இருக்கோம், அதை எப்படி திரும்ப வாங்க? Discharge ஆகிட்டாரு என் கணவர்.",
+    "language": "ta"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 57.0,
+    "end_ts": 71.0,
+    "text": "மேடம் கவலைப்படாதீங்க. அப்போ அது reimbursement claim ஆகுது. நீங்க hospital-ல கட்டின original bills, discharge summary, prescription, lab reports, doctor's certificate, மற்றும் claim form Part B fill பண்ணி எங்க Chennai branch-க்கு submit பண்ணுங்க. Sum insured ten lakhs irukku, surgery cost coverage limit-க்குள்ள வந்தா, பூரா reimburse ஆகும்.",
+    "language": "ta"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 72.0,
+    "end_ts": 81.0,
+    "text": "Sum insured-ல cardiac surgery sub-limit ஏதாவது இருக்கா? Hospital bill total எட்டு லட்ச ரூபா ஆச்சு, அது full-ஆ வருமா?",
+    "language": "ta"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 82.0,
+    "end_ts": 96.0,
+    "text": "மேடம் உங்க policy 'Family Health Optima'-ல major surgery-க்கு sub-limit கிடையாது, full sum insured available. But room rent limit applicable — single private AC room, ஒரு நாள் maximum 5000 rupees. Hospital-ல deluxe room எடுத்து இருந்தா, proportionate deduction வரும். Co-payment உங்க plan-ல illa, so reimbursement amount almost full-ஆ வரும்.",
+    "language": "ta"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 97.0,
+    "end_ts": 105.0,
+    "text": "சார் ஒரு doubt — என் கணவருக்கு diabetes இருந்துச்சு policy edukrathuku munadiye. Pre-existing condition-ன்னு claim reject பண்ணுவாங்களா?",
+    "language": "ta"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 106.0,
+    "end_ts": 121.0,
+    "text": "மேடம் policy proposal-ல disclose பண்ணி இருந்தீங்கன்னா, pre-existing diseases-க்கு waiting period 36 months. உங்க policy 2023-ல start ஆச்சு, இப்போ 2026, so three years complete ஆகுது — coverage start ஆகி இருக்கணும். Disclosure இருக்கான்னு file-ல verify பண்றேன்... yes, diabetes Type-2 disclosed at inception. So no issue, claim valid.",
+    "language": "ta"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 122.0,
+    "end_ts": 128.0,
+    "text": "நல்லது சார். Reimbursement claim submit பண்ணினா எவ்வளவு நாள்ல settle ஆகும்?",
+    "language": "ta"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 129.0,
+    "end_ts": 141.0,
+    "text": "IRDAI regulations படி maximum 30 days, but Star Health average 15 working days-ல settle பண்ணும். Documents complete-ஆ submit பண்ணினா fast-ஆ process ஆகும். ஏதாவது deficiency இருந்தா seven days-ல SMS-ல alert வரும். Amount directly உங்க registered bank account-க்கு NEFT மூலமா credit ஆகும்.",
+    "language": "ta"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 142.0,
+    "end_ts": 147.0,
+    "text": "Thank you சார். Network hospitals list எங்க பாக்கலாம், next time direct cashless பண்ண?",
+    "language": "ta"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 148.0,
+    "end_ts": 156.0,
+    "text": "மேடம் starhealth.in website-ல 'Network Hospital' section-ல உங்க city, pincode போட்டா list வரும். Chennai-ல alone 400-க்கும் மேல network hospitals இருக்கு. Reference number STR-CH-887632.",
+    "language": "ta"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 157.0,
+    "end_ts": 160.0,
+    "text": "மிக்க நன்றி சார். Good evening.",
+    "language": "ta"
+  }
+]

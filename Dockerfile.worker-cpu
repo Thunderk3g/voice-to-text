@@ -1,0 +1,71 @@
+# syntax=docker/dockerfile:1.6
+# =========================================================================
+# v2t Celery worker — CPU queue
+# Handles light tasks: LLM extraction (vLLM HTTP), canonicalization,
+# memory-edge inference, clustering math that fits in RAM.
+# =========================================================================
+
+# -------------------------------------------------------------------------
+# Builder stage
+# -------------------------------------------------------------------------
+FROM python:3.11-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:${PATH}"
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        build-essential gcc g++ git curl ca-certificates \
+        libsndfile1 ffmpeg \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN python -m venv "${VIRTUAL_ENV}"
+
+WORKDIR /build
+COPY requirements.txt ./
+RUN pip install --upgrade pip setuptools wheel \
+ && pip install -r requirements.txt
+
+
+# -------------------------------------------------------------------------
+# Runtime stage
+# -------------------------------------------------------------------------
+FROM python:3.11-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:${PATH}" \
+    APP_HOME=/app \
+    C_FORCE_ROOT=0
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        tini ffmpeg libsndfile1 curl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/venv /opt/venv
+
+RUN groupadd --system --gid 1000 v2t \
+ && useradd  --system --uid 1000 --gid 1000 --home "${APP_HOME}" v2t \
+ && mkdir -p "${APP_HOME}" \
+ && chown -R v2t:v2t "${APP_HOME}"
+
+WORKDIR ${APP_HOME}
+
+COPY --chown=v2t:v2t app ./app
+COPY --chown=v2t:v2t pyproject.toml ./pyproject.toml
+
+USER v2t
+
+# Health: ask celery whether the worker can respond on the broker.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD celery -A app.workers.celery_app inspect ping -d "celery@$(hostname)" \
+        >/dev/null 2>&1 || exit 1
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["celery", "-A", "app.workers.celery_app", "worker", \
+     "--loglevel=INFO", "-Q", "celery", "--concurrency=4"]

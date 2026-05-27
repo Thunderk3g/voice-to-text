@@ -1,0 +1,107 @@
+[
+  {
+    "speaker": "AGENT",
+    "start_ts": 0.0,
+    "end_ts": 4.0,
+    "text": "Good afternoon, HDFC Life Insurance, मैं अंकित बोल रहा हूँ। How may I help you sir?",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 4.5,
+    "end_ts": 13.0,
+    "text": "Hi Ankit, mera naam Vikram Mehta hai. Actually meri policy ka premium due tha 15 तारीख को but I missed paying it. Aaj 22 ho gayi hai — kya policy lapse ho gayi?",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 14.0,
+    "end_ts": 20.5,
+    "text": "Sir please don't worry, मैं अभी आपका policy status check करता हूँ। कृपया मुझे policy number या registered mobile बताइए?",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 21.0,
+    "end_ts": 26.0,
+    "text": "Policy number hai HDFC987123456, ULIP plan hai, annual premium 75 हज़ार का।",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 27.0,
+    "end_ts": 38.5,
+    "text": "Thank you sir। आपकी policy अभी grace period में है। ULIP plans में 30 days का grace period मिलता है from due date, तो आपके पास अभी भी 23 days हैं premium pay करने के लिए without any lapse. कोई late fee भी नहीं लगेगी।",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 39.0,
+    "end_ts": 47.0,
+    "text": "Oh great! Bahut relief mila yaar। Actually mujhe ek doubt aur hai — agar main grace period miss kar deta then kya hota? Fund value zero ho jaati?",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 48.0,
+    "end_ts": 60.0,
+    "text": "Nahi sir aisa nahi hai। ULIP में अगर grace period के बाद भी premium नहीं भरते तो policy discontinued state में चली जाती है, और fund value को discontinuance fund में move कर देते हैं which earns around 4 percent. आप दो साल के अंदर revive कर सकते हैं।",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 61.0,
+    "end_ts": 67.5,
+    "text": "Achha samajh gaya. Renewal का payment online कैसे करूँ? Net banking se ya UPI se?",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 68.5,
+    "end_ts": 80.0,
+    "text": "Sir आप hdfclife.com पर login कीजिए, फिर 'Pay Premium' option select करिए। आप net banking, UPI, debit card, credit card सब use कर सकते हैं। UPI से instant credit मिलता है — एक minute में confirmation SMS आ जाएगा।",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 81.0,
+    "end_ts": 88.0,
+    "text": "OK perfect। Ek aur sawaal — मेरी policy को complete हुए पाँच साल हो गए हैं। क्या मैं अब partial withdrawal कर सकता हूँ?",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 89.0,
+    "end_ts": 101.0,
+    "text": "Yes sir, ULIP में 5-year lock-in period के बाद आप partial withdrawal कर सकते हैं। एक policy year में आप maximum तीन withdrawals कर सकते हैं, और कुल withdrawal annual premium का 300% तक होना चाहिए, otherwise tax implications आ सकते हैं।",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 102.0,
+    "end_ts": 107.0,
+    "text": "Tax implications? Mtlb maturity benefit पे tax lagta hai kya अब?",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 108.0,
+    "end_ts": 121.0,
+    "text": "Sir current rule के हिसाब से, अगर your annual premium 2.5 लाख से ज़्यादा है तो maturity proceeds taxable होते हैं as per Section 10(10D) amendment. आपकी policy 75K premium पे है तो आप safe हैं, fully tax-free.",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 122.0,
+    "end_ts": 127.5,
+    "text": "Theek hai bhai, bahut helpful tha. Main aaj hi premium pay kar deta hoon UPI se.",
+    "language": "hi-en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 128.5,
+    "end_ts": 133.0,
+    "text": "Bahut shukriya sir। Reference number for this call is HDFC-CB-447821. Have a great day!",
+    "language": "hi-en"
+  }
+]

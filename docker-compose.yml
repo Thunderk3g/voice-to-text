@@ -1,0 +1,356 @@
+# =========================================================================
+# v2t — full local stack
+# Tested on Linux + WSL2 with NVIDIA Container Toolkit.
+#
+# NOTE: STT + speaker diarization are handled UPSTREAM by Servo AI.
+# This stack consumes speaker-labeled transcript JSON via /ingest.
+#
+# Usage:
+#   cp .env.example .env
+#   docker compose up -d --build
+#   docker compose run --rm ollama-init     # one-shot: pulls the model
+#   python -m app.scripts.seed_data --api-url http://localhost:8080
+# =========================================================================
+
+x-app-env: &app-env
+  env_file: .env
+
+x-gpu-deploy: &gpu-deploy
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+
+networks:
+  v2t-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:
+  hf_cache:
+  ollama_data:
+
+services:
+
+  # -----------------------------------------------------------------------
+  # Postgres + pgvector + pgcrypto
+  # -----------------------------------------------------------------------
+  postgres:
+    build:
+      context: ./infra/postgres
+      dockerfile: Dockerfile
+    image: v2t/postgres:local
+    container_name: v2t-postgres
+    restart: unless-stopped
+    <<: *app-env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # Redis (Celery broker + result backend, embedding cache)
+  # -----------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: v2t-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # MinIO — S3-compatible object storage (transcript files + artifacts)
+  # -----------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    container_name: v2t-minio
+    restart: unless-stopped
+    <<: *app-env
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - v2t-net
+
+  minio-setup:
+    image: minio/mc:latest
+    container_name: v2t-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    <<: *app-env
+    entrypoint: >
+      /bin/sh -c "
+      set -e;
+      mc alias set local http://minio:9000 $${MINIO_ACCESS_KEY} $${MINIO_SECRET_KEY};
+      mc mb --ignore-existing local/$${MINIO_BUCKET_TRANSCRIPTS};
+      mc mb --ignore-existing local/$${MINIO_BUCKET_ARTIFACTS};
+      mc anonymous set download local/$${MINIO_BUCKET_ARTIFACTS} || true;
+      echo 'minio-setup: buckets ready';
+      "
+    restart: "no"
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # Ollama (Qwen2.5-7B-Instruct) — OpenAI-compatible HTTP at /v1
+  # -----------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: v2t-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      OLLAMA_KEEP_ALIVE: 24h
+      OLLAMA_HOST: 0.0.0.0
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    <<: *gpu-deploy
+    networks:
+      - v2t-net
+
+  # One-shot: pulls the configured model the first time it runs.
+  # Run manually with: docker compose run --rm ollama-init
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: v2t-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+    entrypoint: >
+      /bin/sh -c "
+      set -e;
+      echo 'Pulling Ollama model: '$${OLLAMA_MODEL};
+      ollama pull $${OLLAMA_MODEL};
+      echo 'ollama-init: model ready';
+      "
+    restart: "no"
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # FastAPI — REST API
+  # -----------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: v2t/api:local
+    container_name: v2t-api
+    restart: unless-stopped
+    <<: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    command:
+      - "sh"
+      - "-c"
+      - "alembic upgrade head && uvicorn app.api.main:app --host 0.0.0.0 --port 8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # Celery worker — CPU queue (ingest, extract, cluster, canonicalize,
+  # memory edges, feedback). LLM calls go out to Ollama over HTTP.
+  # -----------------------------------------------------------------------
+  worker-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker-cpu
+    image: v2t/worker-cpu:local
+    container_name: v2t-worker-cpu
+    restart: unless-stopped
+    <<: *app-env
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$(hostname) >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # Celery worker — GPU queue (embedding). The only GPU consumer in
+  # the worker fleet now that STT/diarization are out of scope.
+  # -----------------------------------------------------------------------
+  worker-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker-gpu
+    image: v2t/worker-gpu:local
+    container_name: v2t-worker-gpu
+    restart: unless-stopped
+    <<: *app-env
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - hf_cache:/home/v2t/.cache/huggingface
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$(hostname) >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+    <<: *gpu-deploy
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # Celery beat — periodic scheduler (daily recluster)
+  # -----------------------------------------------------------------------
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.beat
+    image: v2t/beat:local
+    container_name: v2t-beat
+    restart: unless-stopped
+    <<: *app-env
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'celery.*beat' >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # Flower — Celery monitoring UI
+  # -----------------------------------------------------------------------
+  flower:
+    image: mher/flower:2.0
+    container_name: v2t-flower
+    restart: unless-stopped
+    <<: *app-env
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["celery", "--broker=${CELERY_BROKER_URL}", "flower", "--port=5555"]
+    ports:
+      - "5555:5555"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5555/healthcheck || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # Next.js dashboard
+  # -----------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: v2t/frontend:local
+    container_name: v2t-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://api:8080
+      NODE_ENV: production
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # OpenTelemetry collector — disabled by default.
+  # -----------------------------------------------------------------------
+  # otel-collector:
+  #   image: otel/opentelemetry-collector:latest
+  #   container_name: v2t-otel
+  #   restart: unless-stopped
+  #   command: ["--config=/etc/otel/otel-config.yaml"]
+  #   volumes:
+  #     - ./infra/otel/otel-config.yaml:/etc/otel/otel-config.yaml:ro
+  #   ports:
+  #     - "4317:4317"
+  #     - "4318:4318"
+  #   networks:
+  #     - v2t-net

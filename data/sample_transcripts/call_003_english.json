@@ -1,0 +1,121 @@
+[
+  {
+    "speaker": "AGENT",
+    "start_ts": 0.0,
+    "end_ts": 5.0,
+    "text": "Good morning, this is Sneha from LIC of India customer care. How may I assist you today?",
+    "language": "en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 5.5,
+    "end_ts": 14.0,
+    "text": "Hi Sneha, I'm Anita Krishnan. I have a Jeevan Anand policy that I purchased in 2014, and I want to understand a few details about it. Can you pull up the policy?",
+    "language": "en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 14.5,
+    "end_ts": 19.0,
+    "text": "Sure ma'am, please share your policy number and the policyholder's date of birth for verification.",
+    "language": "en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 19.5,
+    "end_ts": 25.0,
+    "text": "Policy number is 678459123, and my date of birth is fifteenth March nineteen seventy-eight.",
+    "language": "en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 26.0,
+    "end_ts": 36.0,
+    "text": "Thank you ma'am. I can see your policy. It's a Jeevan Anand with sum assured of fifteen lakhs, premium paying term of twenty years, and policy term of forty years. You've paid ten annual premiums so far. What would you like to know?",
+    "language": "en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 37.0,
+    "end_ts": 47.0,
+    "text": "Two things actually. First, what is the current surrender value? My husband and I are considering whether to continue or surrender. And second, I want to change the nominee. Right now my brother is listed, I want to change it to my daughter.",
+    "language": "en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 48.0,
+    "end_ts": 62.0,
+    "text": "Understood ma'am. On the surrender value — for Jeevan Anand after ten years of premium payment, the guaranteed surrender value is roughly thirty-five percent of premiums paid excluding the first year, plus accrued bonuses. Based on your record I'm seeing an indicative surrender value of around three lakh forty thousand. I'd strongly suggest not surrendering — Jeevan Anand has a built-in life cover that continues even after maturity, which you'd lose.",
+    "language": "en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 63.0,
+    "end_ts": 68.0,
+    "text": "That's a good point. What would I get if I held it to maturity instead?",
+    "language": "en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 69.0,
+    "end_ts": 84.0,
+    "text": "At maturity in 2054, you would receive sum assured of fifteen lakhs plus reversionary bonuses accumulated, plus a final additional bonus. Indicative maturity value based on current bonus rates is around forty-two lakhs. And importantly, after maturity, the life cover of fifteen lakhs continues for the rest of your life at no additional premium — that's the unique feature of Jeevan Anand.",
+    "language": "en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 85.0,
+    "end_ts": 89.5,
+    "text": "Okay, we'll definitely continue then. Now about the nominee change — how do I do that?",
+    "language": "en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 90.5,
+    "end_ts": 104.0,
+    "text": "For nominee change ma'am you need to submit Form 3750 along with a self-attested copy of the new nominee's PAN or Aadhaar, and a copy of your own KYC. If your daughter is a minor, you'll also need to appoint an appointee — usually the other parent. The form can be downloaded from licindia dot in or submitted at any branch office.",
+    "language": "en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 105.0,
+    "end_ts": 109.0,
+    "text": "My daughter is twenty-three so no appointee needed. Can I submit this online?",
+    "language": "en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 110.0,
+    "end_ts": 122.0,
+    "text": "Yes ma'am, since you're registered on the customer portal, you can do it through the e-services section. Upload the signed form along with KYC, and the change typically reflects within seven working days. You'll receive an endorsement copy on your registered email confirming the nominee update.",
+    "language": "en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 123.0,
+    "end_ts": 127.0,
+    "text": "Perfect. Is there any fee for the nominee change?",
+    "language": "en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 128.0,
+    "end_ts": 132.5,
+    "text": "No ma'am, nominee changes are completely free of charge as mandated by IRDAI.",
+    "language": "en"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 133.0,
+    "end_ts": 137.0,
+    "text": "Thank you so much Sneha, this was really helpful. Have a great day.",
+    "language": "en"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 137.5,
+    "end_ts": 142.0,
+    "text": "You too ma'am. The reference number for this call is LIC-CC-998712. Do call us back if you need anything else.",
+    "language": "en"
+  }
+]

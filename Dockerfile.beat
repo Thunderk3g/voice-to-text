@@ -1,0 +1,67 @@
+# syntax=docker/dockerfile:1.6
+# =========================================================================
+# v2t Celery beat — periodic scheduler
+# Triggers batch_recluster and other cron-like tasks defined on celery_app.
+# =========================================================================
+
+# -------------------------------------------------------------------------
+# Builder stage
+# -------------------------------------------------------------------------
+FROM python:3.11-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:${PATH}"
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        build-essential gcc g++ git curl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN python -m venv "${VIRTUAL_ENV}"
+
+WORKDIR /build
+COPY requirements.txt ./
+RUN pip install --upgrade pip setuptools wheel \
+ && pip install -r requirements.txt
+
+
+# -------------------------------------------------------------------------
+# Runtime stage
+# -------------------------------------------------------------------------
+FROM python:3.11-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:${PATH}" \
+    APP_HOME=/app
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        tini curl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/venv /opt/venv
+
+RUN groupadd --system --gid 1000 v2t \
+ && useradd  --system --uid 1000 --gid 1000 --home "${APP_HOME}" v2t \
+ && mkdir -p "${APP_HOME}" \
+ && chown -R v2t:v2t "${APP_HOME}"
+
+WORKDIR ${APP_HOME}
+
+COPY --chown=v2t:v2t app ./app
+COPY --chown=v2t:v2t pyproject.toml ./pyproject.toml
+
+USER v2t
+
+# Beat is a single-instance scheduler. It has no HTTP endpoint, so we
+# use a process-based liveness check.
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD pgrep -f "celery.*beat" >/dev/null 2>&1 || exit 1
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["celery", "-A", "app.workers.celery_app", "beat", "--loglevel=INFO"]

@@ -1,0 +1,114 @@
+[
+  {
+    "speaker": "AGENT",
+    "start_ts": 0.0,
+    "end_ts": 5.0,
+    "text": "నమస్తే, మాక్స్ లైఫ్ ఇన్సూరెన్స్ కస్టమర్ సర్వీస్. నేను శ్రావణి మాట్లాడుతున్నాను. మీకు ఎలా సహాయం చేయగలను?",
+    "language": "te"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 5.5,
+    "end_ts": 15.0,
+    "text": "హలో మేడం, నా పేరు సురేష్ రెడ్డి. నా అన్నయ్య పోయాడు ఒక నెల క్రితం, road accident-లో. ఆయన term plan తీసుకున్నాడు మీ company-తో. Death claim ఎలా file చేయాలో అడగడానికి call చేశాను.",
+    "language": "te"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 16.0,
+    "end_ts": 22.0,
+    "text": "సర్ మీ అన్నయ్య విషయం విని చాలా బాధగా ఉంది. మేము full support చేస్తాము. ముందుగా policy number చెప్తారా?",
+    "language": "te"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 23.0,
+    "end_ts": 30.0,
+    "text": "Policy number MX-LF-2019-887341. Sum assured one crore, term twenty years, premium fifteen thousand annually.",
+    "language": "te"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 31.0,
+    "end_ts": 42.0,
+    "text": "సర్ policy details verify అయ్యాయి. మీ అన్నయ్య గారు policyholder, మీరు registered nominee గా ఉన్నారు — relationship 'brother'. Active policy, premiums up-to-date. Accidental death-కి additional benefit కూడా ఉంది, total payout one crore plus 50 lakh accidental rider.",
+    "language": "te"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 43.0,
+    "end_ts": 50.0,
+    "text": "Oh okay. మరి ఎలాంటి documents కావాలి? List చెప్తారా please?",
+    "language": "te"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 51.0,
+    "end_ts": 70.0,
+    "text": "సర్ death claim కి కావలసిన documents: One — claim form fully filled and signed. Two — original death certificate from municipal authority. Three — FIR copy from police station, accident case కాబట్టి. Four — post-mortem report. Five — driving license of the deceased if applicable. Six — final police investigation report. Seven — your KYC, PAN, Aadhaar as nominee. Eight — bank account proof for fund transfer. Nine — original policy bond if available, లేకపోతే indemnity bond.",
+    "language": "te"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 71.0,
+    "end_ts": 78.0,
+    "text": "Police investigation report inka complete avvaledu madam. Final report కోసం wait చేయాలా or submit చేయవచ్చా intermediate documents-తో?",
+    "language": "te"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 79.0,
+    "end_ts": 94.0,
+    "text": "సర్ మీరు ఇప్పుడు available documents తో initial claim register చేయవచ్చు, claim ID create అవుతుంది. Final police report వచ్చిన తర్వాత submit చేయండి — claim file open ఉంటుంది maximum 180 days వరకు. IRDAI rule ప్రకారం complete documents అందిన 30 days లోపు settlement చేయాలి. Accidental death cases లో investigation కొంచెం detailed గా ఉంటుంది, average 45-60 days teesukuntundi.",
+    "language": "te"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 95.0,
+    "end_ts": 102.0,
+    "text": "Claim file ఎక్కడ submit చేయాలి? Online possible-ఆ లేకపోతే branch visit చేయాలా?",
+    "language": "te"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 103.0,
+    "end_ts": 118.0,
+    "text": "Both options ఉన్నాయి సర్. Online — maxlifeinsurance.com website లో 'Claims' section లో scanned copies upload చేయవచ్చు. Originals మాత్రం later courier చేయాలి our Gurgaon claims office కి. Branch visit ద్వారా Hyderabad Banjara Hills office లో submit చేయవచ్చు, ధరూవార walk-in 10 to 5. Branch approach faster ఎందుకంటే documents అక్కడే verify అవుతాయి.",
+    "language": "te"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 119.0,
+    "end_ts": 126.0,
+    "text": "OK madam. Claim amount mostly settle అయ్యే time ఎలా payment వస్తుంది? Cheque ఆ bank transfer ఆ?",
+    "language": "te"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 127.0,
+    "end_ts": 138.0,
+    "text": "Direct NEFT or RTGS సర్ — your registered bank account కి credit అవుతుంది within 48 hours of claim approval. Single payout for term plans, no annuity option ఇక్కడ. Tax-free amount under Section 10(10D), so మీ income కి add కావు.",
+    "language": "te"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 139.0,
+    "end_ts": 144.0,
+    "text": "Chala thanks madam. Interim claim register చేయండి please ఇప్పుడే.",
+    "language": "te"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 145.0,
+    "end_ts": 156.0,
+    "text": "సర్ నేను interim death claim register చేస్తున్నాను. Claim ID MAX-DC-2026-58921 generate అయింది, mee registered mobile ki SMS వస్తుంది. Document checklist mail చేస్తాను. Any clarification kosam మా dedicated claims helpline 1860-120-5577 call చేయండి. Once again, my deepest condolences.",
+    "language": "te"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 157.0,
+    "end_ts": 160.0,
+    "text": "Thank you madam. Bye.",
+    "language": "te"
+  }
+]

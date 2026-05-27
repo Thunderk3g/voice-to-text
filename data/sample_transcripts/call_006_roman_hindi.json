@@ -1,0 +1,107 @@
+[
+  {
+    "speaker": "AGENT",
+    "start_ts": 0.0,
+    "end_ts": 5.0,
+    "text": "Namaste, ICICI Prudential Life Insurance, main Deepika baat kar rahi hoon. Aapki kya sahaayata kar sakti hoon?",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 5.5,
+    "end_ts": 18.0,
+    "text": "Madam ji main Suresh Yadav bol raha hoon Kanpur se. Mujhe aapke agent ke against complaint karni hai. Mishbehavior ka maamla hai aur paise bhi galat le liye usne. Bahut pareshan hoon main.",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 19.0,
+    "end_ts": 25.0,
+    "text": "Sir main aapse maafi chahti hoon is taklif ke liye. Aap detail mein bataiye kya hua, main pura case darj karungi.",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 26.0,
+    "end_ts": 45.0,
+    "text": "Madam ek saal pehle ek agent aaya tha Rajesh Tiwari naam ka, license number bhi diya tha. Bola ki guaranteed return plan hai, paanch saal mein paisa double, fixed return 12 percent. Maine bharosa karke do lakh ka premium bhar diya. Ab jab maine policy bond dekha to woh ULIP nikla, market-linked, koi guaranteed return nahi. Aur agent ne jo brochure dikhaya tha woh company ka official nahi tha, khud bana ke laaya tha.",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 46.0,
+    "end_ts": 55.0,
+    "text": "Sir yeh bahut serious matter hai — yeh mis-selling ka case hai aur company iske khilaaf strict action leti hai. Aap policy number bata sakte hain? Aur agent ka full naam aur license number bhi?",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 56.0,
+    "end_ts": 67.0,
+    "text": "Policy number ICICI-PRU-LF-3398122. Agent ka naam Rajesh Tiwari, license number IRDA-AG-887441. Maine premium march 2025 mein bhara tha. Free-look period mein notice hi nahi mila ki ULIP hai. Mujhe paisa wapas chahiye, ya phir guaranteed plan mein convert karwana hai.",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 68.0,
+    "end_ts": 84.0,
+    "text": "Sir IRDAI ke rules ke hisaab se mis-selling proven ho jaaye to aapke paas do options hain. Pehla — full premium refund with policy cancellation under mis-selling provisions, deduction sirf stamp duty aur medical cost ki. Doosra — alternative product mein migration, agar comparable plan available ho. Free-look period 15 din ka hota hai policy receipt se, but mis-selling case mein time-bar nahi lagta agar saboot ho.",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 85.0,
+    "end_ts": 94.0,
+    "text": "Saboot kya chahiye? Mere paas agent ka diya hua brochure hai, WhatsApp pe usne return calculator bhi bheja tha jismein 12 percent guaranteed likha tha, aur policy bond ki copy hai jismein clearly ULIP likha hai.",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 95.0,
+    "end_ts": 112.0,
+    "text": "Sir yeh sab evidence ekdam strong hai. Aap kripya yeh sab grievance@iciciprulife.com par bhejiye written complaint ke saath. Ek formal complaint letter likhiye jismein puri ghatna ho — agent ka naam, date, baat-cheet, aur kya promise kiya gaya tha. Hum 14 din ke andar response denge. Agar response satisfactory nahi laga to aap IRDAI ke Bima Bharosa portal pe complaint kar sakte hain, aur Insurance Ombudsman bhi approach kar sakte hain — woh free of cost hai consumers ke liye.",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 113.0,
+    "end_ts": 119.0,
+    "text": "Ombudsman ka decision binding hota hai kya company pe? Aur kitna time lagta hai?",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 120.0,
+    "end_ts": 134.0,
+    "text": "Sir Ombudsman ka award up to 30 lakh tak insurance company pe binding hota hai. Average disposal time 90 din ke andar hai. Ombudsman aapko call karke hearing rakhega, dono parties ka paksh sunega. Aapka case strong hai is liye chances achhe hain. Lekin pehle internal grievance file karna mandatory hai, uska reply lekar Ombudsman ke paas jaana hota hai.",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 135.0,
+    "end_ts": 142.0,
+    "text": "Theek hai madam. Agent ke against bhi koi action hoga ya nahi? Aur logon ko bhi aisa chuna laga hoga uss aadmi ne.",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 143.0,
+    "end_ts": 158.0,
+    "text": "Sir bilkul. Company internal investigation karegi aur agar mis-selling prove hua to agent ka license terminate ho sakta hai aur IRDAI ko bhi report jaata hai. Aap ka complaint anonymous nahi rahega, but witness protection hota hai. Main aapke liye ek grievance case darj kar rahi hoon — case ID GRV-PRU-2026-44781. Iska reference rakhiye aur ek week mein call back karunga main personally.",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "CUSTOMER",
+    "start_ts": 159.0,
+    "end_ts": 165.0,
+    "text": "Madam aap pehli insaan ho jisne mujhe seedha jawab diya. Bahut shukriya. Main aaj hi email kar deta hoon evidence ke saath.",
+    "language": "hi-roman"
+  },
+  {
+    "speaker": "AGENT",
+    "start_ts": 166.0,
+    "end_ts": 171.0,
+    "text": "Sir aapka shukriya. Hum is matter ko priority pe lenge. Aapka din shubh ho.",
+    "language": "hi-roman"
+  }
+]

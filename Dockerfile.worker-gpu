@@ -1,0 +1,74 @@
+# syntax=docker/dockerfile:1.6
+# =========================================================================
+# v2t Celery worker — GPU queue (gpu.heavy)
+#
+# Handles ONLY embedding generation (multilingual-e5-large) on the GPU.
+# STT and speaker diarization are handled UPSTREAM by Servo AI — this
+# worker no longer runs faster-whisper or pyannote.
+#
+# Base image must match host CUDA driver compatibility.
+# =========================================================================
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    APP_HOME=/app \
+    HF_HOME=/home/v2t/.cache/huggingface \
+    TRANSFORMERS_CACHE=/home/v2t/.cache/huggingface/transformers \
+    TORCH_HOME=/home/v2t/.cache/torch \
+    PATH="/usr/local/bin:${PATH}"
+
+# -------------------------------------------------------------------------
+# OS packages: Python 3.11 + build tooling. No ffmpeg/libsndfile needed
+# (audio processing is upstream).
+# -------------------------------------------------------------------------
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        software-properties-common \
+        ca-certificates curl git tini \
+ && add-apt-repository -y ppa:deadsnakes/ppa \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+        python3.11 python3.11-dev python3.11-distutils \
+        python3-pip \
+        build-essential gcc g++ \
+ && update-alternatives --install /usr/bin/python  python  /usr/bin/python3.11 1 \
+ && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+ && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 \
+ && rm -rf /var/lib/apt/lists/*
+
+# -------------------------------------------------------------------------
+# Python deps (same pinned set as API + workers)
+# -------------------------------------------------------------------------
+WORKDIR /tmp/build
+COPY requirements.txt ./
+RUN python3.11 -m pip install --upgrade pip setuptools wheel \
+ && python3.11 -m pip install -r requirements.txt
+
+# -------------------------------------------------------------------------
+# Non-root user
+# -------------------------------------------------------------------------
+RUN groupadd --system --gid 1000 v2t \
+ && useradd  --system --uid 1000 --gid 1000 --home /home/v2t --create-home v2t \
+ && mkdir -p "${APP_HOME}" "${HF_HOME}" "${TORCH_HOME}" \
+ && chown -R v2t:v2t "${APP_HOME}" /home/v2t
+
+WORKDIR ${APP_HOME}
+
+COPY --chown=v2t:v2t app ./app
+COPY --chown=v2t:v2t pyproject.toml ./pyproject.toml
+
+USER v2t
+
+HEALTHCHECK --interval=30s --timeout=15s --start-period=60s --retries=3 \
+    CMD celery -A app.workers.celery_app inspect ping -d "celery@$(hostname)" \
+        >/dev/null 2>&1 || exit 1
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["celery", "-A", "app.workers.celery_app", "worker", \
+     "--loglevel=INFO", "-Q", "gpu.heavy", "--concurrency=1"]
