@@ -25,6 +25,10 @@ env/
 *.pem
 *.key
 
+# Corporate CA bundles (per-developer; injected into images at build time)
+infra/certs/*.crt
+frontend/certs/*.crt
+
 # Node / Next.js
 node_modules/
 frontend/.next/

@@ -4,6 +4,14 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Corporate CA trust — must precede any HTTPS network call (apk/npm).
+# certs/ may be empty for non-corporate builds; the loop is a no-op then.
+COPY certs/ /usr/local/share/ca-certificates/
+RUN for f in /usr/local/share/ca-certificates/*.crt; do \
+      if [ -f "$f" ]; then cat "$f" >> /etc/ssl/certs/ca-certificates.crt; fi; \
+    done
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+
 RUN apk add --no-cache libc6-compat
 
 COPY package.json package-lock.json* ./

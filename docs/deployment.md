@@ -100,9 +100,10 @@ Build the index inside a maintenance window — HNSW is fully blocking. Bump
 - `app/core/config.py` reads from environment variables via pydantic-settings;
   any secret manager that materializes envs at process start is compatible.
 - Rotate `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` (or their S3 equivalents)
-  when staff turn over. `OLLAMA_API_KEY` is a placeholder — Ollama itself
-  does not authenticate. If you front it with an auth proxy, plumb the real
-  token through this var.
+  when staff turn over. `LLM_API_KEY` should be set to your provider's API
+  key (Groq, OpenAI, etc.). For local Ollama deployments, this field is a
+  placeholder — Ollama itself does not check authentication. If you front it
+  with an auth proxy, plumb the real token through this var.
 
 ---
 

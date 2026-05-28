@@ -5,7 +5,10 @@ signatures** that cross subsystem boundaries.
 
 > **Pipeline scope:** STT and speaker diarization are handled upstream by
 > **Servo AI**. This platform ingests speaker-labeled transcripts only.
-> LLM inference is provided by **Ollama** (OpenAI-compatible HTTP).
+> LLM inference is provided by any OpenAI-compatible HTTP endpoint
+> (Groq, OpenAI, Ollama, vLLM, etc.). The `OllamaClient` class name is
+> historical — it accepts any provider via the `LLM_BASE_URL` /
+> `LLM_API_KEY` / `LLM_MODEL` env vars.
 
 ## Imports — canonical paths
 

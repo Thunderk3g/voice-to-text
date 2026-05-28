@@ -28,7 +28,7 @@ def _openai_chat_payload(content: str) -> dict:
         "id": "chatcmpl-test",
         "object": "chat.completion",
         "created": 0,
-        "model": get_settings().ollama_model,
+        "model": get_settings().llm_model,
         "choices": [
             {
                 "index": 0,
@@ -99,7 +99,7 @@ async def test_canonicalize_happy_path() -> None:
         )
 
     settings = get_settings()
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         router.post("/chat/completions").mock(side_effect=_route_handler)
         client = OllamaClient()
@@ -144,7 +144,7 @@ async def test_canonicalize_caps_examples_at_twelve() -> None:
         )
 
     settings = get_settings()
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         router.post("/chat/completions").mock(side_effect=_handler)
         client = OllamaClient()
@@ -167,7 +167,7 @@ async def test_canonicalize_falls_back_to_top_example_when_llm_empty() -> None:
         return ctx
 
     settings = get_settings()
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         router.post("/chat/completions").mock(
             return_value=httpx.Response(

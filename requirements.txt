@@ -33,7 +33,7 @@ scikit-learn==1.5.2
 hdbscan==0.8.39
 umap-learn==0.5.7
 
-# LLM client (Ollama exposes an OpenAI-compatible /v1 endpoint)
+# LLM client (OpenAI-compatible /v1 endpoint; works with Groq, OpenAI, Ollama, vLLM, etc.)
 openai==1.55.0
 
 # Sarvam.ai STT (handles Hindi + 10 Indic languages natively)

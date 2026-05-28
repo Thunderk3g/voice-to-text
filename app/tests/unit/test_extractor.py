@@ -38,7 +38,7 @@ def _openai_chat_payload(content: str) -> dict:
         "id": "chatcmpl-test",
         "object": "chat.completion",
         "created": 0,
-        "model": get_settings().ollama_model,
+        "model": get_settings().llm_model,
         "choices": [
             {
                 "index": 0,
@@ -81,7 +81,7 @@ async def test_extractor_parses_fenced_json_and_stamps_call_id() -> None:
     )
 
     settings = get_settings()
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         router.post("/chat/completions").mock(
             return_value=httpx.Response(200, json=_openai_chat_payload(fenced))
@@ -127,7 +127,7 @@ async def test_extractor_skips_malformed_questions() -> None:
     }
 
     settings = get_settings()
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         router.post("/chat/completions").mock(
             return_value=httpx.Response(
@@ -148,7 +148,7 @@ async def test_extractor_skips_malformed_questions() -> None:
 async def test_extractor_empty_utterances_short_circuits() -> None:
     call_id = uuid4()
     settings = get_settings()
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         route = router.post("/chat/completions")
         client = OllamaClient()
@@ -168,7 +168,7 @@ async def test_extractor_handles_missing_questions_key() -> None:
     utts = [_utt(call_id, "Why was my claim rejected?")]
 
     settings = get_settings()
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         router.post("/chat/completions").mock(
             return_value=httpx.Response(

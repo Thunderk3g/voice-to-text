@@ -29,7 +29,7 @@ def _openai_chat_payload(content: str) -> dict:
         "id": "chatcmpl-test",
         "object": "chat.completion",
         "created": 0,
-        "model": get_settings().ollama_model,
+        "model": get_settings().llm_model,
         "choices": [
             {
                 "index": 0,
@@ -81,7 +81,7 @@ async def test_min_sim_filter_drops_low_neighbors() -> None:
         assert top_k == settings.memory_edge_top_k
         return [above, below_1, below_2]
 
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         route = router.post("/chat/completions").mock(
             return_value=httpx.Response(
@@ -150,7 +150,7 @@ async def test_weight_threshold_drops_weak_relations() -> None:
     def _handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json=_openai_chat_payload(next(responses)))
 
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         router.post("/chat/completions").mock(side_effect=_handler)
         client = OllamaClient()
@@ -196,7 +196,7 @@ async def test_caps_edges_at_max_per_cluster() -> None:
             ),
         )
 
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         route = router.post("/chat/completions").mock(side_effect=_handler)
         client = OllamaClient()
@@ -223,7 +223,7 @@ async def test_skips_self_loop() -> None:
     async def get_neighbors(cid, top_k):
         return [self_hit, other]
 
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         route = router.post("/chat/completions").mock(
             return_value=httpx.Response(
@@ -266,7 +266,7 @@ async def test_rebuild_global_fans_out() -> None:
             )
         ]
 
-    base = settings.ollama_base_url.rstrip("/")
+    base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         router.post("/chat/completions").mock(
             return_value=httpx.Response(

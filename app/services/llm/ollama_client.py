@@ -1,7 +1,7 @@
 """
 Async Ollama (OpenAI-compatible) chat client used by every LLM-driven service.
 
-Ollama exposes the OpenAI chat-completions API at ``${OLLAMA_BASE_URL}/chat/completions``
+Ollama exposes the OpenAI chat-completions API at ``${LLM_BASE_URL}/chat/completions``
 (default ``http://ollama:11434/v1``). We wrap ``openai.AsyncOpenAI`` so that:
 
   * All callers go through a single retry / timeout surface.
@@ -61,11 +61,22 @@ class OllamaClient:
         client: AsyncOpenAI | None = None,
     ) -> None:
         self._settings: Settings = settings or get_settings()
+        if self._settings.llm_insecure_tls:
+            logger.warning(
+                "llm_client_tls_verify_disabled",
+                base_url=self._settings.llm_base_url,
+            )
+        timeout = httpx.Timeout(self._settings.llm_request_timeout_s)
+        http_client = httpx.AsyncClient(
+            verify=not self._settings.llm_insecure_tls,
+            timeout=timeout,
+        )
         self._client: AsyncOpenAI = client or AsyncOpenAI(
-            base_url=self._settings.ollama_base_url,
-            api_key=self._settings.ollama_api_key.get_secret_value(),
-            timeout=httpx.Timeout(self._settings.ollama_request_timeout_s),
+            base_url=self._settings.llm_base_url,
+            api_key=self._settings.llm_api_key.get_secret_value(),
+            timeout=timeout,
             max_retries=0,  # tenacity owns retries
+            http_client=http_client,
         )
 
     # ------------------------------------------------------------------
@@ -73,7 +84,7 @@ class OllamaClient:
     # ------------------------------------------------------------------
     @property
     def model(self) -> str:
-        return self._settings.ollama_model
+        return self._settings.llm_model
 
     async def chat_json(
         self,
@@ -173,7 +184,7 @@ class OllamaClient:
         extra: dict[str, Any] | None,
     ) -> str:
         kwargs: dict[str, Any] = {
-            "model": self._settings.ollama_model,
+            "model": self._settings.llm_model,
             "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
@@ -181,9 +192,9 @@ class OllamaClient:
             "temperature": (
                 temperature
                 if temperature is not None
-                else self._settings.ollama_temperature
+                else self._settings.llm_temperature
             ),
-            "max_tokens": max_tokens or self._settings.ollama_max_tokens,
+            "max_tokens": max_tokens or self._settings.llm_max_tokens,
         }
         if response_format is not None:
             kwargs["response_format"] = response_format

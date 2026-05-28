@@ -15,7 +15,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     VIRTUAL_ENV=/opt/venv \
-    PATH="/opt/venv/bin:${PATH}"
+    PATH="/opt/venv/bin:${PATH}" \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    PIP_CERT=/etc/ssl/certs/ca-certificates.crt
+
+# Corporate CA trust — must precede any HTTPS network call (apt/pip).
+# infra/certs/ may be empty for non-corporate builds; the loop is a no-op then.
+COPY infra/certs/ /usr/local/share/ca-certificates/
+RUN for f in /usr/local/share/ca-certificates/*.crt; do \
+      if [ -f "$f" ]; then cat "$f" >> /etc/ssl/certs/ca-certificates.crt; fi; \
+    done
 
 # Build deps required to compile a handful of wheels (hdbscan, fasttext,
 # pyannote/torchaudio etc. when wheels are not available for the target).
@@ -51,7 +61,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     VIRTUAL_ENV=/opt/venv \
     PATH="/opt/venv/bin:${PATH}" \
-    APP_HOME=/app
+    APP_HOME=/app \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    PIP_CERT=/etc/ssl/certs/ca-certificates.crt
+
+# Corporate CA trust — propagate to the runtime image too.
+COPY infra/certs/ /usr/local/share/ca-certificates/
+RUN for f in /usr/local/share/ca-certificates/*.crt; do \
+      if [ -f "$f" ]; then cat "$f" >> /etc/ssl/certs/ca-certificates.crt; fi; \
+    done
 
 # Minimal runtime deps:
 #  - tini → PID 1, reaps zombies, forwards signals
