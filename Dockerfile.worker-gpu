@@ -21,7 +21,18 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HF_HOME=/home/v2t/.cache/huggingface \
     TRANSFORMERS_CACHE=/home/v2t/.cache/huggingface/transformers \
     TORCH_HOME=/home/v2t/.cache/torch \
-    PATH="/usr/local/bin:${PATH}"
+    PATH="/usr/local/bin:${PATH}" \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    PIP_CERT=/etc/ssl/certs/ca-certificates.crt
+
+# Corporate CA trust — must precede any HTTPS network call (apt/pip).
+# nvidia/cuda:*-ubuntu22.04 ships with ca-certificates already installed,
+# so /etc/ssl/certs/ca-certificates.crt is present and writable.
+COPY infra/certs/ /usr/local/share/ca-certificates/
+RUN for f in /usr/local/share/ca-certificates/*.crt; do \
+      if [ -f "$f" ]; then cat "$f" >> /etc/ssl/certs/ca-certificates.crt; fi; \
+    done
 
 # -------------------------------------------------------------------------
 # OS packages: Python 3.11 + build tooling. No ffmpeg/libsndfile needed

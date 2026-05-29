@@ -7,20 +7,22 @@
 FROM node:20-slim AS builder
 WORKDIR /app
 
-# Trust corporate root CA (Cisco Umbrella + BajajLife) so npm, Node, and the
-# Next.js build can reach npm-registry / Google fonts through the MITM proxy.
+# Install ca-certificates first using plain HTTP debian mirrors
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates \
  && rm -rf /var/lib/apt/lists/*
-COPY infra/certs/bajaj-root.pem /usr/local/share/ca-certificates/bajaj-root.crt
+
+# Corporate CA trust — must precede any HTTPS network call (npm/Node).
+# certs/ may be empty for non-corporate builds; update-ca-certificates is a no-op then.
+COPY certs/ /usr/local/share/ca-certificates/
 RUN update-ca-certificates
 ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
-COPY frontend/package.json frontend/package-lock.json* ./
+COPY package.json package-lock.json* ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
-COPY frontend/ .
+COPY . .
 
 # Compose passes NEXT_PUBLIC_API_BASE_URL at runtime, but Next.js bakes
 # rewrite destinations and any NEXT_PUBLIC_* values at *build* time. Accept
@@ -39,10 +41,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
+# Install ca-certificates in the runner stage too, for outbound calls
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates \
  && rm -rf /var/lib/apt/lists/*
-COPY infra/certs/bajaj-root.pem /usr/local/share/ca-certificates/bajaj-root.crt
+
+COPY certs/ /usr/local/share/ca-certificates/
 RUN update-ca-certificates
 ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt

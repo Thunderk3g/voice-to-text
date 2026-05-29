@@ -1,5 +1,11 @@
 # GPU sizing
 
+> **Note (post-Groq switch):** As of the move to a hosted LLM provider (Groq),
+> LLM inference no longer requires a local GPU. The sizing guidance below now
+> applies only to the embedding worker (`worker-gpu`), which runs
+> `intfloat/multilingual-e5-large` locally. The Ollama-specific sections
+> remain valid as a reference for self-hosted deployments.
+
 The v2t pipeline has exactly two GPU consumers:
 
 1. **Ollama** running `qwen2.5:7b-instruct` (default quant: `q4_K_M`).

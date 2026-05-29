@@ -8,8 +8,10 @@
 # Usage:
 #   cp .env.example .env
 #   docker compose up -d --build
-#   docker compose run --rm ollama-init     # one-shot: pulls the model
 #   python -m app.scripts.seed_data --api-url http://localhost:8080
+#
+# LLM provider: Groq (external HTTPS API). No local LLM container — calls
+# go out via LLM_BASE_URL / LLM_API_KEY in .env.
 # =========================================================================
 
 x-app-env: &app-env
@@ -32,7 +34,6 @@ volumes:
   postgres_data:
   minio_data:
   hf_cache:
-  ollama_data:
 
 services:
 
@@ -129,52 +130,6 @@ services:
       - v2t-net
 
   # -----------------------------------------------------------------------
-  # Ollama (Qwen2.5-7B-Instruct) — OpenAI-compatible HTTP at /v1
-  # -----------------------------------------------------------------------
-  ollama:
-    image: ollama/ollama:latest
-    container_name: v2t-ollama
-    restart: unless-stopped
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    environment:
-      OLLAMA_KEEP_ALIVE: 24h
-      OLLAMA_HOST: 0.0.0.0
-    healthcheck:
-      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 30s
-    <<: *gpu-deploy
-    networks:
-      - v2t-net
-
-  # One-shot: pulls the configured model the first time it runs.
-  # Run manually with: docker compose run --rm ollama-init
-  ollama-init:
-    image: ollama/ollama:latest
-    container_name: v2t-ollama-init
-    depends_on:
-      ollama:
-        condition: service_healthy
-    environment:
-      OLLAMA_HOST: http://ollama:11434
-      OLLAMA_MODEL: ${OLLAMA_MODEL}
-    entrypoint: >
-      /bin/sh -c "
-      set -e;
-      echo 'Pulling Ollama model: '$${OLLAMA_MODEL};
-      ollama pull $${OLLAMA_MODEL};
-      echo 'ollama-init: model ready';
-      "
-    restart: "no"
-    networks:
-      - v2t-net
-
-  # -----------------------------------------------------------------------
   # FastAPI — REST API
   # -----------------------------------------------------------------------
   api:
@@ -209,7 +164,7 @@ services:
 
   # -----------------------------------------------------------------------
   # Celery worker — CPU queue (ingest, extract, cluster, canonicalize,
-  # memory edges, feedback). LLM calls go out to Ollama over HTTP.
+  # memory edges, feedback). LLM calls go out to Groq over HTTPS.
   # -----------------------------------------------------------------------
   worker-cpu:
     build:
@@ -317,8 +272,8 @@ services:
   # -----------------------------------------------------------------------
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     image: v2t/frontend:local
     container_name: v2t-frontend
     restart: unless-stopped
