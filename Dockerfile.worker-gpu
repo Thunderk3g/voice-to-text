@@ -31,6 +31,17 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
         software-properties-common \
         ca-certificates curl git tini \
+ && rm -rf /var/lib/apt/lists/*
+
+# Trust corporate root CA before any HTTPS fetch (PPA, get-pip, PyPI)
+COPY infra/certs/bajaj-root.pem /usr/local/share/ca-certificates/bajaj-root.crt
+RUN update-ca-certificates
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    PIP_CERT=/etc/ssl/certs/ca-certificates.crt
+
+RUN apt-get update \
  && add-apt-repository -y ppa:deadsnakes/ppa \
  && apt-get update \
  && apt-get install -y --no-install-recommends \

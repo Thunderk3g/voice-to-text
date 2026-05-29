@@ -20,6 +20,13 @@ RUN apt-get update \
         build-essential gcc g++ git curl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
+COPY infra/certs/bajaj-root.pem /usr/local/share/ca-certificates/bajaj-root.crt
+RUN update-ca-certificates
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    PIP_CERT=/etc/ssl/certs/ca-certificates.crt
+
 RUN python -m venv "${VIRTUAL_ENV}"
 
 WORKDIR /build
@@ -41,8 +48,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-        tini curl ca-certificates \
+        tini curl ca-certificates procps \
  && rm -rf /var/lib/apt/lists/*
+
+COPY infra/certs/bajaj-root.pem /usr/local/share/ca-certificates/bajaj-root.crt
+RUN update-ca-certificates
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 
 COPY --from=builder /opt/venv /opt/venv
 

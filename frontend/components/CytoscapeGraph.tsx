@@ -29,7 +29,7 @@ const CytoscapeComponent = dynamic(() => import("react-cytoscapejs"), {
   elements: ElementDefinition[];
   layout: cytoscape.LayoutOptions;
   style: React.CSSProperties;
-  stylesheet: cytoscape.Stylesheet[];
+  stylesheet: unknown[];
   cy?: (cy: Core) => void;
   minZoom?: number;
   maxZoom?: number;
@@ -80,7 +80,7 @@ export function CytoscapeGraph({
     return [...nodeElements, ...edgeElements];
   }, [nodes, edges]);
 
-  const stylesheet = useMemo<cytoscape.Stylesheet[]>(
+  const stylesheet = useMemo<unknown[]>(
     () => [
       {
         selector: "node",

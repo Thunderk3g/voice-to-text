@@ -3,7 +3,7 @@ const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
   async rewrites() {
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://api:8000";
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://api:8080";
     return [
       {
         source: "/api/v2t/:path*",

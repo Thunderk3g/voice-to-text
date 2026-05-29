@@ -78,9 +78,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
-    configure_logging()
-    init_tracing("v2t-api")
-    FastAPIInstrumentor.instrument_app(app)
+    # Middleware (incl. OTel) must already be wired before the app starts —
+    # Starlette no longer permits add_middleware after startup. Tracing/OTel
+    # init runs at app construction time in create_app() instead.
     logger = get_logger("v2t.api.lifespan")
     logger.info("api_starting", version=__version__, env=get_settings().app_env)
     try:
@@ -100,6 +100,8 @@ def create_app() -> FastAPI:
     """Build the FastAPI app. Called by `app = create_app()` and tests."""
 
     settings = get_settings()
+    configure_logging()
+    init_tracing("v2t-api")
 
     app = FastAPI(
         title="v2t — insurance call intelligence",
@@ -107,6 +109,13 @@ def create_app() -> FastAPI:
         default_response_class=ORJSONResponse,
         lifespan=_lifespan,
     )
+
+    # OTel instrumentation must be installed before the app starts so its
+    # middleware can be added.
+    try:
+        FastAPIInstrumentor.instrument_app(app)
+    except Exception:  # noqa: BLE001
+        pass
 
     # ---- Middleware ----
     app.add_middleware(

@@ -31,6 +31,16 @@ RUN apt-get update \
         ffmpeg \
  && rm -rf /var/lib/apt/lists/*
 
+# Trust corporate root CA (Cisco Umbrella + BajajLife) so pip/httpx/curl
+# inside the container can reach PyPI, Groq, etc. through the MITM proxy.
+COPY infra/certs/bajaj-root.pem /usr/local/share/ca-certificates/bajaj-root.crt
+RUN update-ca-certificates
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    PIP_CERT=/etc/ssl/certs/ca-certificates.crt \
+    NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+
 RUN python -m venv "${VIRTUAL_ENV}"
 
 WORKDIR /build
@@ -65,6 +75,13 @@ RUN apt-get update \
         curl \
         ca-certificates \
  && rm -rf /var/lib/apt/lists/*
+
+# Trust corporate root CA inside runtime (Groq + outbound HTTPS)
+COPY infra/certs/bajaj-root.pem /usr/local/share/ca-certificates/bajaj-root.crt
+RUN update-ca-certificates
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 
 # Copy the pre-built virtualenv from the builder
 COPY --from=builder /opt/venv /opt/venv
