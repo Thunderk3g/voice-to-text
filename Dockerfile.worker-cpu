@@ -79,6 +79,11 @@ COPY --from=builder /opt/venv /opt/venv
 RUN groupadd --system --gid 1000 v2t \
  && useradd  --system --uid 1000 --gid 1000 --home "${APP_HOME}" v2t \
  && mkdir -p "${APP_HOME}" \
+ # Pre-create the HF/Whisper cache dir owned by v2t so that when the hf_cache
+ # named volume is mounted here, Docker seeds a FRESH volume with v2t ownership
+ # (a volume over a non-existent path is created root-owned and the non-root
+ # worker can't write the model into it).
+ && mkdir -p "${APP_HOME}/.cache/huggingface" \
  && chown -R v2t:v2t "${APP_HOME}"
 
 WORKDIR ${APP_HOME}
