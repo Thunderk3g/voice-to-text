@@ -31,8 +31,6 @@ RUN apt-get update \
         libsndfile1 ffmpeg \
  && rm -rf /var/lib/apt/lists/*
 
-COPY infra/certs/bajaj-root.pem /usr/local/share/ca-certificates/bajaj-root.crt
-RUN update-ca-certificates
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
@@ -72,8 +70,6 @@ RUN apt-get update \
         tini ffmpeg libsndfile1 curl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
-COPY infra/certs/bajaj-root.pem /usr/local/share/ca-certificates/bajaj-root.crt
-RUN update-ca-certificates
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt

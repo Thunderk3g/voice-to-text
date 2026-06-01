@@ -29,8 +29,6 @@ RUN apt-get update \
         build-essential gcc g++ git curl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
-COPY infra/certs/bajaj-root.pem /usr/local/share/ca-certificates/bajaj-root.crt
-RUN update-ca-certificates
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
@@ -69,8 +67,6 @@ RUN apt-get update \
         tini curl ca-certificates procps \
  && rm -rf /var/lib/apt/lists/*
 
-COPY infra/certs/bajaj-root.pem /usr/local/share/ca-certificates/bajaj-root.crt
-RUN update-ca-certificates
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
