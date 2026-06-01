@@ -7,7 +7,8 @@
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-14-000?logo=next.js)
 ![Postgres](https://img.shields.io/badge/Postgres-16%2Bpgvector-336791?logo=postgresql&logoColor=white)
-![Ollama](https://img.shields.io/badge/LLM-Ollama%20qwen2.5--7b-7B4DBA)
+![LLM](https://img.shields.io/badge/LLM-OpenAI--compatible%20(Groq%20default)-7B4DBA)
+![Embeddings](https://img.shields.io/badge/Embeddings-Cohere%20%2F%20e5--large-39A0ED)
 ![Sarvam](https://img.shields.io/badge/STT-Sarvam.ai-F26B38)
 
 ---
@@ -33,45 +34,122 @@ plus Sarvam's broader Indic set when STT is enabled.
 | Layer        | Provider                            | Why                                                     |
 |--------------|--------------------------------------|---------------------------------------------------------|
 | **STT**      | [Sarvam.ai](https://www.sarvam.ai/) | Hindi-native (no Whisper-to-Urdu drift), 10 Indic langs |
-| **LLM**      | [Ollama](https://ollama.com/) + `qwen2.5:7b-instruct` | Local inference, OpenAI-compatible /v1                   |
-| **Embeddings** | `intfloat/multilingual-e5-large`  | Cross-lingual aligned 1024-d space                       |
+| **LLM**      | Any OpenAI-compatible `/v1` endpoint — **[Groq](https://groq.com/) `openai/gpt-oss-120b` by default**; [Ollama](https://ollama.com/), vLLM, or OpenAI all work | One client, swap provider with `LLM_BASE_URL` / `LLM_MODEL` — no code change |
+| **Embeddings** | **[Cohere](https://cohere.com/) `embed-multilingual-v3.0` by default** (hosted, no torch), or local `intfloat/multilingual-e5-large` | Both 1024-d → identical pgvector schema; switch with `EMBEDDING_PROVIDER` |
 | **Vector DB**  | Postgres 16 + `pgvector`           | One database, ivfflat → HNSW on scale-up                 |
 | **Queue**    | Celery + Redis                      | At-least-once with `task_acks_late=True`                 |
 | **Storage**  | MinIO (S3-compatible)               | Raw audio, transcript JSON, pipeline artifacts           |
 | **UI**       | Next.js 14 (App Router) + Cytoscape.js + Plotly | Cluster explorer, memory graph, retrieval playground   |
 
+The default stack is **fully hosted for LLM + embeddings (Groq + Cohere), so no
+GPU is required**. Point `LLM_BASE_URL` at a local Ollama and set
+`EMBEDDING_PROVIDER=local` to run everything on-prem instead.
+
 Audio → Sarvam (chunked on silences, <30 s each, transcribed in parallel) →
-heuristic speaker assignment → Ollama JSON-mode extraction → e5 embedding →
-HDBSCAN + incremental assignment → Ollama canonicalization + memory edges.
+heuristic speaker assignment → LLM JSON-mode extraction → embedding (Cohere or
+e5) → HDBSCAN + incremental assignment → LLM canonicalization + memory edges.
+Pre-labeled transcript JSON can be ingested directly, skipping the STT stage.
 
 See [`docs/architecture.md`](docs/architecture.md) for the full diagram.
 
 ---
 
-## Quickstart (Linux / WSL2 with NVIDIA Container Toolkit)
+## Quickstart
+
+The default direction is **open-source-first**: a native Ollama LLM, local e5
+embeddings on CPU, and open-source faster-whisper STT — **no paid API keys and
+no GPU required**. Two ready-made profiles are provided:
+
+- **`.env.opensource`** — fully open source (faster-whisper STT on CPU). No keys.
+- **`.env.sarvam`** — high-accuracy Hindi/Indic STT via Sarvam (set `SARVAM_API_KEY`).
+
+Both run the LLM via a **native Ollama on the host**, reached from containers
+via `host.docker.internal`. (See [Run on macOS](#run-on-macos-apple-silicon--m-series)
+for the Apple-Silicon walkthrough.)
 
 ```bash
 git clone https://github.com/Thunderk3g/voice-to-text.git
 cd voice-to-text
-cp .env.example .env
-# fill in SARVAM_API_KEY (and any other secrets) in .env
 
-docker compose up -d --build
-docker compose run --rm ollama-init          # pulls qwen2.5:7b-instruct (~4–5 GB, one time)
+# Run Ollama natively on the host first (Metal-accelerated on Mac):
+ollama serve &
+ollama pull qwen2.5:7b-instruct
+
+# Pick a profile:
+cp .env.opensource .env       # fully open source (Whisper STT)
+# cp .env.sarvam .env         # Sarvam STT — then set SARVAM_API_KEY in .env
+
+docker compose up -d --build  # worker-gpu is opt-in via --profile gpu
 
 # Seed the 6 sample multilingual transcripts:
 python -m app.scripts.seed_data --api-url http://localhost:8080
 ```
 
+> To use a hosted LLM (Groq) instead of Ollama, uncomment the Groq block in
+> your `.env`.
+
 Open:
 
 | URL                          | What                                             |
 |------------------------------|--------------------------------------------------|
-| http://localhost:3000        | Next.js dashboard (cluster explorer, graph, …)   |
+| http://localhost:3001        | Next.js dashboard (cluster explorer, graph, …)   |
 | http://localhost:8080/docs   | FastAPI Swagger                                  |
 | http://localhost:8080/metrics| Prometheus exposition                            |
 | http://localhost:5555        | Flower (Celery queue monitor)                    |
 | http://localhost:9001        | MinIO console                                    |
+
+---
+
+## Run on macOS (Apple Silicon / M-series)
+
+On a MacBook (M-series), Docker Desktop **can't pass the Apple GPU through to
+containers**, so the LLM runs **natively on the host** (Metal-accelerated) and
+the containers reach it over `host.docker.internal`. The CUDA `worker-gpu`
+container can't run on Mac, so it's opt-in and the CPU worker handles
+embeddings.
+
+**1. Install and run Ollama natively** (not in Docker):
+
+```bash
+brew install ollama            # or download from https://ollama.com/download
+ollama serve &                 # Metal-accelerated; listens on :11434
+ollama pull qwen2.5:7b-instruct
+```
+
+Containers reach this host Ollama via `LLM_BASE_URL=http://host.docker.internal:11434/v1`
+(already set in both profile files; compose adds the `host.docker.internal`
+host entry so it works on Linux too).
+
+**2. Pick a profile:**
+
+```bash
+cp .env.opensource .env        # fully open source — faster-whisper STT, no keys
+# or:
+cp .env.sarvam .env            # Sarvam STT — then set SARVAM_API_KEY in .env
+```
+
+**3. Bring up the stack** (no GPU needed; `worker-gpu` is opt-in):
+
+```bash
+docker compose up -d --build
+# NVIDIA/Linux users who want the CUDA embedding worker instead:
+#   docker compose --profile gpu up -d --build
+```
+
+**4. Seed the sample transcripts:**
+
+```bash
+python -m app.scripts.seed_data --api-url http://localhost:8080
+```
+
+Then open the dashboard at **http://localhost:3001** (compose maps 3001 → the
+container's 3000).
+
+**Accuracy vs. speed tradeoff:** the open-source profile's faster-whisper
+`large-v3` runs on CPU — it's noticeably **slower** and **weaker on
+Hindi/Devanagari** than Sarvam. If high-accuracy Indic audio is the priority,
+use the **sarvam** profile (the high-accuracy audio path); the **opensource**
+profile is the zero-key, fully on-prem path.
 
 ---
 
@@ -132,26 +210,34 @@ curl -X POST http://localhost:8080/feedback \
 |----------------------|--------------------------------|-----|------------|
 | `api`                | python:3.11, FastAPI           | no  | 8080       |
 | `worker-cpu`         | python:3.11                    | no  | —          |
-| `worker-gpu`         | nvidia/cuda + python:3.11      | yes | —          |
-| `ollama`             | ollama/ollama                  | yes | 11434      |
+| `worker-gpu`         | nvidia/cuda + python:3.11      | opt | —          |
 | `postgres`           | pgvector/pgvector:pg16         | no  | 5432       |
 | `redis`              | redis:7-alpine                 | no  | 6379       |
 | `minio`              | minio/minio                    | no  | 9000, 9001 |
 | `flower`             | mher/flower                    | no  | 5555       |
-| `frontend`           | node:20 (Next.js 14 standalone)| no  | 3000       |
+| `frontend`           | node:20 (Next.js 14 standalone)| no  | 3001 → 3000|
 | `beat`               | python:3.11                    | no  | —          |
 
-Sarvam.ai is **not** a container — calls go out over the public Sarvam HTTPS
-API. Only an API key is needed.
+`worker-gpu` only does work when `EMBEDDING_PROVIDER=local`; with the default
+hosted Cohere embeddings the entire fleet is CPU-only.
+
+The **LLM, embeddings, and STT providers are not containers** — Groq, Cohere,
+and Sarvam.ai are reached over their public HTTPS APIs. Only API keys are
+needed. (Run a local Ollama container and point `LLM_BASE_URL` at it if you
+prefer on-prem inference.)
 
 ---
 
-## GPU sizing — RTX 4080 (16 GB)
+## GPU sizing (on-prem / hosted-free deployments only)
+
+The default Groq + Cohere stack needs **no GPU**. The numbers below apply only
+if you self-host the models — e.g. `EMBEDDING_PROVIDER=local` and/or a local
+Ollama LLM — on a single RTX 4080 (16 GB):
 
 | Workload                          | VRAM          | Notes                              |
 |-----------------------------------|---------------|------------------------------------|
-| Ollama `qwen2.5:7b-instruct` q4_K_M | ~5–6 GB     | Default Ollama quantisation        |
-| multilingual-e5-large             | ~2 GB         | Loaded once per worker-gpu process |
+| Ollama `qwen2.5:7b-instruct` q4_K_M | ~5–6 GB     | Only if you self-host the LLM      |
+| multilingual-e5-large             | ~2 GB         | Only when `EMBEDDING_PROVIDER=local`; loaded once per worker-gpu |
 | Headroom                          | ~8 GB         | OS + fragmentation + future models |
 
 Smaller-card profiles (RTX 4070 Ti 12 GB, RTX 3060 8 GB, A10 24 GB+) and
@@ -171,10 +257,10 @@ cp .env.example .env                                  # tweak DSN to localhost
 docker compose up -d postgres redis minio
 alembic upgrade head
 
-# Ollama: install natively + pre-pull the model.
-#   https://ollama.com/download
-ollama serve &
-ollama pull qwen2.5:7b-instruct
+# LLM + embeddings are hosted by default (Groq + Cohere) — just set the keys
+# in .env, nothing to install. To run the LLM on-prem instead, install Ollama
+# (https://ollama.com/download), `ollama serve &`, `ollama pull qwen2.5:7b-instruct`,
+# and point LLM_BASE_URL at http://localhost:11434/v1.
 
 # Then run the app processes:
 uvicorn app.api.main:app --reload --port 8080
@@ -218,11 +304,12 @@ pytest app/tests/integration -v       # auto-skipped if DATABASE_URL_SYNC unreac
 
 ## Roadmap
 
+- [x] Pluggable LLM backend behind one OpenAI-compatible interface (Groq /
+      Ollama / vLLM / OpenAI — swap via `LLM_BASE_URL`)
+- [x] Pluggable embedding backend (hosted Cohere or local e5, `EMBEDDING_PROVIDER`)
 - [ ] Switch pgvector index from ivfflat to HNSW once corpus passes ~1 L vectors
 - [ ] Wire Sarvam **Batch STT API** (returns proper diarization) to replace the
       on-board speaker heuristic
-- [ ] Pluggable LLM backend (vLLM / OpenAI / Anthropic / Bedrock) behind the same
-      OpenAI-compatible interface
 - [ ] OpenTelemetry collector container wiring (config in `docs/deployment.md`)
 - [ ] Pre-built Grafana dashboard for the v2t Prometheus namespace
 
@@ -236,9 +323,9 @@ app/
   workers/         Celery tasks + pipelines + sync DB glue
   services/
     stt/           Sarvam client + transcript loader + speaker heuristic
-    llm/           Ollama OpenAI-compatible client
+    llm/           OpenAI-compatible LLM client (Groq / Ollama / vLLM / OpenAI)
     extraction/    LLM-driven question extractor
-    embedding/     multilingual-e5-large service + Redis cache
+    embedding/     Cohere + local e5-large encoders + Redis cache
     canonicalization/  Per-cluster FAQ synthesis
     memory_graph/  LLM-inferred cluster-to-cluster edges
     factories.py   Glue between sync workers and async services

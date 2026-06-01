@@ -5,11 +5,13 @@ All services in the platform read from a single Settings object so that
 configuration is consistent and validated at startup. Settings are
 populated from environment variables (or a .env file).
 
-STT provider: Sarvam.ai. Long audio is chunked on silences (<30s per
-chunk to fit Sarvam's sync REST envelope), transcribed in parallel,
-stitched back with offset timestamps, then run through the on-board
-speaker-assignment heuristic. Pre-transcribed JSON is still accepted via
-/ingest with is_transcript=true.
+STT provider (STT_PROVIDER): "sarvam" or "whisper" (open-source
+faster-whisper, run locally on CPU) — see app/services/stt/. Sarvam chunks
+long audio on silences (<30s per chunk to fit Sarvam's sync REST envelope),
+transcribes in parallel, and stitches segments back with offset timestamps;
+faster-whisper handles long audio natively. Both run through the on-board
+speaker-assignment heuristic. "none" disables audio STT (transcript-only).
+Pre-transcribed JSON is still accepted via /ingest with is_transcript=true.
 """
 
 from __future__ import annotations
@@ -61,14 +63,24 @@ class Settings(BaseSettings):
     minio_bucket_transcripts: str = "transcripts"
     minio_bucket_artifacts: str = "pipeline-artifacts"
 
-    # ---- Sarvam.ai STT ----
-    stt_provider: Literal["sarvam", "none"] = "sarvam"
+    # ---- STT ----
+    stt_provider: Literal["sarvam", "whisper", "none"] = "sarvam"
+
+    # ---- Sarvam.ai STT (active when stt_provider == "sarvam") ----
     sarvam_api_key: SecretStr = SecretStr("")
     sarvam_stt_model: str = "saarika:v2.5"
     sarvam_language_code: str = "unknown"  # "unknown" auto-detects across Sarvam's Indic set
     sarvam_request_timeout_s: int = 60
     sarvam_chunk_duration_s: int = 25
     sarvam_chunk_overlap_ms: int = 200
+
+    # ---- faster-whisper STT (active when stt_provider == "whisper") ----
+    # Open-source local model. Defaults target a CPU-only Linux container
+    # (no GPU); "int8" keeps the large-v3 weights memory-friendly.
+    whisper_model: str = "large-v3"
+    whisper_device: str = "cpu"
+    whisper_compute_type: str = "int8"
+    whisper_language: str = ""  # empty string = auto-detect
 
     # ---- LLM (OpenAI-compatible — Groq / Ollama / vLLM / OpenAI) ----
     llm_base_url: str = "http://ollama:11434/v1"

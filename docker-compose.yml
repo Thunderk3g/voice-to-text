@@ -1,17 +1,22 @@
 # =========================================================================
 # v2t — full local stack
-# Tested on Linux + WSL2 with NVIDIA Container Toolkit.
+# Runs on macOS (Apple Silicon), Linux, and WSL2.
 #
-# NOTE: STT + speaker diarization are handled UPSTREAM by Servo AI.
-# This stack consumes speaker-labeled transcript JSON via /ingest.
+# LLM:        native Ollama on the host (Metal-accelerated on Mac), reached
+#             from containers via host.docker.internal. No LLM container —
+#             calls go out via LLM_BASE_URL / LLM_API_KEY in .env.
+# STT:        Sarvam.ai (hosted, Indic-accurate) OR open-source faster-whisper
+#             on CPU — selected by STT_PROVIDER. (No Servo AI dependency.)
+# Embeddings: local multilingual-e5-large on CPU by default (EMBEDDING_PROVIDER
+#             =local); the CPU worker handles the embedding queue.
+# worker-gpu: opt-in only (CUDA). It is behind the "gpu" compose profile and
+#             does NOT start by default — Mac can't pass through the GPU.
+#             NVIDIA/Linux users enable it with: docker compose --profile gpu up
 #
 # Usage:
-#   cp .env.example .env
+#   cp .env.opensource .env   # or: cp .env.sarvam .env   (set SARVAM_API_KEY)
 #   docker compose up -d --build
 #   python -m app.scripts.seed_data --api-url http://localhost:8080
-#
-# LLM provider: Groq (external HTTPS API). No local LLM container — calls
-# go out via LLM_BASE_URL / LLM_API_KEY in .env.
 # =========================================================================
 
 x-app-env: &app-env
@@ -149,6 +154,8 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command:
       - "sh"
       - "-c"
@@ -181,6 +188,12 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Consume both the CPU queue and the embedding queue so embeddings run on
+    # CPU here when worker-gpu is not started (default on Mac / no-GPU hosts).
+    command: ["celery", "-A", "app.workers.celery_app", "worker",
+              "--loglevel=INFO", "-Q", "celery,gpu.heavy", "--concurrency=4"]
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$(hostname) >/dev/null 2>&1"]
       interval: 30s
@@ -201,6 +214,9 @@ services:
     image: v2t/worker-gpu:local
     container_name: v2t-worker-gpu
     restart: unless-stopped
+    # Opt-in only: CUDA worker. Not started by default (Mac can't pass through
+    # the GPU). Enable on NVIDIA/Linux with: docker compose --profile gpu up
+    profiles: ["gpu"]
     <<: *app-env
     depends_on:
       api:
@@ -209,6 +225,8 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - hf_cache:/home/v2t/.cache/huggingface
     healthcheck:
@@ -235,6 +253,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f 'celery.*beat' >/dev/null"]
       interval: 30s

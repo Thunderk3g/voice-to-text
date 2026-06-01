@@ -39,6 +39,8 @@ openai==1.55.0
 # Sarvam.ai STT (handles Hindi + 10 Indic languages natively)
 sarvamai>=0.1.10
 pydub==0.25.1                            # audio chunking for >30s clips
+# faster-whisper STT (open-source, local; CPU int8 large-v3 by default)
+faster-whisper==1.0.3
 
 # Observability
 structlog==24.4.0

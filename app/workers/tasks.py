@@ -259,12 +259,12 @@ def transcribe_call(self, call_id: str) -> None:
                 source_uri = row["source_uri"]
 
             from app.services.audio.io import cleanup_temp, download_to_temp
-            from app.services.stt.sarvam import SarvamTranscriber
+            from app.services.stt import make_transcriber
             from app.services.stt.speaker_heuristic import assign_speakers
 
             audio_path = download_to_temp(source_uri)
             try:
-                svc = SarvamTranscriber()
+                svc = make_transcriber()
                 raw_utterances = run_async(
                     svc.transcribe_file(call_id=UUID(call_id), audio_path=audio_path)
                 )
