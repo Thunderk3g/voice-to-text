@@ -37,7 +37,7 @@ logger = get_logger(__name__)
 router = APIRouter(tags=["ingest"])
 
 # Extension -> is_transcript. Drives type inference for /ingest/upload.
-_AUDIO_EXTS = frozenset({".wav", ".mp3", ".m4a", ".ogg", ".flac", ".webm"})
+_AUDIO_EXTS = frozenset({".wav", ".mp3", ".m4a", ".ogg", ".flac", ".webm", ".mp4"})
 _TRANSCRIPT_EXTS = frozenset({".json"})
 
 # Streaming read size for the upload temp-file copy.

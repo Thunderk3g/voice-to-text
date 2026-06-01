@@ -131,3 +131,25 @@ def test_upload_empty_file_returns_400(client: TestClient) -> None:
 
     assert response.status_code == 400, response.text
     assert response.json()["type"] == "empty_file"
+
+
+def test_upload_audio_mp4_returns_202(client: TestClient, saved_buckets: list[str]) -> None:
+    """.mp4 is treated as audio (goes to the audio-raw bucket)."""
+    files = {"file": ("call.mp4", io.BytesIO(b"\x00\x00\x00\x18ftypmp42fake"), "audio/mp4")}
+    response = client.post("/ingest/upload", files=files)
+
+    assert response.status_code == 202, response.text
+    assert response.json()["is_transcript"] is False
+    assert saved_buckets == ["audio-raw"]
+
+
+def test_upload_is_transcript_override_on_wav(
+    client: TestClient, saved_buckets: list[str]
+) -> None:
+    """Explicit is_transcript=true wins over the .wav extension inference."""
+    files = {"file": ("call.wav", io.BytesIO(b"RIFFfake-audio"), "audio/wav")}
+    response = client.post("/ingest/upload", files=files, data={"is_transcript": "true"})
+
+    assert response.status_code == 202, response.text
+    assert response.json()["is_transcript"] is True
+    assert saved_buckets == ["transcripts"]
