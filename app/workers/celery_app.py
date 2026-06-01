@@ -65,8 +65,12 @@ celery_app.conf.update(
     # Timezone
     timezone="UTC",
     enable_utc=True,
-    # Routing
-    task_default_queue="default",
+    # Routing. NOTE: the default queue MUST be "celery" — that's the queue the
+    # API sender (app/api/celery_sender.py, no task_default_queue set) dispatches
+    # v2t.ingest onto, and the queue the worker fleet consumes (-Q celery,...).
+    # If this is "default", the pipeline chain (transcribe -> extract -> ...) is
+    # routed to an unconsumed queue and silently never runs after ingest.
+    task_default_queue="celery",
     task_routes=(_route_task,),
     # Beat
     beat_schedule={

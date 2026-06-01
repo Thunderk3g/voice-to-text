@@ -50,7 +50,8 @@ def start_call_pipeline(call_id: str | UUID) -> Any:
     Returns the AsyncResult of the head of the chain.
     """
     cid = str(call_id)
-    if _is_transcript(cid):
+    is_transcript = _is_transcript(cid)
+    if is_transcript:
         log.info("pipeline_dispatch_transcript", call_id=cid)
         first_stage = celery_app.signature("v2t._load_transcript", args=(cid,))
     else:
@@ -63,7 +64,18 @@ def start_call_pipeline(call_id: str | UUID) -> Any:
         celery_app.signature("v2t.embed", args=(cid,)),
         celery_app.signature("v2t.cluster", args=(cid,)),
     )
-    return head.apply_async()
+    result = head.apply_async()
+    # Log WHERE the chain was queued so a stuck pipeline is diagnosable: the head
+    # task must land on a queue the worker consumes (default queue = "celery").
+    log.info(
+        "pipeline_chain_dispatched",
+        call_id=cid,
+        is_transcript=is_transcript,
+        head_task=first_stage.task,
+        head_task_id=result.id,
+        default_queue=celery_app.conf.task_default_queue,
+    )
+    return result
 
 
 __all__ = ["start_call_pipeline"]

@@ -193,7 +193,7 @@ services:
     # Consume both the CPU queue and the embedding queue so embeddings run on
     # CPU here when worker-gpu is not started (default on Mac / no-GPU hosts).
     command: ["celery", "-A", "app.workers.celery_app", "worker",
-              "--loglevel=INFO", "-Q", "celery,gpu.heavy", "--concurrency=4"]
+              "--loglevel=INFO", "-Q", "celery,gpu.heavy,default", "--concurrency=4"]
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$(hostname) >/dev/null 2>&1"]
       interval: 30s

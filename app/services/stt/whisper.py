@@ -89,12 +89,15 @@ def _get_model(model: str, device: str, compute_type: str) -> Any:
             return cached
         ctor = _load_whisper_model_class()
         logger.info(
-            "whisper.model_load",
+            "whisper.model_load_start",
             model=model,
             device=device,
             compute_type=compute_type,
+            note="first run downloads the model weights (large-v3 ~3GB) and can "
+            "take several minutes — the call will sit in stt_running until done",
         )
         instance = ctor(model, device=device, compute_type=compute_type)
+        logger.info("whisper.model_load_done", model=model)
         _model_cache[key] = instance
         return instance
 

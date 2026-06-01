@@ -118,7 +118,13 @@ def _mark_failed(call_id: str | UUID) -> None:
 
 def _next(signature_name: str, *args: Any) -> None:
     """Schedule the next pipeline task. Kept tiny so it is trivially mockable."""
-    celery_app.signature(signature_name, args=args).apply_async()
+    result = celery_app.signature(signature_name, args=args).apply_async()
+    log.info(
+        "stage_handoff",
+        next_task=signature_name,
+        next_task_id=getattr(result, "id", None),
+        queue=celery_app.conf.task_default_queue,
+    )
 
 
 def _store_trace_id(session, call_id: str | UUID, trace_id: str) -> None:
@@ -239,7 +245,9 @@ def load_transcript(self, call_id: str) -> None:
 @celery_app.task(bind=True, name="v2t.transcribe", acks_late=True)
 def transcribe_call(self, call_id: str) -> None:
     _bind(call_id, stage="transcribe")
-    log.info("transcribe_start")
+    from app.core.config import get_settings
+
+    log.info("transcribe_start", stt_provider=get_settings().stt_provider)
     try:
         with _stage("transcribe"):
             with sync_session() as session:
