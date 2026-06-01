@@ -217,7 +217,9 @@ services:
     # Opt-in only: CUDA worker. Not started by default (Mac can't pass through
     # the GPU). Enable on NVIDIA/Linux with: docker compose --profile gpu up
     profiles: ["gpu"]
-    <<: *app-env
+    # Single merge key: combine env-file + GPU deploy reservation. Two separate
+    # `<<:` keys in one mapping is a duplicate-key error in strict YAML parsers.
+    <<: [*app-env, *gpu-deploy]
     depends_on:
       api:
         condition: service_healthy
@@ -235,7 +237,6 @@ services:
       timeout: 15s
       retries: 5
       start_period: 60s
-    <<: *gpu-deploy
     networks:
       - v2t-net
 
