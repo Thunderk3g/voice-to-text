@@ -8,7 +8,8 @@ import {
   type FormEvent,
 } from "react";
 import { apiUpload, ApiError } from "@/lib/api";
-import type { UploadResponse } from "@/lib/types";
+import type { STTProvider, UploadResponse } from "@/lib/types";
+import { STT_PROVIDERS, STT_PROVIDER_LABEL } from "@/lib/types";
 import { Card } from "./Card";
 import { Spinner } from "./Spinner";
 
@@ -23,6 +24,7 @@ export function UploadBox({
   const [file, setFile] = useState<File | null>(null);
   const [campaign, setCampaign] = useState("");
   const [channel, setChannel] = useState("");
+  const [sttProvider, setSttProvider] = useState<STTProvider>("whisper");
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +33,7 @@ export function UploadBox({
     setFile(null);
     setCampaign("");
     setChannel("");
+    setSttProvider("whisper");
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -56,6 +59,7 @@ export function UploadBox({
       const ch = channel.trim();
       if (c) form.append("campaign", c);
       if (ch) form.append("channel", ch);
+      form.append("stt_provider", sttProvider);
       const res = await apiUpload<UploadResponse>("/ingest/upload", form);
       reset();
       onUploaded(res.call_id);
@@ -124,7 +128,7 @@ export function UploadBox({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div>
             <label className="label">Campaign (optional)</label>
             <input
@@ -144,6 +148,20 @@ export function UploadBox({
               placeholder="e.g. inbound"
               className="input"
             />
+          </div>
+          <div>
+            <label className="label">STT Provider</label>
+            <select
+              value={sttProvider}
+              onChange={(e) => setSttProvider(e.target.value as STTProvider)}
+              className="input"
+            >
+              {STT_PROVIDERS.map((p) => (
+                <option key={p} value={p}>
+                  {STT_PROVIDER_LABEL[p]}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

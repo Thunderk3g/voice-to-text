@@ -247,7 +247,6 @@ def transcribe_call(self, call_id: str) -> None:
     _bind(call_id, stage="transcribe")
     from app.core.config import get_settings
 
-    log.info("transcribe_start", stt_provider=get_settings().stt_provider)
     try:
         with _stage("transcribe"):
             with sync_session() as session:
@@ -255,7 +254,7 @@ def transcribe_call(self, call_id: str) -> None:
                 row = (
                     session.execute(
                         __import__("sqlalchemy").text(
-                            "SELECT source_uri FROM calls WHERE id = :cid"
+                            "SELECT source_uri, metadata FROM calls WHERE id = :cid"
                         ),
                         {"cid": call_id},
                     )
@@ -265,6 +264,13 @@ def transcribe_call(self, call_id: str) -> None:
                 if row is None:
                     raise ValueError(f"call_id {call_id} not found")
                 source_uri = row["source_uri"]
+                meta = row["metadata"] or {}
+                provider_override = meta.get("stt_provider")
+
+            log.info(
+                "transcribe_start",
+                stt_provider=provider_override or get_settings().stt_provider,
+            )
 
             from app.services.audio.io import cleanup_temp, download_to_temp
             from app.services.stt import make_transcriber
@@ -272,7 +278,7 @@ def transcribe_call(self, call_id: str) -> None:
 
             audio_path = download_to_temp(source_uri)
             try:
-                svc = make_transcriber()
+                svc = make_transcriber(provider=provider_override)
                 raw_utterances = run_async(
                     svc.transcribe_file(call_id=UUID(call_id), audio_path=audio_path)
                 )

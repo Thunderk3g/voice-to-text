@@ -120,6 +120,7 @@ export interface CallMetadata {
   customer_id?: string | null;
   campaign?: string | null;
   channel?: string | null;
+  stt_provider?: string | null;
   received_at?: string | null;
   extra?: Record<string, unknown>;
 }
@@ -325,6 +326,13 @@ export const LANGUAGE_LABEL: Record<Language, string> = {
   [Language.TAMIL]: "Tamil",
   [Language.TELUGU]: "Telugu",
   [Language.OTHER]: "Other",
+};
+
+export const STT_PROVIDERS = ["whisper", "sarvam"] as const;
+export type STTProvider = (typeof STT_PROVIDERS)[number];
+export const STT_PROVIDER_LABEL: Record<STTProvider, string> = {
+  whisper: "Whisper (local)",
+  sarvam: "Sarvam (cloud)",
 };
 
 export const INTENT_LABEL: Record<Intent, string> = {

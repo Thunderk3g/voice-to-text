@@ -23,13 +23,18 @@ from __future__ import annotations
 from app.core.config import get_settings
 
 
-def make_transcriber():
-    """Return the transcriber for the configured ``stt_provider``.
+def make_transcriber(provider: str | None = None):
+    """Return the transcriber for the given (or configured) ``stt_provider``.
+
+    ``provider`` optionally overrides the global ``settings.stt_provider`` so a
+    caller can select the STT provider per call. When ``provider`` is ``None``
+    the global ``settings.stt_provider`` is used.
 
     Raises ``RuntimeError`` for ``"none"`` (audio ingest is unsupported in
     transcript-only mode) or an unknown provider value.
     """
-    provider = get_settings().stt_provider
+    if provider is None:
+        provider = get_settings().stt_provider
 
     if provider == "sarvam":
         from app.services.stt.sarvam import SarvamTranscriber

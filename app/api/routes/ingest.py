@@ -183,6 +183,7 @@ async def ingest_upload(
     campaign: str | None = Form(None),
     channel: str | None = Form(None),
     is_transcript: bool | None = Form(None),
+    stt_provider: str | None = Form(None),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, object]:
     """Accept a multipart audio/transcript upload, store it in MinIO, ingest it.
@@ -193,6 +194,14 @@ async def ingest_upload(
     size cap, uploaded to the appropriate bucket, and the standard pipeline is
     dispatched. Returns 202 with the new call_id and the MinIO source_uri.
     """
+    if stt_provider is not None and stt_provider not in ("sarvam", "whisper"):
+        raise APIError(
+            f"Unsupported stt_provider: {stt_provider!r}. "
+            "Allowed values: 'sarvam', 'whisper'.",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            error_type="invalid_stt_provider",
+        )
+
     settings = get_settings()
     safe_name = _safe_name(file.filename)
     ext = PurePath(safe_name).suffix
@@ -237,7 +246,9 @@ async def ingest_upload(
                 error_type="upload_storage_failed",
             ) from exc
 
-        metadata = CallMetadata(campaign=campaign, channel=channel)
+        metadata = CallMetadata(
+            campaign=campaign, channel=channel, stt_provider=stt_provider
+        )
         call_id = await _create_and_dispatch(
             db,
             source_uri=source_uri,

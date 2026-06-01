@@ -153,3 +153,41 @@ def test_upload_is_transcript_override_on_wav(
     assert response.status_code == 202, response.text
     assert response.json()["is_transcript"] is True
     assert saved_buckets == ["transcripts"]
+
+
+def test_upload_stt_provider_whisper_stored(client: TestClient) -> None:
+    """An explicit stt_provider=whisper is persisted on the Call's metadata."""
+    # Override get_db with a session that records the added Call row so we can
+    # inspect the persisted state (mirrors test_upload_is_transcript_override).
+    sessions: list[_FakeSession] = []
+
+    async def _override_get_db():
+        sess = _FakeSession()
+        sessions.append(sess)
+        yield sess
+
+    client.app.dependency_overrides[deps.get_db] = _override_get_db
+
+    files = {"file": ("call.wav", io.BytesIO(b"RIFFfake-audio"), "audio/wav")}
+    response = client.post(
+        "/ingest/upload", files=files, data={"stt_provider": "whisper"}
+    )
+
+    assert response.status_code == 202, response.text
+    # The Call row added to the session carries the chosen provider.
+    assert sessions, "get_db override was not invoked"
+    added = sessions[0].added
+    assert len(added) == 1
+    call = added[0]
+    assert call.call_metadata["stt_provider"] == "whisper"
+
+
+def test_upload_stt_provider_bogus_returns_422(client: TestClient) -> None:
+    """An unknown stt_provider value is rejected with HTTP 422."""
+    files = {"file": ("call.wav", io.BytesIO(b"RIFFfake-audio"), "audio/wav")}
+    response = client.post(
+        "/ingest/upload", files=files, data={"stt_provider": "bogus"}
+    )
+
+    assert response.status_code == 422, response.text
+    assert response.json()["type"] == "invalid_stt_provider"

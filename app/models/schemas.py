@@ -10,7 +10,7 @@ DO NOT add business logic here — keep schemas declarative.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -36,6 +36,7 @@ class CallMetadata(BaseModel):
     customer_id: str | None = None
     campaign: str | None = None
     channel: str | None = None  # ivr | inbound | outbound | chat-bot
+    stt_provider: Literal["sarvam", "whisper"] | None = None
     received_at: datetime | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
 

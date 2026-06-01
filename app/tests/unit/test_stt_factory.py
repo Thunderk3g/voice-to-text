@@ -34,3 +34,21 @@ def test_factory_none_raises(monkeypatch):
     _patch_settings(monkeypatch, stt_provider="none")
     with pytest.raises(RuntimeError):
         stt_pkg.make_transcriber()
+
+
+def test_factory_provider_override_wins_over_settings(monkeypatch):
+    # Global setting is sarvam, but an explicit override selects whisper.
+    _patch_settings(monkeypatch, stt_provider="sarvam", sarvam_api_key="dummy-key")
+    from app.services.stt.whisper import WhisperTranscriber
+
+    svc = stt_pkg.make_transcriber(provider="whisper")
+    assert isinstance(svc, WhisperTranscriber)
+
+
+def test_factory_no_override_honors_settings(monkeypatch):
+    # With no override, the configured provider (sarvam) is used.
+    _patch_settings(monkeypatch, stt_provider="sarvam", sarvam_api_key="dummy-key")
+    from app.services.stt.sarvam import SarvamTranscriber
+
+    svc = stt_pkg.make_transcriber()
+    assert isinstance(svc, SarvamTranscriber)
