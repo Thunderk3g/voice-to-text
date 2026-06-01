@@ -108,8 +108,9 @@ async def test_extractor_skips_malformed_questions() -> None:
 
     payload = {
         "questions": [
-            # Invalid — missing required normalized_text + language.
-            {"raw_text": "garbage"},
+            # Skipped — no usable question text under any known key (raw_text/
+            # query/question/text/...). Items that DO carry text are salvaged.
+            {"context": "no question text here"},
             # Valid
             {
                 "raw_text": "Tell me about claim status.",

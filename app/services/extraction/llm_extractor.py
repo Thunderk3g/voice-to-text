@@ -32,6 +32,7 @@ from app.prompts.extraction import build_transcript_block
 from app.prompts.extraction_lang import detect_dominant_language, system_prompt_for
 from app.prompts.extraction_schema import EXTRACTION_RESPONSE_SCHEMA
 from app.services.llm.ollama_client import OllamaClient
+from app.utils.lang import detect_language
 
 logger = structlog.get_logger(__name__)
 
@@ -184,6 +185,21 @@ def _coerce_questions(
             )
             extraction_processed.labels(status="invalid").inc()
             continue
+
+        # Local models (e.g. Gemma via Ollama) don't reliably honor the strict
+        # schema: they use alias keys (query/question/...) and omit language.
+        # Be liberal in what we accept so usable questions aren't dropped.
+        if not item.get("raw_text"):
+            for _alt in ("query", "question", "text", "utterance", "normalized_text"):
+                if item.get(_alt):
+                    item["raw_text"] = item[_alt]
+                    break
+        if not item.get("normalized_text") and item.get("raw_text"):
+            item["normalized_text"] = item["raw_text"]
+        if not item.get("language"):
+            item["language"] = detect_language(
+                item.get("normalized_text") or item.get("raw_text") or ""
+            )
 
         # Stamp call_id + extraction time before validation so they're
         # always populated regardless of LLM output.

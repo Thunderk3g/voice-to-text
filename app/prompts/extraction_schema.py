@@ -32,12 +32,19 @@ EXTRACTION_RESPONSE_SCHEMA: dict = {
             "items": {
                 "type": "object",
                 "additionalProperties": False,
+                # Strict JSON-schema mode (Groq/OpenAI) requires EVERY key in
+                # ``properties`` to be listed here, else the API rejects the
+                # request with HTTP 400. ``secondary_intents`` is semantically
+                # optional but must still be required at the schema level; the
+                # model emits ``[]`` when there are none (ExtractedQuestion
+                # defaults it to an empty list).
                 "required": [
                     "raw_text",
                     "normalized_text",
                     "english_gloss",
                     "question_type",
                     "intent",
+                    "secondary_intents",
                     "language",
                     "confidence",
                 ],

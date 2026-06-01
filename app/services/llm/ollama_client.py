@@ -39,6 +39,25 @@ from app.utils.json_safe import LLMJsonError, parse_llm_json
 logger = structlog.get_logger(__name__)
 
 
+def _sole_array_property(json_schema: dict[str, Any] | None) -> str | None:
+    """Return the name of the schema's single top-level array property.
+
+    Used to recover from local models that return the inner array directly
+    instead of the ``{"<key>": [...]}`` object the schema asks for. Returns
+    ``None`` unless the schema is an object with exactly one property whose
+    type is ``array`` (so we never guess for multi-field schemas).
+    """
+    if not isinstance(json_schema, dict):
+        return None
+    props = json_schema.get("properties")
+    if not isinstance(props, dict) or len(props) != 1:
+        return None
+    key, spec = next(iter(props.items()))
+    if isinstance(spec, dict) and spec.get("type") == "array":
+        return key
+    return None
+
+
 # Exception families we treat as transient and retry on.
 _RETRY_EXC: tuple[type[BaseException], ...] = (
     httpx.HTTPStatusError,
@@ -145,6 +164,20 @@ class OllamaClient:
                         snippet=content[:200],
                     )
                     raise
+
+                if isinstance(parsed, list):
+                    # Some local models (e.g. Gemma via Ollama) ignore the
+                    # object wrapper and return the inner array directly. If the
+                    # schema declares a single top-level array property, wrap the
+                    # list under that key so callers get the expected object.
+                    wrap_key = _sole_array_property(json_schema)
+                    if wrap_key is not None:
+                        logger.info(
+                            "ollama.wrapped_bare_list",
+                            key=wrap_key,
+                            n_items=len(parsed),
+                        )
+                        return {wrap_key: parsed}
 
                 if not isinstance(parsed, dict):
                     logger.warning("ollama.json_not_object", kind=type(parsed).__name__)

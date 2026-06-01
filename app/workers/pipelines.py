@@ -18,7 +18,6 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from celery import chain
 from sqlalchemy import text
 
 from app.core.logging import get_logger
@@ -45,9 +44,15 @@ def _is_transcript(call_id: str) -> bool:
 
 
 def start_call_pipeline(call_id: str | UUID) -> Any:
-    """Build and dispatch the Celery chain for a single call.
+    """Dispatch the head stage for a single call.
 
-    Returns the AsyncResult of the head of the chain.
+    The pipeline advances stage-to-stage via each task's own ``_next(...)``
+    handoff (transcribe -> extract -> embed -> cluster -> canonicalize/
+    memory_edges). We therefore dispatch ONLY the head stage here. A Celery
+    ``chain`` would be a redundant second driver and, because its mutable
+    signatures prepend the previous task's return value, would call the next
+    task as ``extract_call(self, <prev_result>, cid)`` -> TypeError. Returns
+    the AsyncResult of the head stage.
     """
     cid = str(call_id)
     is_transcript = _is_transcript(cid)
@@ -58,15 +63,9 @@ def start_call_pipeline(call_id: str | UUID) -> Any:
         log.info("pipeline_dispatch_audio", call_id=cid)
         first_stage = celery_app.signature("v2t.transcribe", args=(cid,))
 
-    head = chain(
-        first_stage,
-        celery_app.signature("v2t.extract", args=(cid,)),
-        celery_app.signature("v2t.embed", args=(cid,)),
-        celery_app.signature("v2t.cluster", args=(cid,)),
-    )
-    result = head.apply_async()
-    # Log WHERE the chain was queued so a stuck pipeline is diagnosable: the head
-    # task must land on a queue the worker consumes (default queue = "celery").
+    result = first_stage.apply_async()
+    # Log WHERE the head was queued so a stuck pipeline is diagnosable: it must
+    # land on a queue the worker consumes (default queue = "celery").
     log.info(
         "pipeline_chain_dispatched",
         call_id=cid,
