@@ -133,6 +133,26 @@ def upload_artifact(local_path: str, key: str, bucket: str | None = None) -> str
     return uri
 
 
+def save_upload(local_path: str, *, bucket: str, key: str) -> str:
+    """Upload a freshly-received file to an explicit ``bucket/key`` and return the URI.
+
+    Mirrors :func:`upload_artifact` but targets an explicit bucket (no default).
+    The ``audio-raw`` bucket is NOT created by minio-setup, so ensuring the
+    bucket exists here is essential for the upload ingest path.
+    """
+    p = Path(local_path)
+    if not p.exists():
+        raise FileNotFoundError(f"upload not found: {local_path}")
+
+    client = _get_minio_client()
+    _ensure_bucket(client, bucket)
+    log.info("upload_save_start", path=str(p), bucket=bucket, key=key)
+    client.fput_object(bucket, key, str(p))
+    uri = f"minio://{bucket}/{key}"
+    log.info("upload_save_done", uri=uri, size=p.stat().st_size)
+    return uri
+
+
 def cleanup_temp(path: str) -> None:
     """Best-effort cleanup helper for files produced by ``download_to_temp``."""
     try:
@@ -142,4 +162,4 @@ def cleanup_temp(path: str) -> None:
         log.debug("cleanup_temp_failed", path=path, error=str(exc))
 
 
-__all__ = ["download_to_temp", "upload_artifact", "cleanup_temp"]
+__all__ = ["download_to_temp", "upload_artifact", "save_upload", "cleanup_temp"]

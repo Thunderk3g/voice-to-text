@@ -64,5 +64,17 @@ export async function apiPost<T, B = unknown>(
   return handle<T>(res);
 }
 
+// Multipart upload. Do NOT set Content-Type — the browser sets the
+// multipart/form-data boundary automatically from the FormData body.
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const res = await fetch(joinPath(path), {
+    method: "POST",
+    headers: { Accept: "application/json" },
+    body: form,
+    cache: "no-store",
+  });
+  return handle<T>(res);
+}
+
 // SWR fetcher (GET only)
 export const swrFetcher = <T>(path: string): Promise<T> => apiGet<T>(path);

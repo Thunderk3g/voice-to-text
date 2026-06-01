@@ -62,6 +62,8 @@ class Settings(BaseSettings):
     minio_bucket_audio: str = "audio-raw"
     minio_bucket_transcripts: str = "transcripts"
     minio_bucket_artifacts: str = "pipeline-artifacts"
+    # Max size (MiB) accepted by the multipart /ingest/upload endpoint.
+    upload_max_mb: int = 200
 
     # ---- STT ----
     stt_provider: Literal["sarvam", "whisper", "none"] = "sarvam"

@@ -130,6 +130,12 @@ export interface CallCreate {
   metadata?: CallMetadata;
 }
 
+export interface UploadResponse {
+  call_id: string;
+  source_uri: string;
+  is_transcript: boolean;
+}
+
 export interface CallRead {
   id: UUIDString;
   source_uri: string;
