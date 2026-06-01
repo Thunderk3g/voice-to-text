@@ -80,11 +80,24 @@ class Settings(BaseSettings):
     llm_insecure_tls: bool = False
 
     # ---- Embeddings ----
+    # Provider dispatch lives in app/services/embedding/e5.py. "local" uses
+    # SentenceTransformer (needs the model on disk + optionally a GPU).
+    # "cohere" calls Cohere's hosted embed-multilingual-v3.0 — same 1024 dim,
+    # no schema change. Switch with EMBEDDING_PROVIDER in .env.
+    embedding_provider: Literal["local", "cohere"] = "local"
     embedding_model: str = "intfloat/multilingual-e5-large"
     embedding_dim: int = 1024
     embedding_device: Literal["cuda", "cpu"] = "cuda"
     embedding_batch_size: int = 32
     embedding_max_seq_len: int = 512
+
+    # ---- Cohere embeddings (active when embedding_provider == "cohere") ----
+    cohere_api_key: SecretStr = SecretStr("")
+    cohere_base_url: str = "https://api.cohere.com/v2"
+    cohere_embed_model: str = "embed-multilingual-v3.0"
+    # Cohere caps batch at 96 inputs per call; we keep a small safety margin.
+    cohere_batch_size: int = 90
+    cohere_request_timeout_s: int = 60
 
     # ---- Clustering ----
     hdbscan_min_cluster_size: int = 8

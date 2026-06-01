@@ -164,19 +164,35 @@ class MemoryGraphBuilder:
             cosine_sim=hit.cosine_sim,
         )
 
-        try:
-            payload = await self._client.chat_json(
-                system=RELATION_INFERENCE_SYSTEM,
-                user=user_prompt,
+        from app.core.observability import llm_calls
+        from app.services.memory_graph import edge_cache
+
+        # Cache hit shortcut: skip the LLM entirely when we already have a
+        # verdict for this (src, dst) pair within the TTL window.
+        cached = await edge_cache.get(
+            hit.source.cluster_id, hit.neighbor.cluster_id
+        )
+        if cached is not None:
+            payload = cached
+        else:
+            try:
+                payload = await self._client.chat_json(
+                    system=RELATION_INFERENCE_SYSTEM,
+                    user=user_prompt,
+                )
+                llm_calls.labels(purpose="edge_label", status="ok").inc()
+            except Exception as exc:  # noqa: BLE001 — retries exhausted
+                llm_calls.labels(purpose="edge_label", status="error").inc()
+                logger.warning(
+                    "mem_graph.llm_failed",
+                    source=str(hit.source.cluster_id),
+                    target=str(hit.neighbor.cluster_id),
+                    error=str(exc),
+                )
+                return None
+            await edge_cache.put(
+                hit.source.cluster_id, hit.neighbor.cluster_id, payload
             )
-        except Exception as exc:  # noqa: BLE001 — retries exhausted
-            logger.warning(
-                "mem_graph.llm_failed",
-                source=str(hit.source.cluster_id),
-                target=str(hit.neighbor.cluster_id),
-                error=str(exc),
-            )
-            return None
 
         if not bool(payload.get("has_relation")):
             return None

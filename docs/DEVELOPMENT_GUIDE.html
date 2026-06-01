@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>v2t — Development Guide</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161a22;
+    --panel-2: #1c2230;
+    --line: #2a3142;
+    --text: #e6e9ef;
+    --muted: #8c95a8;
+    --accent: #4cc3ff;
+    --accent-2: #7af1c5;
+    --warn: #ffb454;
+    --bad: #ff6b6b;
+    --good: #41d293;
+    --code-bg: #0c0f15;
+    --shadow: 0 4px 20px rgba(0,0,0,0.35);
+    --radius: 10px;
+    --mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --panel-2: #f1f3f8;
+      --line: #e1e5ee;
+      --text: #1c2230;
+      --muted: #5a6578;
+      --code-bg: #0f1115;
+      --shadow: 0 2px 10px rgba(20,30,50,0.06);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.55; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: var(--mono); font-size: 0.92em; background: rgba(255,255,255,0.05); padding: 1px 5px; border-radius: 4px; }
+  pre {
+    background: var(--code-bg);
+    color: #d6e0f0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.86em;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: inherit; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 32px 28px 80px; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #1a2030 0%, #0f1622 100%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 32px 36px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: ""; position: absolute; right: -80px; top: -80px;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(76,195,255,0.18), transparent 60%);
+    pointer-events: none;
+  }
+  .hero h1 { margin: 0 0 6px; font-size: 30px; letter-spacing: -0.02em; }
+  .hero .tag { color: var(--accent); font-weight: 600; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .hero p.lede { color: var(--muted); margin: 10px 0 0; max-width: 720px; font-size: 15.5px; }
+  .hero .quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); display: inline-block; }
+  .pill.warn .dot { background: var(--warn); }
+  .pill.bad  .dot { background: var(--bad); }
+  .pill.muted .dot { background: var(--muted); }
+
+  /* Layout */
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 26px; margin: 16px 0; box-shadow: var(--shadow); }
+  section h2 { margin: 0 0 4px; font-size: 20px; letter-spacing: -0.01em; }
+  section .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  section h3 { margin-top: 22px; font-size: 16px; }
+  section p { margin: 8px 0; }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 4px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; background: var(--panel-2); }
+  tr:last-child td { border-bottom: none; }
+  td code { font-size: 12.5px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* Status badges */
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-weight: 600; }
+  .badge.good { background: rgba(65,210,147,0.15); color: var(--good); border: 1px solid rgba(65,210,147,0.4); }
+  .badge.warn { background: rgba(255,180,84,0.13); color: var(--warn); border: 1px solid rgba(255,180,84,0.4); }
+  .badge.bad  { background: rgba(255,107,107,0.13); color: var(--bad);  border: 1px solid rgba(255,107,107,0.4); }
+  .badge.muted{ background: rgba(140,149,168,0.13); color: var(--muted); border: 1px solid rgba(140,149,168,0.4); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 12px 0 18px; flex-wrap: wrap; }
+  .tab-btn {
+    background: none; border: none; color: var(--muted);
+    padding: 9px 14px; cursor: pointer; font: inherit; font-size: 13px;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Details (collapsible) */
+  details { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; margin: 8px 0; }
+  details summary { cursor: pointer; font-weight: 600; font-size: 13px; user-select: none; outline: none; }
+  details[open] summary { margin-bottom: 8px; }
+
+  /* TOC */
+  .toc { font-size: 13.5px; }
+  .toc ol { padding-left: 18px; margin: 6px 0; }
+  .toc a { color: var(--text); }
+  .toc a:hover { color: var(--accent); }
+
+  /* SVG container */
+  .arch { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin: 12px 0; overflow-x: auto; }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 22px; margin: 10px 0; }
+  .timeline::before { content: ""; position: absolute; left: 7px; top: 6px; bottom: 6px; width: 2px; background: var(--line); }
+  .timeline .item { position: relative; padding: 4px 0 12px; }
+  .timeline .item::before {
+    content: ""; position: absolute; left: -19px; top: 9px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent); border: 2px solid var(--bg);
+  }
+  .timeline .item.fix::before { background: var(--good); }
+  .timeline .item.bug::before { background: var(--bad); }
+  .timeline .item.cfg::before { background: var(--warn); }
+  .timeline .item h4 { margin: 0 0 2px; font-size: 14px; }
+  .timeline .item .meta { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+  .timeline .item .body { font-size: 13.5px; margin-top: 4px; }
+
+  /* Service grid */
+  .svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .svc-card {
+    background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 8px; padding: 12px 14px; position: relative;
+  }
+  .svc-card.good { border-left: 3px solid var(--good); }
+  .svc-card.warn { border-left: 3px solid var(--warn); }
+  .svc-card.bad  { border-left: 3px solid var(--bad); }
+  .svc-card.muted { border-left: 3px solid var(--muted); opacity: 0.78; }
+  .svc-card h4 { margin: 0 0 4px; font-size: 14px; font-family: var(--mono); }
+  .svc-card .row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); }
+  .svc-card .role { font-size: 12.5px; margin-top: 6px; color: var(--muted); }
+
+  hr { border: none; border-top: 1px solid var(--line); margin: 24px 0; }
+  .muted { color: var(--muted); }
+
+  .anchor { color: var(--muted); margin-left: 6px; opacity: 0; transition: opacity .12s; text-decoration: none; }
+  h2:hover .anchor, h3:hover .anchor { opacity: 1; }
+
+  footer { color: var(--muted); font-size: 12px; text-align: center; margin-top: 30px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="hero">
+    <div class="tag">Bajaj Life &middot; Voice-to-Text Platform</div>
+    <h1>v2t — Development Guide</h1>
+    <p class="lede">
+      Insurance call intelligence: ingest customer calls, extract structured questions, cluster them,
+      surface canonical FAQs and a memory graph. FastAPI + pgvector + Celery + Groq + Next.js, end-to-end on local Docker.
+    </p>
+    <div class="quick">
+      <span class="pill"><span class="dot"></span> API healthy</span>
+      <span class="pill"><span class="dot"></span> Workers ready</span>
+      <span class="pill"><span class="dot"></span> Groq reachable through corporate cert</span>
+      <span class="pill warn"><span class="dot"></span> GPU embedding worker offline</span>
+      <span class="pill muted"><span class="dot"></span> Ollama disabled (Groq active)</span>
+    </div>
+  </header>
+
+  <section class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#arch">Architecture</a></li>
+      <li><a href="#stack">Tech stack</a></li>
+      <li><a href="#repo">Repository layout</a></li>
+      <li><a href="#env">Environment &amp; secrets</a></li>
+      <li><a href="#tls">Corporate TLS bundle</a></li>
+      <li><a href="#status">Current service status</a></li>
+      <li><a href="#ops">Operating the stack</a></li>
+      <li><a href="#devlog">Development log</a></li>
+      <li><a href="#blocked">What is not running</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="#files">Files changed</a></li>
+    </ol>
+  </section>
+
+  <section id="overview">
+    <h2>1. Overview <a class="anchor" href="#overview">#</a></h2>
+    <p>
+      <strong>v2t</strong> turns raw insurance customer calls — or pre-labeled transcripts — into structured intelligence:
+      extracted questions with intent and language metadata, semantic clusters of recurring concerns,
+      canonical FAQs distilled from each cluster, and a memory graph of how concerns relate.
+      A Next.js dashboard sits on top.
+    </p>
+    <div class="grid-2">
+      <div>
+        <h3>What it does</h3>
+        <ul>
+          <li>Ingests audio or pre-labeled transcripts via <code>POST /ingest</code>.</li>
+          <li>Transcribes audio with <strong>Sarvam.ai</strong> (Hindi + 10 Indic languages).</li>
+          <li>Extracts structured questions via <strong>Groq</strong> (<code>openai/gpt-oss-120b</code>, OpenAI-compatible).</li>
+          <li>Embeds with <code>multilingual-e5-large</code> (1024-dim) into <strong>pgvector</strong>.</li>
+          <li>Clusters with HDBSCAN; emits canonical FAQs and memory-graph edges.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Where it runs</h3>
+        <ul>
+          <li>Local Docker stack — 9 services (8 long-running + 1 init).</li>
+          <li>Postgres 16 + pgvector 0.8.2 + pgcrypto.</li>
+          <li>Redis 7 (Celery broker / result / cache).</li>
+          <li>MinIO (object storage for transcripts &amp; artifacts).</li>
+          <li>Outbound: Groq HTTPS, Sarvam HTTPS, LangSmith HTTPS — all through the corporate MITM.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="arch">
+    <h2>2. Architecture <a class="anchor" href="#arch">#</a></h2>
+    <div class="sub">Live services in solid fill, skipped services in hatched fill. Arrows show request / data direction.</div>
+    <div class="arch">
+      <svg viewBox="0 0 1040 540" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-label="v2t architecture diagram">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#7d8aa5"/>
+          </marker>
+          <pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+            <rect width="6" height="6" fill="#2a3142"/>
+            <line x1="0" y1="0" x2="0" y2="6" stroke="#3a4258" stroke-width="2"/>
+          </pattern>
+          <style>
+            .lbl { font: 600 13px var(--mono, monospace); fill: #e6e9ef; }
+            .sub { font: 11px var(--sans, sans-serif); fill: #8c95a8; }
+            .box { fill: #1c2230; stroke: #4cc3ff; stroke-width: 1.4; rx: 8; }
+            .box.ok { stroke: #41d293; }
+            .box.ext { stroke: #ffb454; stroke-dasharray: 4 3; }
+            .box.off { fill: url(#hatch); stroke: #5a6578; }
+            .ln { stroke: #7d8aa5; stroke-width: 1.4; fill: none; }
+          </style>
+        </defs>
+
+        <!-- Browser -->
+        <g><rect class="box ext" x="20" y="30" width="160" height="56" rx="8"/><text class="lbl" x="100" y="55" text-anchor="middle">Browser</text><text class="sub" x="100" y="72" text-anchor="middle">user</text></g>
+
+        <!-- Frontend -->
+        <g><rect class="box ok" x="220" y="30" width="180" height="76" rx="8"/><text class="lbl" x="310" y="55" text-anchor="middle">Next.js dashboard</text><text class="sub" x="310" y="72" text-anchor="middle">v2t-frontend</text><text class="sub" x="310" y="89" text-anchor="middle">host :3001 → container :3000</text></g>
+
+        <!-- FastAPI -->
+        <g><rect class="box ok" x="440" y="30" width="200" height="76" rx="8"/><text class="lbl" x="540" y="55" text-anchor="middle">FastAPI</text><text class="sub" x="540" y="72" text-anchor="middle">v2t-api · :8080</text><text class="sub" x="540" y="89" text-anchor="middle">12 routes (OpenAPI)</text></g>
+
+        <!-- Groq -->
+        <g><rect class="box ext" x="680" y="30" width="170" height="76" rx="8"/><text class="lbl" x="765" y="55" text-anchor="middle">Groq</text><text class="sub" x="765" y="72" text-anchor="middle">api.groq.com/v1</text><text class="sub" x="765" y="89" text-anchor="middle">gpt-oss-120b · whisper-v3</text></g>
+
+        <!-- Sarvam -->
+        <g><rect class="box ext" x="870" y="30" width="150" height="76" rx="8"/><text class="lbl" x="945" y="55" text-anchor="middle">Sarvam.ai</text><text class="sub" x="945" y="72" text-anchor="middle">STT</text><text class="sub" x="945" y="89" text-anchor="middle">saarika:v2.5</text></g>
+
+        <!-- Postgres -->
+        <g><rect class="box ok" x="100" y="170" width="180" height="80" rx="8"/><text class="lbl" x="190" y="195" text-anchor="middle">Postgres + pgvector</text><text class="sub" x="190" y="212" text-anchor="middle">v2t-postgres · :5432</text><text class="sub" x="190" y="229" text-anchor="middle">compliance_db</text></g>
+
+        <!-- Redis -->
+        <g><rect class="box ok" x="320" y="170" width="160" height="80" rx="8"/><text class="lbl" x="400" y="195" text-anchor="middle">Redis</text><text class="sub" x="400" y="212" text-anchor="middle">v2t-redis · :6379</text><text class="sub" x="400" y="229" text-anchor="middle">broker / result / cache</text></g>
+
+        <!-- MinIO -->
+        <g><rect class="box ok" x="520" y="170" width="180" height="80" rx="8"/><text class="lbl" x="610" y="195" text-anchor="middle">MinIO</text><text class="sub" x="610" y="212" text-anchor="middle">v2t-minio · :9000 / :9001</text><text class="sub" x="610" y="229" text-anchor="middle">transcripts, artifacts</text></g>
+
+        <!-- Flower -->
+        <g><rect class="box ok" x="740" y="170" width="160" height="80" rx="8"/><text class="lbl" x="820" y="195" text-anchor="middle">Flower</text><text class="sub" x="820" y="212" text-anchor="middle">v2t-flower · :5555</text><text class="sub" x="820" y="229" text-anchor="middle">Celery monitor</text></g>
+
+        <!-- Worker CPU -->
+        <g><rect class="box ok" x="180" y="310" width="220" height="86" rx="8"/><text class="lbl" x="290" y="335" text-anchor="middle">Celery worker CPU</text><text class="sub" x="290" y="352" text-anchor="middle">v2t-worker-cpu</text><text class="sub" x="290" y="369" text-anchor="middle">ingest · extract · cluster</text><text class="sub" x="290" y="385" text-anchor="middle">canonicalize · memory edges</text></g>
+
+        <!-- Beat -->
+        <g><rect class="box ok" x="440" y="310" width="180" height="86" rx="8"/><text class="lbl" x="530" y="335" text-anchor="middle">Celery beat</text><text class="sub" x="530" y="352" text-anchor="middle">v2t-beat</text><text class="sub" x="530" y="369" text-anchor="middle">periodic scheduler</text><text class="sub" x="530" y="385" text-anchor="middle">daily recluster</text></g>
+
+        <!-- Worker GPU (off) -->
+        <g><rect class="box off" x="660" y="310" width="220" height="86" rx="8"/><text class="lbl" x="770" y="335" text-anchor="middle" fill="#a0a8bd">Celery worker GPU</text><text class="sub" x="770" y="352" text-anchor="middle">v2t-worker-gpu — OFFLINE</text><text class="sub" x="770" y="369" text-anchor="middle">embeddings queue stalls</text><text class="sub" x="770" y="385" text-anchor="middle">no NVIDIA runtime</text></g>
+
+        <!-- minio-setup, ollama -->
+        <g><rect class="box muted" x="20" y="450" width="180" height="56" rx="8" fill="#1c2230" stroke="#5a6578"/><text class="lbl" x="110" y="475" text-anchor="middle" fill="#a0a8bd">minio-setup</text><text class="sub" x="110" y="492" text-anchor="middle">exited 0 — one-shot init</text></g>
+        <g><rect class="box off" x="220" y="450" width="200" height="56" rx="8"/><text class="lbl" x="320" y="475" text-anchor="middle" fill="#a0a8bd">Ollama (skipped)</text><text class="sub" x="320" y="492" text-anchor="middle">Groq replaces this path</text></g>
+
+        <!-- Arrows -->
+        <path class="ln" d="M180,60 H220" marker-end="url(#arrow)"/>
+        <path class="ln" d="M400,60 H440" marker-end="url(#arrow)"/>
+        <path class="ln" d="M640,60 H680" marker-end="url(#arrow)"/>
+        <path class="ln" d="M850,60 H870" marker-end="url(#arrow)"/>
+
+        <!-- FastAPI -> DB/Redis/MinIO -->
+        <path class="ln" d="M540,106 V140 H190 V170" marker-end="url(#arrow)"/>
+        <path class="ln" d="M540,106 V140 H400 V170" marker-end="url(#arrow)"/>
+        <path class="ln" d="M540,106 V140 H610 V170" marker-end="url(#arrow)"/>
+
+        <!-- Worker CPU -> Redis/Postgres/MinIO -->
+        <path class="ln" d="M290,310 V270 H400 V250" marker-end="url(#arrow)"/>
+        <path class="ln" d="M290,310 V270 H190 V250" marker-end="url(#arrow)"/>
+        <path class="ln" d="M290,310 V270 H610 V250" marker-end="url(#arrow)"/>
+        <!-- Worker -> Groq (extraction goes out) -->
+        <path class="ln" d="M400,330 H660 V270 H765 V106" marker-end="url(#arrow)" stroke-dasharray="4 3"/>
+
+        <!-- Beat -> Redis -->
+        <path class="ln" d="M530,310 V270 H400 V250" marker-end="url(#arrow)"/>
+
+        <!-- Flower -> Redis -->
+        <path class="ln" d="M820,250 V270 H400 V250" marker-end="url(#arrow)"/>
+
+        <!-- Legend -->
+        <g transform="translate(740,440)">
+          <rect x="0" y="0" width="280" height="80" rx="6" fill="#161a22" stroke="#2a3142"/>
+          <text class="sub" x="14" y="20" fill="#e6e9ef">Legend</text>
+          <rect x="14" y="30" width="14" height="10" fill="#1c2230" stroke="#41d293"/><text class="sub" x="34" y="40">healthy container</text>
+          <rect x="150" y="30" width="14" height="10" fill="#1c2230" stroke="#ffb454" stroke-dasharray="3 2"/><text class="sub" x="170" y="40">external HTTPS</text>
+          <rect x="14" y="50" width="14" height="10" fill="url(#hatch)" stroke="#5a6578"/><text class="sub" x="34" y="60">skipped / offline</text>
+          <line x1="150" y1="55" x2="180" y2="55" stroke="#7d8aa5" stroke-dasharray="4 3"/><text class="sub" x="186" y="60">LLM call</text>
+        </g>
+      </svg>
+    </div>
+    <h3>Data flow</h3>
+    <ol>
+      <li><code>POST /ingest</code> accepts an audio URL or a pre-labeled transcript JSON.</li>
+      <li>Audio path: chunked on silence (30 s Sarvam limit) → Sarvam transcription → speaker heuristic → stitched transcript.</li>
+      <li>Transcript → LLM extraction (Groq) → <code>ExtractedQuestionORM</code> rows.</li>
+      <li>Each question → e5-large embedding → pgvector row. <span class="badge warn">stalled today: GPU worker offline</span></li>
+      <li>Periodic recluster (HDBSCAN) → <code>SemanticCluster</code> rows.</li>
+      <li>Cluster → canonical FAQ + memory-edge inference.</li>
+      <li>Dashboard reads via the 12 FastAPI routes.</li>
+    </ol>
+  </section>
+
+  <section id="stack">
+    <h2>3. Tech stack <a class="anchor" href="#stack">#</a></h2>
+    <table>
+      <thead><tr><th>Layer</th><th>Choice</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>API</td><td>FastAPI 0.115 + uvicorn</td><td>OpenTelemetry instrumentation, Prometheus <code>/metrics</code></td></tr>
+        <tr><td>Workers</td><td>Celery 5.4 + Redis 5.2</td><td>queues: <code>celery</code> (CPU), <code>gpu.heavy</code> (offline)</td></tr>
+        <tr><td>DB</td><td>Postgres 16 + pgvector 0.8.2 + pgcrypto</td><td>Alembic at <code>0001_initial</code></td></tr>
+        <tr><td>Object store</td><td>MinIO</td><td>buckets: <code>transcripts</code>, <code>pipeline-artifacts</code></td></tr>
+        <tr><td>LLM</td><td>Groq <code>openai/gpt-oss-120b</code></td><td>OpenAI-compatible <code>/v1</code></td></tr>
+        <tr><td>STT</td><td>Sarvam.ai <code>saarika:v2.5</code></td><td>Hindi + 10 Indic languages</td></tr>
+        <tr><td>Embeddings</td><td><code>intfloat/multilingual-e5-large</code> (1024-dim)</td><td>runs on GPU worker — today: down</td></tr>
+        <tr><td>Clustering</td><td>HDBSCAN + UMAP</td><td><code>min_cluster_size = 8</code></td></tr>
+        <tr><td>Frontend</td><td>Next.js 14.2 (standalone)</td><td>proxies <code>/api/v2t/*</code> → <code>http://api:8080/*</code></td></tr>
+        <tr><td>Auth (frontend)</td><td>Firebase (Vite vars)</td><td>not yet enforced server-side</td></tr>
+        <tr><td>Tracing</td><td>LangSmith + OTLP HTTP</td><td>project <code>compliance-project</code></td></tr>
+        <tr><td>TLS</td><td>Corporate root bundle</td><td>see Section 6</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="repo">
+    <h2>4. Repository layout <a class="anchor" href="#repo">#</a></h2>
+    <pre><code>voice-to-text/
+  app/                              FastAPI + Celery code
+    api/
+      main.py                       app factory, lifespan, middleware
+      routes/                       analytics, calls, clusters, faq, feedback,
+                                    health, ingest, memory_graph, search
+    clustering/                     HDBSCAN + UMAP engine
+    core/                           settings, logging, tracing
+    db/
+      models.py                     SQLAlchemy ORM
+      repositories.py
+      session.py
+    memory/                         memory-graph inference
+    models/schemas.py               Pydantic v2 request/response models
+    services/
+      embedding/e5.py               multilingual-e5-large
+      extraction/llm_extractor.py   Groq-compatible client
+      stt/                          Sarvam adapter + speaker heuristic
+    workers/
+      celery_app.py
+      tasks.py
+  frontend/                         Next.js 14 dashboard
+    next.config.js                  rewrites /api/v2t/* → ${NEXT_PUBLIC_API_BASE_URL}
+    types/modules.d.ts              ambient module declarations
+    Dockerfile                      node:20-slim builder + runner
+  infra/
+    certs/                          corporate root CAs (PEM)
+    postgres/Dockerfile             pgvector + pgcrypto image
+  scripts/
+    install-corp-ca.ps1             extract corporate roots from Windows store
+  Dockerfile                        API image
+  Dockerfile.worker-cpu             CPU worker image
+  Dockerfile.worker-gpu             CUDA worker image (currently unused)
+  Dockerfile.beat                   beat scheduler image
+  docker-compose.yml
+  requirements.txt
+  alembic.ini
+  .env / .env.example
+  docs/                             this guide, contracts, deployment, gpu sizing
+</code></pre>
+
+    <h3>ORM names (gotcha)</h3>
+    <p>Several ORM classes end in <code>ORM</code> while a Pydantic schema of the same root name exists under <code>app/models/schemas.py</code>. Importing the wrong one silently raises <code>ImportError</code> only when the route is called.</p>
+    <table>
+      <thead><tr><th>Pydantic schema (app.models.schemas)</th><th>ORM class (app.db.models)</th></tr></thead>
+      <tbody>
+        <tr><td><code>ExtractedQuestion</code></td><td><code>ExtractedQuestionORM</code></td></tr>
+        <tr><td><code>ClusterMember</code></td><td><code>ClusterMemberORM</code></td></tr>
+        <tr><td><code>CanonicalFAQ</code></td><td><code>CanonicalFAQORM</code></td></tr>
+        <tr><td><code>MemoryEdge</code></td><td><code>MemoryEdgeORM</code></td></tr>
+        <tr><td><code>FeedbackAnnotation</code></td><td><code>FeedbackAnnotationORM</code></td></tr>
+        <tr><td>—</td><td><code>Call</code>, <code>Utterance</code>, <code>SemanticCluster</code>, <code>Embedding</code> (no <code>ORM</code> suffix)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="env">
+    <h2>5. Environment &amp; secrets <a class="anchor" href="#env">#</a></h2>
+    <p>A working <code>.env</code> is required at repo root. Shape matches <code>.env.example</code> with these values for this deployment:</p>
+    <table>
+      <thead><tr><th>Variable</th><th>Value (this deployment)</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>POSTGRES_USER</code></td><td><code>compliance_user</code></td><td>Bajaj naming</td></tr>
+        <tr><td><code>POSTGRES_DB</code></td><td><code>compliance_db</code></td><td>—</td></tr>
+        <tr><td><code>LLM_BASE_URL</code></td><td><code>https://api.groq.com/openai/v1/</code></td><td>OpenAI-compatible</td></tr>
+        <tr><td><code>LLM_MODEL</code></td><td><code>openai/gpt-oss-120b</code></td><td>extraction + canonicalization</td></tr>
+        <tr><td><code>LLM_TRANSCRIPTION_MODEL</code></td><td><code>whisper-large-v3</code></td><td>secondary STT path</td></tr>
+        <tr><td><code>LLM_INSECURE_TLS</code></td><td><code>true</code></td><td>dev only; corporate cert is the real fix</td></tr>
+        <tr><td><code>NEXT_PUBLIC_API_BASE_URL</code></td><td><code>http://localhost:8080</code></td><td>used by browser-side fetches</td></tr>
+        <tr><td><code>LANGSMITH_PROJECT</code></td><td><code>compliance-project</code></td><td>tracing</td></tr>
+        <tr><td><code>OLLAMA_MODEL</code></td><td><code>qwen2.5:7b-instruct</code> (unused)</td><td>placeholder so compose interpolation succeeds</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Required secrets</h3>
+    <table>
+      <thead><tr><th>Variable</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td><code>SARVAM_API_KEY</code></td><td>Sarvam dashboard</td></tr>
+        <tr><td><code>LLM_API_KEY</code></td><td>Groq console</td></tr>
+        <tr><td><code>LANGSMITH_API_KEY</code></td><td>smith.langchain.com</td></tr>
+        <tr><td><code>VITE_FIREBASE_*</code></td><td>Firebase console</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="tls">
+    <h2>6. Corporate TLS bundle <a class="anchor" href="#tls">#</a></h2>
+    <div class="sub">The dominant source of build/runtime failures. Without trusting Cisco Umbrella + BajajLife roots, nothing HTTPS works inside containers.</div>
+
+    <svg viewBox="0 0 980 200" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-label="cert bundle flow">
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#7d8aa5"/>
+        </marker>
+        <style>
+          .b { fill: #1c2230; stroke: #4cc3ff; rx: 8; stroke-width: 1.4; }
+          .b2 { fill: #1c2230; stroke: #7af1c5; rx: 8; stroke-width: 1.4; }
+          .lbl2 { font: 600 12.5px var(--mono, monospace); fill: #e6e9ef; }
+          .s2 { font: 11px var(--sans, sans-serif); fill: #8c95a8; }
+        </style>
+      </defs>
+      <g><rect class="b" x="10" y="50" width="200" height="80" rx="8"/><text class="lbl2" x="110" y="80" text-anchor="middle">Windows root store</text><text class="s2" x="110" y="100" text-anchor="middle">Cisco Umbrella + BajajLife</text></g>
+      <g><rect class="b" x="260" y="50" width="200" height="80" rx="8"/><text class="lbl2" x="360" y="80" text-anchor="middle">install-corp-ca.ps1</text><text class="s2" x="360" y="100" text-anchor="middle">scripts/</text><text class="s2" x="360" y="116" text-anchor="middle">extracts both roots</text></g>
+      <g><rect class="b2" x="510" y="50" width="220" height="80" rx="8"/><text class="lbl2" x="620" y="80" text-anchor="middle">bajaj-root.pem</text><text class="s2" x="620" y="100" text-anchor="middle">infra/certs/</text><text class="s2" x="620" y="116" text-anchor="middle">concatenated bundle</text></g>
+      <g><rect class="b2" x="780" y="20" width="190" height="56" rx="8"/><text class="lbl2" x="875" y="44" text-anchor="middle">5 Dockerfiles</text><text class="s2" x="875" y="62" text-anchor="middle">api, worker-cpu, beat,</text></g>
+      <g><rect class="b2" x="780" y="100" width="190" height="76" rx="8"/><text class="lbl2" x="875" y="124" text-anchor="middle">env vars</text><text class="s2" x="875" y="142" text-anchor="middle">REQUESTS_CA_BUNDLE,</text><text class="s2" x="875" y="158" text-anchor="middle">SSL_CERT_FILE,</text><text class="s2" x="875" y="172" text-anchor="middle">NODE_EXTRA_CA_CERTS</text></g>
+      <path d="M210,90 H260" stroke="#7d8aa5" stroke-width="1.4" marker-end="url(#arr2)"/>
+      <path d="M460,90 H510" stroke="#7d8aa5" stroke-width="1.4" marker-end="url(#arr2)"/>
+      <path d="M730,90 H770 V48 H780" stroke="#7d8aa5" stroke-width="1.4" fill="none" marker-end="url(#arr2)"/>
+      <path d="M730,90 H770 V130 H780" stroke="#7d8aa5" stroke-width="1.4" fill="none" marker-end="url(#arr2)"/>
+    </svg>
+
+    <h3>Verify Groq from inside a container</h3>
+    <pre><code>docker exec v2t-api curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
+  https://api.groq.com/openai/v1/models
+# expected: HTTP 200</code></pre>
+
+    <details>
+      <summary>Why the frontend uses <code>node:20-slim</code> instead of <code>node:20-alpine</code></summary>
+      <p>
+        After TLS is trusted, Cisco Umbrella still corrupts the binary <code>.apk</code> payloads from
+        <code>dl-cdn.alpinelinux.org</code> — every package fails signature verification
+        (<code>file format is invalid or inconsistent</code>). Debian's <code>deb.debian.org</code> mirror serves over plain HTTP
+        and passes through cleanly, so we swap to a Debian-based Node image.
+      </p>
+    </details>
+
+    <h3>If new corporate CAs ship</h3>
+    <pre><code>.\scripts\install-corp-ca.ps1
+docker compose build api worker-cpu beat frontend
+docker compose up -d --force-recreate api worker-cpu beat frontend</code></pre>
+  </section>
+
+  <section id="status">
+    <h2>7. Current service status <a class="anchor" href="#status">#</a></h2>
+    <div class="sub">All long-running services healthy. <code>minio-setup</code> is a one-shot init job — Exited (0) is correct.</div>
+    <div class="svc-grid">
+      <div class="svc-card good"><h4>v2t-api</h4><div class="row"><span>:8080</span><span class="badge good">healthy</span></div><div class="role">REST API · OpenAPI</div></div>
+      <div class="svc-card good"><h4>v2t-worker-cpu</h4><div class="row"><span>internal</span><span class="badge good">healthy</span></div><div class="role">ingest · extract · cluster</div></div>
+      <div class="svc-card good"><h4>v2t-beat</h4><div class="row"><span>internal</span><span class="badge good">healthy</span></div><div class="role">scheduler</div></div>
+      <div class="svc-card good"><h4>v2t-flower</h4><div class="row"><span>:5555</span><span class="badge good">healthy</span></div><div class="role">Celery UI</div></div>
+      <div class="svc-card good"><h4>v2t-frontend</h4><div class="row"><span>:3001</span><span class="badge good">healthy</span></div><div class="role">Next.js dashboard</div></div>
+      <div class="svc-card good"><h4>v2t-postgres</h4><div class="row"><span>:5432</span><span class="badge good">healthy</span></div><div class="role">compliance_db + pgvector</div></div>
+      <div class="svc-card good"><h4>v2t-redis</h4><div class="row"><span>:6379</span><span class="badge good">healthy</span></div><div class="role">broker · result · cache</div></div>
+      <div class="svc-card good"><h4>v2t-minio</h4><div class="row"><span>:9000 / :9001</span><span class="badge good">healthy</span></div><div class="role">object storage</div></div>
+      <div class="svc-card muted"><h4>v2t-minio-setup</h4><div class="row"><span>one-shot</span><span class="badge muted">Exited (0)</span></div><div class="role">created buckets, exited</div></div>
+      <div class="svc-card bad"><h4>v2t-worker-gpu</h4><div class="row"><span>—</span><span class="badge bad">offline</span></div><div class="role">no NVIDIA runtime</div></div>
+      <div class="svc-card muted"><h4>v2t-ollama</h4><div class="row"><span>—</span><span class="badge muted">skipped</span></div><div class="role">Groq replaces it</div></div>
+    </div>
+
+    <h3>Open URLs</h3>
+    <table>
+      <thead><tr><th>URL</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><a href="http://localhost:3001/">http://localhost:3001/</a></td><td>Frontend dashboard</td></tr>
+        <tr><td><a href="http://localhost:8080/docs">http://localhost:8080/docs</a></td><td>OpenAPI</td></tr>
+        <tr><td><a href="http://localhost:8080/healthz">http://localhost:8080/healthz</a></td><td>Shallow health</td></tr>
+        <tr><td><a href="http://localhost:8080/readyz">http://localhost:8080/readyz</a></td><td>Deep health (DB + Redis)</td></tr>
+        <tr><td><a href="http://localhost:5555/">http://localhost:5555/</a></td><td>Flower</td></tr>
+        <tr><td><a href="http://localhost:9001/">http://localhost:9001/</a></td><td>MinIO console — <code>minio_admin</code> / <code>minio_admin_pw</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Exposed API routes</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Path</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/healthz</code></td><td>shallow health</td></tr>
+        <tr><td><code>GET</code></td><td><code>/readyz</code></td><td>deep health</td></tr>
+        <tr><td><code>POST</code></td><td><code>/ingest</code></td><td>audio URL or transcript</td></tr>
+        <tr><td><code>GET</code></td><td><code>/calls/{id}</code></td><td>call detail</td></tr>
+        <tr><td><code>GET</code></td><td><code>/calls/{id}/questions</code></td><td>extracted questions for a call</td></tr>
+        <tr><td><code>GET</code></td><td><code>/calls/{id}/utterances</code></td><td>utterance timeline</td></tr>
+        <tr><td><code>POST</code></td><td><code>/search</code></td><td>semantic search</td></tr>
+        <tr><td><code>GET</code></td><td><code>/cluster/{id}</code></td><td>cluster detail</td></tr>
+        <tr><td><code>GET</code></td><td><code>/faq</code></td><td>canonical FAQ list</td></tr>
+        <tr><td><code>GET</code></td><td><code>/memory-graph</code></td><td>nodes + edges</td></tr>
+        <tr><td><code>GET</code></td><td><code>/analytics</code></td><td>dashboard summary</td></tr>
+        <tr><td><code>POST</code></td><td><code>/feedback</code></td><td>human feedback into the loop</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="ops">
+    <h2>8. Operating the stack <a class="anchor" href="#ops">#</a></h2>
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="op-up">Start</button>
+      <button class="tab-btn" data-tab="op-down">Stop</button>
+      <button class="tab-btn" data-tab="op-logs">Logs</button>
+      <button class="tab-btn" data-tab="op-rebuild">Rebuild</button>
+      <button class="tab-btn" data-tab="op-fastpath">Fast iterate</button>
+    </div>
+    <div class="tab-panel active" id="op-up">
+      <p>Non-GPU subset (everything you can actually run on this host):</p>
+      <pre><code>docker compose up -d \
+  postgres redis minio minio-setup \
+  api worker-cpu beat flower frontend</code></pre>
+    </div>
+    <div class="tab-panel" id="op-down">
+      <pre><code>docker compose down</code></pre>
+      <p>Add <code>-v</code> to drop the <code>postgres_data</code> / <code>minio_data</code> / <code>hf_cache</code> volumes. <span class="badge bad">destructive</span></p>
+    </div>
+    <div class="tab-panel" id="op-logs">
+      <pre><code>docker compose logs -f api
+docker compose logs -f worker-cpu
+docker logs v2t-beat --tail 50</code></pre>
+    </div>
+    <div class="tab-panel" id="op-rebuild">
+      <pre><code>docker compose build api worker-cpu beat
+docker compose up -d --force-recreate api worker-cpu beat</code></pre>
+    </div>
+    <div class="tab-panel" id="op-fastpath">
+      <p>For Python route changes during dev, skip the image build and copy the file in directly:</p>
+      <pre><code>docker cp ./app/api/routes/analytics.py v2t-api:/app/app/api/routes/analytics.py
+docker restart v2t-api</code></pre>
+      <p class="muted">This is what we used during the model-import fix round in Section 9.8.</p>
+    </div>
+  </section>
+
+  <section id="devlog">
+    <h2>9. Development log <a class="anchor" href="#devlog">#</a></h2>
+    <div class="sub">What changed since the initial commit (<code>252386d</code>), why, and where. Coloured dots: <span class="badge warn">config</span> / <span class="badge bad">bug</span> / <span class="badge good">fix</span>.</div>
+
+    <div class="timeline">
+      <div class="item cfg">
+        <h4>9.1 <code>.env</code> created</h4>
+        <div class="meta">phase: setup · files: <code>.env</code></div>
+        <div class="body">Compose was warning on every command because <code>.env.example</code> was the only env file present. Created <code>.env</code> from the template, then layered Bajaj-specific values: <code>compliance_user</code> / <code>compliance_db</code>, Groq, LangSmith, Firebase. Added <code>OLLAMA_MODEL</code> placeholder so the legacy <code>ollama-init</code> service's interpolation stops warning even though Ollama isn't started.</div>
+      </div>
+
+      <div class="item fix">
+        <h4>9.2 Corporate TLS bundle wired into every image</h4>
+        <div class="meta">phase: infra · files: <code>infra/certs/bajaj-root.pem</code>, all 5 Dockerfiles, <code>scripts/install-corp-ca.ps1</code></div>
+        <div class="body">
+          Exported <strong>Cisco Umbrella Root CA</strong> + <strong>BajajLife-Root-CA</strong> from the Windows root store. Each Dockerfile copies the PEM into <code>/usr/local/share/ca-certificates/</code>, runs <code>update-ca-certificates</code>, and sets <code>REQUESTS_CA_BUNDLE</code> / <code>SSL_CERT_FILE</code> / <code>CURL_CA_BUNDLE</code> / <code>PIP_CERT</code> / <code>NODE_EXTRA_CA_CERTS</code>.
+          Switched the frontend from <code>node:20-alpine</code> to <code>node:20-slim</code> because the proxy corrupts binary <code>.apk</code> payloads even after TLS is trusted.
+        </div>
+      </div>
+
+      <div class="item fix">
+        <h4>9.3 Build dependency pins</h4>
+        <div class="meta">phase: deps · files: <code>requirements.txt</code>, <code>frontend/components/CytoscapeGraph.tsx</code>, <code>frontend/types/modules.d.ts</code></div>
+        <div class="body">
+          <ul>
+            <li><code>indic-transliteration==2.3.66</code> did not exist on PyPI; bumped to <code>2.3.67</code>.</li>
+            <li>Added ambient <code>declare module "react-cytoscapejs";</code> shim.</li>
+            <li><code>cytoscape.Stylesheet[]</code> was renamed in newer <code>@types/cytoscape</code> — loosened the typing instead of rewriting every CSS rule.</li>
+            <li>Frontend runner stage adds <code>mkdir -p public</code> because the repo has no <code>frontend/public</code> dir and Next.js standalone expects it.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="item bug">
+        <h4>9.4 FastAPI middleware ordering</h4>
+        <div class="meta">phase: code · files: <code>app/api/main.py</code></div>
+        <div class="body">
+          <code>FastAPIInstrumentor.instrument_app(app)</code> was called inside <code>_lifespan</code>. Recent Starlette refuses to add middleware after startup:
+          <pre><code>RuntimeError: Cannot add middleware after an application has started</code></pre>
+          Moved OTel + logging init into <code>create_app()</code> before any <code>add_middleware</code> call.
+        </div>
+      </div>
+
+      <div class="item fix">
+        <h4>9.5 Healthchecks</h4>
+        <div class="meta">phase: infra · files: <code>Dockerfile.beat</code>, <code>docker-compose.yml</code></div>
+        <div class="body">
+          Added <code>procps</code> to the beat runtime image so <code>pgrep -f 'celery.*beat'</code> works. Replaced the frontend's <code>wget</code>-based healthcheck with a Node-native <code>http.get</code> check (slim image has no wget).
+        </div>
+      </div>
+
+      <div class="item cfg">
+        <h4>9.6 Port remap</h4>
+        <div class="meta">phase: infra · files: <code>docker-compose.yml</code></div>
+        <div class="body">Frontend remapped from host port <strong>3000 → 3001</strong>; another <code>node.exe</code> on the host was already bound to 3000. Container internal port stays 3000.</div>
+      </div>
+
+      <div class="item bug">
+        <h4>9.7 Frontend → API proxy mis-pointed</h4>
+        <div class="meta">phase: bug · files: <code>frontend/next.config.js</code>, <code>frontend/Dockerfile</code></div>
+        <div class="body">
+          Two bugs in one chain:
+          <ol>
+            <li><code>next.config.js</code> defaulted to <code>http://api:8000</code>. The API listens on <code>:8080</code>.</li>
+            <li>Next.js bakes rewrite destinations at <strong>build</strong> time, so the <code>environment:</code> block in compose never reached the build.</li>
+          </ol>
+          Fixed the fallback to <code>http://api:8080</code> and declared <code>ARG NEXT_PUBLIC_API_BASE_URL=http://api:8080</code> in the frontend Dockerfile so future overrides flow through.
+        </div>
+      </div>
+
+      <div class="item bug">
+        <h4>9.8 Six API routes imported model classes under the wrong name</h4>
+        <div class="meta">phase: bug · files: <code>analytics.py</code>, <code>calls.py</code>, <code>search.py</code>, <code>feedback.py</code>, <code>faq.py</code>, <code>memory_graph.py</code></div>
+        <div class="body">
+          The ORM module exports <code>ExtractedQuestionORM</code> / <code>ClusterMemberORM</code> / etc., but six route files imported them under the non-ORM names and renamed with <code>as</code>:
+          <pre><code>from app.db.models import ExtractedQuestion as ExtractedQuestionORM
+# ImportError: cannot import name 'ExtractedQuestion' from 'app.db.models'</code></pre>
+          Smoke-test result after the fix:
+          <table>
+            <thead><tr><th>Route</th><th>Status</th><th>Body</th></tr></thead>
+            <tbody>
+              <tr><td><code>GET /analytics</code></td><td><span class="badge good">200</span></td><td>zeroed metrics object</td></tr>
+              <tr><td><code>GET /faq</code></td><td><span class="badge good">200</span></td><td><code>[]</code></td></tr>
+              <tr><td><code>GET /memory-graph</code></td><td><span class="badge good">200</span></td><td><code>{nodes: [], edges: []}</code></td></tr>
+              <tr><td><code>GET /api/v2t/analytics</code> (via frontend)</td><td><span class="badge good">200</span></td><td>same payload as direct</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="blocked">
+    <h2>10. What is not running and why <a class="anchor" href="#blocked">#</a></h2>
+    <table>
+      <thead><tr><th>Service</th><th>Skipped because</th><th>Impact</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>worker-gpu</code></td>
+          <td>Docker Desktop on this host has no NVIDIA runtime</td>
+          <td>The <code>gpu.heavy</code> Celery queue (embeddings) has no consumer. Ingest → extract works; embedding → clustering → FAQ stalls.</td>
+        </tr>
+        <tr>
+          <td><code>ollama</code> / <code>ollama-init</code></td>
+          <td><code>.env</code> points the LLM at Groq, not Ollama</td>
+          <td>None. Dead code in this configuration.</td>
+        </tr>
+      </tbody>
+    </table>
+    <h3>To unblock embeddings</h3>
+    <ol>
+      <li>Install <strong>NVIDIA Container Toolkit</strong> on Docker Desktop and bring <code>worker-gpu</code> up, or</li>
+      <li>Add a <strong>CPU embedding worker</strong>: clone <code>Dockerfile.worker-gpu</code>, drop the CUDA base, set <code>EMBEDDING_DEVICE=cpu</code>, listen on the same <code>gpu.heavy</code> queue. Slower but functional.</li>
+    </ol>
+  </section>
+
+  <section id="roadmap">
+    <h2>11. Roadmap <a class="anchor" href="#roadmap">#</a></h2>
+    <div class="sub">Not committed work — proposals only. Pick a direction before starting.</div>
+    <div class="grid-2">
+      <div>
+        <h3>Near term (this week)</h3>
+        <ul>
+          <li>Push a synthetic transcript through <code>/ingest</code> end-to-end; verify Groq extraction produces <code>ExtractedQuestionORM</code> rows.</li>
+          <li>CPU embedding worker so the rest of the pipeline can be exercised.</li>
+          <li>Capture the Sarvam path with a real audio sample once <code>SARVAM_API_KEY</code> is in place.</li>
+          <li>Frontend auth: wire <code>VITE_FIREBASE_*</code> to actually gate the dashboard.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Mid term</h3>
+        <ul>
+          <li>Server-side auth: Firebase ID-token verifier middleware on FastAPI.</li>
+          <li>Backfill drift / cluster-growth charts in <code>/analytics</code>.</li>
+          <li>LangSmith trace links from individual <code>/ingest</code> calls into the dashboard.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Longer term</h3>
+        <ul>
+          <li>Move Sarvam STT to a Celery task so <code>/ingest</code> returns immediately.</li>
+          <li>Multi-tenant data isolation (per insurance product / region).</li>
+          <li>Production deployment manifests (Kubernetes parity with the local stack).</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Tech debt to keep an eye on</h3>
+        <ul>
+          <li>Ollama-related dead code paths still exist in compose and the LLM client.</li>
+          <li>Half of the ORM classes have an <code>ORM</code> suffix and half don't (see Section 4 table).</li>
+          <li>The cytoscape Stylesheet typing is currently <code>unknown[]</code> — should be tightened.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="files">
+    <h2>12. Files changed since <code>252386d</code> <a class="anchor" href="#files">#</a></h2>
+    <details open>
+      <summary>Files added (8)</summary>
+      <ul>
+        <li><code>.env</code></li>
+        <li><code>infra/certs/bajaj-root.pem</code></li>
+        <li><code>infra/certs/.gitkeep</code>, <code>infra/certs/README.md</code></li>
+        <li><code>frontend/certs/.gitkeep</code>, <code>frontend/certs/README.md</code></li>
+        <li><code>frontend/types/modules.d.ts</code></li>
+        <li><code>scripts/install-corp-ca.ps1</code></li>
+        <li><code>docs/DEVELOPMENT_GUIDE.md</code>, <code>docs/DEVELOPMENT_GUIDE.html</code> (this guide)</li>
+      </ul>
+    </details>
+    <details>
+      <summary>Files modified</summary>
+      <table>
+        <thead><tr><th>Path</th><th>Change</th></tr></thead>
+        <tbody>
+          <tr><td><code>Dockerfile</code></td><td>cert install + env vars</td></tr>
+          <tr><td><code>Dockerfile.worker-cpu</code></td><td>cert install + env vars</td></tr>
+          <tr><td><code>Dockerfile.beat</code></td><td>cert install + <code>procps</code> + env vars</td></tr>
+          <tr><td><code>Dockerfile.worker-gpu</code></td><td>cert install + env vars</td></tr>
+          <tr><td><code>frontend/Dockerfile</code></td><td><code>node:20-slim</code>, cert install, build-arg API URL</td></tr>
+          <tr><td><code>frontend/next.config.js</code></td><td>default URL <code>:8000</code> → <code>:8080</code></td></tr>
+          <tr><td><code>frontend/components/CytoscapeGraph.tsx</code></td><td>relaxed <code>Stylesheet</code> typing</td></tr>
+          <tr><td><code>docker-compose.yml</code></td><td>frontend port 3001, healthcheck, build context tweaks</td></tr>
+          <tr><td><code>requirements.txt</code></td><td><code>indic-transliteration</code> 2.3.66 → 2.3.67</td></tr>
+          <tr><td><code>app/api/main.py</code></td><td>OTel + logging init moved out of lifespan</td></tr>
+          <tr><td><code>app/api/routes/analytics.py</code></td><td>model import fix</td></tr>
+          <tr><td><code>app/api/routes/calls.py</code></td><td>model import fix</td></tr>
+          <tr><td><code>app/api/routes/search.py</code></td><td>model import fix</td></tr>
+          <tr><td><code>app/api/routes/feedback.py</code></td><td>model import fix</td></tr>
+          <tr><td><code>app/api/routes/faq.py</code></td><td>model import fix</td></tr>
+          <tr><td><code>app/api/routes/memory_graph.py</code></td><td>model import fix</td></tr>
+          <tr><td><code>app/core/config.py</code></td><td>cleanup</td></tr>
+          <tr><td><code>app/services/llm/ollama_client.py</code></td><td>cleanup</td></tr>
+          <tr><td><code>docs/contracts.md</code>, <code>docs/deployment.md</code>, <code>docs/gpu_sizing.md</code></td><td>doc tweaks</td></tr>
+        </tbody>
+      </table>
+    </details>
+  </section>
+
+  <section>
+    <h2>13. Quick reference</h2>
+    <pre><code># Bring the stack up
+docker compose up -d postgres redis minio minio-setup api worker-cpu beat flower frontend
+
+# Status
+docker ps --filter name=v2t- --format 'table {{.Names}}\t{{.Status}}'
+
+# Smoke
+curl http://localhost:8080/healthz
+curl http://localhost:8080/readyz
+curl http://localhost:8080/analytics
+curl http://localhost:3001/api/v2t/analytics
+
+# Groq through corporate cert
+docker exec v2t-api curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
+  -H "Authorization: Bearer $LLM_API_KEY" \
+  https://api.groq.com/openai/v1/models
+
+# Postgres shell
+docker exec -it v2t-postgres psql -U compliance_user -d compliance_db
+
+# Worker logs
+docker compose logs -f worker-cpu</code></pre>
+  </section>
+
+  <footer>
+    Generated 2026-05-29 · Bajaj Life · v2t platform · docs/DEVELOPMENT_GUIDE.html
+  </footer>
+
+</div>
+
+<script>
+  // Tab switcher
+  document.querySelectorAll('.tabs').forEach(group => {
+    const btns = group.querySelectorAll('.tab-btn');
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.tab;
+        btns.forEach(b => b.classList.toggle('active', b === btn));
+        const parent = group.parentElement;
+        parent.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === id));
+      });
+    });
+  });
+
+  // Inject # anchor links into h2 / h3 in sections that have ids
+  document.querySelectorAll('section[id] h2').forEach(h => {
+    if (!h.querySelector('.anchor')) {
+      const a = document.createElement('a');
+      a.className = 'anchor';
+      a.href = '#' + h.parentElement.id;
+      a.textContent = '#';
+      h.appendChild(a);
+    }
+  });
+</script>
+</body>
+</html>

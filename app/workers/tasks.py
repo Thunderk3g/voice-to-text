@@ -121,6 +121,59 @@ def _next(signature_name: str, *args: Any) -> None:
     celery_app.signature(signature_name, args=args).apply_async()
 
 
+def _store_trace_id(session, call_id: str | UUID, trace_id: str) -> None:
+    """Persist a LangSmith run_id on the Call row for dashboard deep-linking."""
+    from app.db.models import Call as CallORM
+    from sqlalchemy import update as sa_update
+
+    try:
+        session.execute(
+            sa_update(CallORM)
+            .where(CallORM.id == call_id)
+            .values(langsmith_trace_id=trace_id)
+        )
+    except Exception:  # noqa: BLE001 - best effort
+        log.exception("store_trace_id_failed", call_id=str(call_id))
+
+
+def _emit_silhouette_gauge() -> None:
+    """Query labeled embeddings, compute mean silhouette, publish Prom gauge.
+
+    Skips silently when there are fewer than two clusters with members.
+    Caller wraps this so a failure does not break the beat job.
+    """
+    from sqlalchemy import select
+    from app.clustering.quality import cluster_silhouette
+    from app.core.observability import (
+        cluster_silhouette_samples,
+        cluster_silhouette_score,
+    )
+
+    with sync_session() as session:
+        from app.db.models import ClusterMemberORM, Embedding
+
+        stmt = (
+            select(Embedding.vector, ClusterMemberORM.cluster_id)
+            .join(
+                ClusterMemberORM,
+                ClusterMemberORM.question_id == Embedding.question_id,
+            )
+        )
+        rows = session.execute(stmt).all()
+
+    if not rows:
+        cluster_silhouette_score.set(0.0)
+        cluster_silhouette_samples.set(0)
+        return
+
+    vectors = [list(r[0]) for r in rows]
+    labels = [str(r[1]) for r in rows]
+    score, n = cluster_silhouette(vectors, labels)
+    cluster_silhouette_score.set(score)
+    cluster_silhouette_samples.set(n)
+    log.info("silhouette_emitted", score=score, samples=n)
+
+
 # ----------------------------------------------------------------------------
 # v2t.ingest — entry point
 # ----------------------------------------------------------------------------
@@ -276,19 +329,30 @@ def extract_call(self, call_id: str) -> None:
                 )
                 utterances = _load_utterances(session, call_id)
 
+            from app.core.langsmith_tracing import traced
             from app.services.factories import make_llm_extractor
 
             extractor = make_llm_extractor()
-            result = run_async(extractor.extract(UUID(str(call_id)), utterances))
+            with traced(
+                "v2t.extract",
+                inputs={"call_id": str(call_id), "n_utterances": len(utterances)},
+            ) as trace_id:
+                result = run_async(extractor.extract(UUID(str(call_id)), utterances))
 
             with sync_session() as session:
                 _persist_extracted_questions(session, call_id, result.questions)
+                if trace_id:
+                    _store_trace_id(session, call_id, trace_id)
                 set_call_status(
                     session, call_id, CallStatus.EXTRACTION_DONE.value
                 )
         extraction_processed.labels(status="ok").inc()
         _next("v2t.embed", call_id)
-        log.info("extract_done", n_questions=len(result.questions))
+        log.info(
+            "extract_done",
+            n_questions=len(result.questions),
+            langsmith_trace_id=trace_id,
+        )
     except Exception as exc:
         if _is_transient(exc):
             extraction_processed.labels(status="retry").inc()
@@ -303,8 +367,11 @@ def extract_call(self, call_id: str) -> None:
 # ----------------------------------------------------------------------------
 # v2t.embed
 # ----------------------------------------------------------------------------
-@celery_app.task(bind=True, name="v2t.embed", queue="gpu.heavy", acks_late=True)
+@celery_app.task(bind=True, name="v2t.embed", acks_late=True)
 def embed_call(self, call_id: str) -> None:
+    # NOTE: queue= argument intentionally omitted. Embeddings now run via the
+    # external provider (Cohere by default) so this task no longer needs the
+    # gpu.heavy worker and can be served by the regular celery queue.
     _bind(call_id, stage="embed")
     log.info("embed_start")
     try:
@@ -444,6 +511,13 @@ def batch_recluster(self) -> None:
 
             engine = make_cluster_engine()
             counts = run_async(engine.rebatch_all())
+
+            # Compute mean silhouette on the freshly clustered set so the
+            # dashboard / Prometheus sees a quality signal per batch tick.
+            try:
+                _emit_silhouette_gauge()
+            except Exception:  # noqa: BLE001 - never fail the beat on metrics
+                log.exception("silhouette_emit_failed")
         clusters_assigned.labels(mode="batch").inc(int(counts.get("updated", 0)))
         log.info("batch_recluster_done", **counts)
     except Exception as exc:
@@ -480,6 +554,20 @@ def feedback_merge(self, payload: dict[str, Any]) -> None:
                         "UPDATE semantic_clusters SET is_stable = FALSE, last_updated = NOW() WHERE id = :src"
                     ),
                     {"src": src},
+                )
+                # Mark every question that was in the source cluster as a
+                # human-overridden label so future learning treats it as gold.
+                session.execute(
+                    text(
+                        """
+                        UPDATE extracted_questions
+                        SET human_override = TRUE
+                        WHERE id IN (
+                            SELECT question_id FROM cluster_members WHERE cluster_id = :tgt
+                        )
+                        """
+                    ),
+                    {"tgt": tgt},
                 )
         _next("v2t.canonicalize", tgt)
         log.info("feedback_merge_done")
@@ -529,7 +617,8 @@ def feedback_relabel(self, payload: dict[str, Any]) -> None:
                         text(
                             """
                             UPDATE extracted_questions
-                            SET intent = :i
+                            SET intent = :i,
+                                human_override = TRUE
                             WHERE id IN (
                                 SELECT question_id FROM cluster_members WHERE cluster_id = :c
                             )
@@ -581,6 +670,12 @@ def feedback_reassign(self, payload: dict[str, Any]) -> None:
                         "q": qid,
                         "s": float(payload.get("similarity", 1.0)),
                     },
+                )
+                session.execute(
+                    text(
+                        "UPDATE extracted_questions SET human_override = TRUE WHERE id = :q"
+                    ),
+                    {"q": qid},
                 )
         log.info("feedback_reassign_done")
     except Exception as exc:

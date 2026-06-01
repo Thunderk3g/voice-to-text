@@ -25,10 +25,12 @@ from uuid import UUID
 import structlog
 from pydantic import ValidationError
 
-from app.core.observability import extraction_processed
+from app.core.observability import extraction_processed, llm_calls
 from app.models.schemas import ExtractedQuestion, ExtractionResult, UtteranceSchema
-from app.prompts import EXTRACTION_SYSTEM, EXTRACTION_USER_TEMPLATE
+from app.prompts import EXTRACTION_USER_TEMPLATE
 from app.prompts.extraction import build_transcript_block
+from app.prompts.extraction_lang import detect_dominant_language, system_prompt_for
+from app.prompts.extraction_schema import EXTRACTION_RESPONSE_SCHEMA
 from app.services.llm.ollama_client import OllamaClient
 
 logger = structlog.get_logger(__name__)
@@ -59,11 +61,21 @@ class LLMExtractor:
             )
 
         chunks = _chunk_utterances(utterances, _CHUNK_CHAR_BUDGET)
+
+        # Detect the call's dominant language on the joined customer text
+        # so we can pick a language-tuned system prompt for every chunk.
+        customer_text = " ".join(
+            u.text for u in utterances if u.speaker.value == "CUSTOMER"
+        )
+        lang_bucket = detect_dominant_language(customer_text or " ".join(u.text for u in utterances))
+        system_prompt = system_prompt_for(lang_bucket)
+
         logger.info(
             "extractor.start",
             call_id=str(call_id),
             n_utterances=len(utterances),
             n_chunks=len(chunks),
+            language_bucket=lang_bucket,
         )
 
         all_questions: list[ExtractedQuestion] = []
@@ -84,9 +96,12 @@ class LLMExtractor:
 
             try:
                 payload = await self._client.chat_json(
-                    system=EXTRACTION_SYSTEM,
+                    system=system_prompt,
                     user=user_prompt,
+                    json_schema=EXTRACTION_RESPONSE_SCHEMA,
+                    schema_name="extraction_result",
                 )
+                llm_calls.labels(purpose="extract", status="ok").inc()
             except Exception as exc:  # noqa: BLE001 — retries already exhausted
                 logger.error(
                     "extractor.chunk_failed",
@@ -95,6 +110,7 @@ class LLMExtractor:
                     error=str(exc),
                 )
                 extraction_processed.labels(status="error").inc()
+                llm_calls.labels(purpose="extract", status="error").inc()
                 continue
 
             raw_responses.append(_safe_repr(payload))

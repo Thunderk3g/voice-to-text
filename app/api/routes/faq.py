@@ -25,7 +25,7 @@ async def list_faqs(
     limit: int = Query(default=50, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
 ) -> list[CanonicalFAQ]:
-    from app.db.models import CanonicalFAQ as FAQORM, SemanticCluster
+    from app.db.models import CanonicalFAQORM as FAQORM, SemanticCluster
 
     stmt = (
         select(FAQORM)

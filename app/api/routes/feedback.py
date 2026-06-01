@@ -39,7 +39,7 @@ async def submit_feedback(
     payload: FeedbackAnnotation,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    from app.db.models import FeedbackAnnotation as FeedbackAnnotationORM
+    from app.db.models import FeedbackAnnotationORM
 
     task_name = _ACTION_TASKS.get(payload.action)
     if task_name is None:

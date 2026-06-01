@@ -8,7 +8,7 @@ pipeline live in `metrics`.
 
 from __future__ import annotations
 
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Gauge, Histogram
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
@@ -42,10 +42,29 @@ embeddings_generated = Counter(
     "v2t_embeddings_generated_total",
     "Embeddings generated.",
 )
+embedding_cache_events = Counter(
+    "v2t_embedding_cache_events_total",
+    "Embedding cache lookups by outcome.",
+    labelnames=("event",),  # hit | miss | error
+)
+llm_calls = Counter(
+    "v2t_llm_calls_total",
+    "LLM calls grouped by purpose and outcome.",
+    labelnames=("purpose", "status"),  # extract/canonicalize/edge_label, ok|error
+)
 clusters_assigned = Counter(
     "v2t_clusters_assigned_total",
     "Cluster assignments performed.",
     labelnames=("mode",),  # incremental | batch
+)
+
+cluster_silhouette_score = Gauge(
+    "v2t_cluster_silhouette_score",
+    "Mean silhouette score across the labeled cluster set (last batch_recluster).",
+)
+cluster_silhouette_samples = Gauge(
+    "v2t_cluster_silhouette_samples",
+    "Number of samples included in the silhouette computation.",
 )
 
 stage_duration_seconds = Histogram(

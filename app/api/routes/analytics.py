@@ -29,7 +29,7 @@ router = APIRouter(tags=["analytics"])
 async def get_analytics(db: AsyncSession = Depends(get_db)) -> AnalyticsSummary:
     from app.db.models import (
         Call,
-        ExtractedQuestion as ExtractedQuestionORM,
+        ExtractedQuestionORM,
         SemanticCluster,
     )
 

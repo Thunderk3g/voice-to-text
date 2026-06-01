@@ -66,6 +66,7 @@ class CallRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     metadata: CallMetadata
+    langsmith_trace_id: str | None = None
 
 
 # ============================================================================

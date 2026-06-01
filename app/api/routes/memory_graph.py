@@ -23,7 +23,7 @@ async def get_memory_graph(
     limit: int = Query(default=500, ge=1, le=5000),
     db: AsyncSession = Depends(get_db),
 ) -> MemoryGraph:
-    from app.db.models import MemoryEdge as MemoryEdgeORM, SemanticCluster
+    from app.db.models import MemoryEdgeORM, SemanticCluster
 
     edge_stmt = (
         select(MemoryEdgeORM)

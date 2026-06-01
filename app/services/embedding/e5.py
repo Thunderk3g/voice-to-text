@@ -1,20 +1,28 @@
 """
-multilingual-e5-large embedding service.
+Multilingual embedding service with pluggable providers.
 
-Lazily loads sentence-transformers so importing this module is cheap and
-torch is NOT pulled in at module top. Embeddings are L2-normalized.
+Providers:
+  * ``local``  — SentenceTransformer(intfloat/multilingual-e5-large). Needs the
+                 model on disk and optionally a GPU. Default historically.
+  * ``cohere`` — Cohere embed-multilingual-v3.0 (hosted, 1024-dim). No torch
+                 dependency at runtime. Selected when
+                 ``settings.embedding_provider == "cohere"``.
+
+The provider is loaded lazily on first use; importing this module is cheap.
+All providers must return L2-normalized float32 vectors of shape (N, 1024).
+The cache, batching, and e5 ``query:`` / ``passage:`` prefixing logic is
+provider-agnostic so swapping providers does not invalidate behavior.
 """
 
 from __future__ import annotations
 
 import asyncio
-from typing import Iterable
 
 import numpy as np
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.core.observability import embeddings_generated
+from app.core.observability import embedding_cache_events, embeddings_generated
 from app.models.schemas import EmbeddingRecord, ExtractedQuestion
 from app.utils.lang import add_e5_prefix
 
@@ -22,42 +30,56 @@ logger = get_logger(__name__)
 
 
 class EmbeddingService:
-    """Generate L2-normalized multilingual-e5 embeddings.
+    """Generate L2-normalized 1024-dim multilingual embeddings.
 
-    The underlying SentenceTransformer is loaded lazily on first use to
-    keep import-time cost negligible (and to avoid importing torch at
-    module top).
+    The underlying encoder is loaded lazily on first use to keep import-time
+    cost negligible (and to avoid importing torch at module top when running
+    against the hosted Cohere provider).
     """
 
     def __init__(self, cache: object | None = None) -> None:
         self._settings = get_settings()
-        self._model = None
+        self._encoder = None  # local: SentenceTransformer | cohere: CohereEncoder
         self._lock = asyncio.Lock()
         self._cache = cache  # optional EmbeddingCache
 
-    async def _ensure_model(self):
-        if self._model is not None:
-            return self._model
+    async def _ensure_encoder(self):
+        if self._encoder is not None:
+            return self._encoder
         async with self._lock:
-            if self._model is None:
-                # local import — torch must not be pulled at module top
-                from sentence_transformers import SentenceTransformer
+            if self._encoder is None:
+                provider = self._settings.embedding_provider
+                if provider == "cohere":
+                    # Local import — keeps httpx-only path clean of torch.
+                    from app.services.embedding.cohere_encoder import CohereEncoder
 
-                logger.info(
-                    "loading_embedding_model",
-                    model=self._settings.embedding_model,
-                    device=self._settings.embedding_device,
-                )
-                self._model = await asyncio.to_thread(
-                    SentenceTransformer,
-                    self._settings.embedding_model,
-                    device=self._settings.embedding_device,
-                )
-                try:
-                    self._model.max_seq_length = self._settings.embedding_max_seq_len
-                except Exception:  # noqa: BLE001
-                    pass
-        return self._model
+                    logger.info(
+                        "loading_embedding_encoder",
+                        provider="cohere",
+                        model=self._settings.cohere_embed_model,
+                    )
+                    self._encoder = CohereEncoder()
+                else:
+                    # Local import — torch must not be pulled at module top.
+                    from sentence_transformers import SentenceTransformer
+
+                    logger.info(
+                        "loading_embedding_encoder",
+                        provider="local",
+                        model=self._settings.embedding_model,
+                        device=self._settings.embedding_device,
+                    )
+                    model = await asyncio.to_thread(
+                        SentenceTransformer,
+                        self._settings.embedding_model,
+                        device=self._settings.embedding_device,
+                    )
+                    try:
+                        model.max_seq_length = self._settings.embedding_max_seq_len
+                    except Exception:  # noqa: BLE001
+                        pass
+                    self._encoder = model
+        return self._encoder
 
     # ------------------------------------------------------------------
     async def embed(
@@ -66,10 +88,9 @@ class EmbeddingService:
         *,
         role: str = "passage",
     ) -> list[list[float]]:
-        """Embed a list of texts with the configured e5 model.
-
-        Each text is prefixed with 'query:' or 'passage:' per e5 spec.
-        Returns L2-normalized vectors of length `settings.embedding_dim`.
+        """Embed a list of texts. Each text is prefixed with 'query:' /
+        'passage:' per e5 spec. Returns L2-normalized vectors of length
+        ``settings.embedding_dim``.
         """
         if not texts:
             return []
@@ -83,18 +104,26 @@ class EmbeddingService:
                 cached_map = await self._cache.get_many(prefixed)  # type: ignore[attr-defined]
             except Exception as exc:  # noqa: BLE001
                 logger.warning("embedding_cache_get_failed", error=str(exc))
+                embedding_cache_events.labels(event="error").inc()
                 cached_map = {}
+
+        # Cache metrics — count one event per requested text.
+        if self._cache is not None:
+            hits = sum(1 for t in prefixed if t in cached_map)
+            embedding_cache_events.labels(event="hit").inc(hits)
+            embedding_cache_events.labels(event="miss").inc(len(prefixed) - hits)
 
         missing_idx = [i for i, t in enumerate(prefixed) if t not in cached_map]
         missing_texts = [prefixed[i] for i in missing_idx]
 
         new_vectors: np.ndarray | None = None
         if missing_texts:
-            model = await self._ensure_model()
+            encoder = await self._ensure_encoder()
             new_vectors = await asyncio.to_thread(
                 self._encode_sync,
-                model,
+                encoder,
                 missing_texts,
+                role,
             )
             embeddings_generated.inc(len(missing_texts))
 
@@ -116,14 +145,19 @@ class EmbeddingService:
                 if t in cached_map:
                     out[i] = np.asarray(cached_map[t], dtype=np.float32)
         if new_vectors is not None:
-            # vectorized assignment for missing rows
             out[np.asarray(missing_idx, dtype=np.int64)] = new_vectors
 
         return out.tolist()
 
-    def _encode_sync(self, model, texts: list[str]) -> np.ndarray:
-        """Run sentence-transformers encode synchronously inside a thread."""
-        vecs = model.encode(
+    def _encode_sync(self, encoder, texts: list[str], role: str) -> np.ndarray:
+        """Run the underlying encoder synchronously inside a thread."""
+        # CohereEncoder: object exposes .encode(texts, role=...) and handles
+        # batching + normalization itself.
+        if self._settings.embedding_provider == "cohere":
+            return encoder.encode(texts, role=role)
+
+        # SentenceTransformer path.
+        vecs = encoder.encode(
             texts,
             batch_size=self._settings.embedding_batch_size,
             normalize_embeddings=True,
@@ -144,14 +178,16 @@ class EmbeddingService:
         texts = [self._compose_text(q) for q in questions]
         vectors = await self.embed(texts, role="passage")
 
-        model_name = self._settings.embedding_model
+        model_name = (
+            self._settings.cohere_embed_model
+            if self._settings.embedding_provider == "cohere"
+            else self._settings.embedding_model
+        )
         dim = self._settings.embedding_dim
 
         records: list[EmbeddingRecord] = []
         for q, vec in zip(questions, vectors):
             if q.id is None:
-                # An ExtractedQuestion without an id cannot anchor an embedding row;
-                # callers must persist questions first.
                 logger.warning("embedding_question_missing_id", call_id=str(q.call_id))
                 continue
             records.append(

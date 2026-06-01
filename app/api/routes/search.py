@@ -59,9 +59,9 @@ async def search(
     qvec = vectors[0]
 
     from app.db.models import (
-        ClusterMember,
+        ClusterMemberORM,
         Embedding,
-        ExtractedQuestion as ExtractedQuestionORM,
+        ExtractedQuestionORM,
     )
 
     # pgvector cosine distance operator: `<=>`. Similarity = 1 - distance.
@@ -69,9 +69,9 @@ async def search(
     similarity_expr = (1.0 - distance_expr).label("similarity")
 
     stmt = (
-        select(ExtractedQuestionORM, ClusterMember.cluster_id, similarity_expr)
+        select(ExtractedQuestionORM, ClusterMemberORM.cluster_id, similarity_expr)
         .join(Embedding, Embedding.question_id == ExtractedQuestionORM.id)
-        .outerjoin(ClusterMember, ClusterMember.question_id == ExtractedQuestionORM.id)
+        .outerjoin(ClusterMemberORM, ClusterMemberORM.question_id == ExtractedQuestionORM.id)
     )
 
     if payload.language is not None:

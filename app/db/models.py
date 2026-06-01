@@ -115,6 +115,9 @@ class Call(Base):
     call_metadata: Mapped[dict] = mapped_column(
         "metadata", JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
     )
+    langsmith_trace_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -209,6 +212,11 @@ class ExtractedQuestionORM(Base):
     confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     extracted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    # Set true by feedback tasks (merge / split / relabel) so downstream
+    # learning treats these rows as gold labels.
+    human_override: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
     )
 
     call: Mapped[Call] = relationship(back_populates="questions")

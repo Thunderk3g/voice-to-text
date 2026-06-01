@@ -37,7 +37,7 @@ async def get_call(call_id: UUID, db: AsyncSession = Depends(get_db)) -> CallRea
             error_type="call_not_found",
         )
 
-    metadata = CallMetadata.model_validate(row.meta or {})
+    metadata = CallMetadata.model_validate(row.call_metadata or {})
     return CallRead(
         id=row.id,
         source_uri=row.source_uri,
@@ -48,6 +48,7 @@ async def get_call(call_id: UUID, db: AsyncSession = Depends(get_db)) -> CallRea
         created_at=row.created_at,
         updated_at=row.updated_at,
         metadata=metadata,
+        langsmith_trace_id=row.langsmith_trace_id,
     )
 
 
@@ -72,7 +73,7 @@ async def list_questions(
     call_id: UUID,
     db: AsyncSession = Depends(get_db),
 ) -> list[ExtractedQuestion]:
-    from app.db.models import ExtractedQuestion as ExtractedQuestionORM
+    from app.db.models import ExtractedQuestionORM
 
     stmt = (
         select(ExtractedQuestionORM)

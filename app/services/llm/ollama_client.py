@@ -94,13 +94,32 @@ class OllamaClient:
         temperature: float | None = None,
         max_tokens: int | None = None,
         extra: dict[str, Any] | None = None,
+        json_schema: dict[str, Any] | None = None,
+        schema_name: str = "structured_output",
     ) -> dict[str, Any]:
         """Run a chat completion in JSON mode and return a parsed dict.
+
+        When ``json_schema`` is provided we ask the model for strict
+        JSON-schema-validated output (supported by Groq's OpenAI-compatible
+        endpoint and by Ollama 0.5+). Without a schema we fall back to the
+        looser ``json_object`` mode, which most providers tolerate.
 
         Retries transient errors *and* JSON-parse failures so that a model
         glitch (fences, trailing prose) gets a second chance on a fresh
         sample.
         """
+
+        if json_schema is not None:
+            response_format: dict[str, Any] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": schema_name,
+                    "schema": json_schema,
+                    "strict": True,
+                },
+            }
+        else:
+            response_format = {"type": "json_object"}
 
         async for attempt in AsyncRetrying(
             wait=wait_exponential(multiplier=1, min=1, max=20),
@@ -114,7 +133,7 @@ class OllamaClient:
                     user=user,
                     temperature=temperature,
                     max_tokens=max_tokens,
-                    response_format={"type": "json_object"},
+                    response_format=response_format,
                     extra=extra,
                 )
                 try:
@@ -180,7 +199,7 @@ class OllamaClient:
         user: str,
         temperature: float | None,
         max_tokens: int | None,
-        response_format: dict[str, str] | None,
+        response_format: dict[str, Any] | None,
         extra: dict[str, Any] | None,
     ) -> str:
         kwargs: dict[str, Any] = {
