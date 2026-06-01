@@ -201,8 +201,9 @@ services:
     # ~3GB copy of the Whisper large-v3 model (the model cache is per-process,
     # not shared across prefork children). >2 concurrent large-v3 loads OOM the
     # Docker VM. Keep this in step with the host RAM (≈3GB/worker for large-v3).
+    # -E emits task events so Flower's live view (active/processed tasks) works.
     command: ["celery", "-A", "app.workers.celery_app", "worker",
-              "--loglevel=INFO", "-Q", "celery,gpu.heavy,default", "--concurrency=2"]
+              "--loglevel=INFO", "-Q", "celery,gpu.heavy,default", "--concurrency=2", "-E"]
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$(hostname) >/dev/null 2>&1"]
       interval: 30s
