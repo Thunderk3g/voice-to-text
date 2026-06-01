@@ -101,7 +101,7 @@ class Settings(BaseSettings):
     embedding_provider: Literal["local", "cohere"] = "local"
     embedding_model: str = "intfloat/multilingual-e5-large"
     embedding_dim: int = 1024
-    embedding_device: Literal["cuda", "cpu"] = "cuda"
+    embedding_device: Literal["cuda", "cpu"] = "cpu"
     embedding_batch_size: int = 32
     embedding_max_seq_len: int = 512
 
