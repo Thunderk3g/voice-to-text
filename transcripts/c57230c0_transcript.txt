@@ -1,0 +1,982 @@
+AGENT [00:00]: Hello?
+CUSTOMER [00:02]: Hello?
+AGENT [00:04]: Sir, you were telling me your policy number.
+CUSTOMER [00:06]: Yes, yes, I couldn't hear you.
+AGENT [00:08]: I was saying that I couldn't hear you, sir.
+CUSTOMER [00:10]: Yes, I was saying that I couldn't hear you, sir.
+AGENT [00:12]: Yes, I was saying that I couldn't hear you, sir.
+CUSTOMER [00:14]: Tell me.
+AGENT [00:16]: 064
+CUSTOMER [00:18]: 064
+AGENT [00:20]: 064
+CUSTOMER [00:22]: 520
+AGENT [00:24]: 520
+CUSTOMER [00:26]: 1783
+AGENT [00:28]: 1783
+CUSTOMER [00:37]: 1783
+AGENT [00:39]: 1783
+CUSTOMER [00:41]: 1783
+AGENT [00:43]: 1783
+CUSTOMER [00:45]: 1783
+AGENT [00:47]: 1783
+CUSTOMER [00:49]: 1783
+AGENT [00:51]: 1783
+CUSTOMER [00:53]: 1783
+AGENT [00:55]: 1783
+CUSTOMER [00:57]: 1783
+AGENT [00:59]: 1783
+CUSTOMER [01:01]: 1783
+AGENT [01:03]: 1783
+CUSTOMER [01:05]: Wait a minute.
+AGENT [01:07]: Are you doing a job or a business?
+CUSTOMER [01:11]: Job.
+CUSTOMER [01:13]: And what is your annual income?
+CUSTOMER [01:15]: 2.5 lakhs.
+AGENT [01:19]: 2.5 lakhs.
+CUSTOMER [01:21]: What is your date of birth?
+AGENT [01:51]: Hmm?
+CUSTOMER [01:53]: What is your date of birth?
+AGENT [01:57]: 4th March 2000.
+CUSTOMER [01:59]: 4th March 2000.
+AGENT [02:01]: And you have been in the police for 70 years, right?
+CUSTOMER [02:05]: Yes.
+AGENT [02:06]: But you started as a third party.
+CUSTOMER [02:08]: Why didn't you directly take it from the Bajaj?
+AGENT [02:10]: I was looking for it.
+CUSTOMER [02:14]: But I couldn't find it.
+AGENT [02:16]: If you take it directly from the Bajaj,
+CUSTOMER [02:18]: then you don't face any problem
+AGENT [02:20]: or issue during the claim.
+CUSTOMER [02:22]: Yes.
+AGENT [02:24]: If you bike through a third party,
+CUSTOMER [02:26]: then you face a problem.
+CUSTOMER [02:28]: What is the problem in that?
+CUSTOMER [02:30]: During the claim,
+AGENT [02:32]: whoever is there will verify the policy first.
+CUSTOMER [02:34]: Then they verify it.
+AGENT [02:36]: If there is any mistake in verifying the policy,
+CUSTOMER [02:40]: then the claim is rejected.
+AGENT [02:42]: Okay.
+CUSTOMER [02:44]: So you bought it directly from the policy Bajaj.
+AGENT [02:46]: You could have bought it directly from the Bajaj.
+CUSTOMER [02:48]: Hmm.
+AGENT [02:50]: But then I took it.
+CUSTOMER [02:52]: What is your date of birth?
+CUSTOMER [02:54]: What?
+CUSTOMER [02:56]: What is your date of birth?
+AGENT [02:58]: 4th March 2000.
+CUSTOMER [03:00]: 4th March 2000.
+AGENT [03:02]: Yes.
+CUSTOMER [03:04]: Currently, you are 25 years old, right?
+AGENT [03:18]: Yes.
+CUSTOMER [03:32]: And how far have you completed your studies?
+CUSTOMER [03:34]: How far?
+CUSTOMER [03:38]: Education.
+AGENT [03:40]: Graduation.
+CUSTOMER [03:42]: Okay.
+AGENT [03:50]: And you had a policy of 50 lakhs
+CUSTOMER [03:52]: and coverage for up to 70 years, right?
+AGENT [03:54]: Yes, it was 60 lakhs.
+CUSTOMER [03:56]: 60 lakhs policy and coverage for up to 70 years.
+AGENT [03:58]: That means coverage for 45 years.
+CUSTOMER [04:16]: Yes.
+CUSTOMER [04:18]: And what was the premium pay term, sir?
+CUSTOMER [04:20]: It was 120,000.
+CUSTOMER [04:22]: How much?
+CUSTOMER [04:24]: 128,000 per month.
+AGENT [04:26]: No, no, no.
+CUSTOMER [04:28]: I will premium for the regular pay.
+AGENT [04:30]: Yes.
+CUSTOMER [04:32]: And do you consume tobacco or cigarette for any purpose, sir?
+AGENT [04:34]: No, no.
+CUSTOMER [04:36]: You don't, right?
+AGENT [04:38]: Yes.
+CUSTOMER [04:40]: So your premium today should be 739, sir.
+CUSTOMER [04:42]: What do you mean?
+CUSTOMER [04:44]: The premium should be 749.
+AGENT [04:46]: One minute.
+CUSTOMER [04:48]: You have a policy of 60 lakhs, right?
+AGENT [04:50]: Yes.
+CUSTOMER [05:05]: And in your premium,
+AGENT [05:07]: you had added something additional in the policy, right?
+CUSTOMER [05:09]: Yes. Accidental.
+AGENT [05:11]: Disability.
+CUSTOMER [05:13]: How much?
+AGENT [05:17]: 50 lakhs, I think.
+CUSTOMER [05:20]: How much?
+AGENT [05:22]: 50 lakhs.
+CUSTOMER [05:24]: You had added accidental 50 lakhs.
+AGENT [05:26]: Yes.
+CUSTOMER [05:32]: Disability?
+AGENT [05:52]: Yes.
+CUSTOMER [05:54]: Your premium was 1028, right?
+AGENT [06:01]: Yes.
+CUSTOMER [06:03]: And you didn't mention this in your premium.
+AGENT [06:05]: Yes.
+CUSTOMER [06:07]: I mean, in that,
+AGENT [06:09]: this policy,
+CUSTOMER [06:11]: when I,
+AGENT [06:13]: I mean,
+CUSTOMER [06:15]: if
+AGENT [06:17]: according to
+CUSTOMER [06:19]: 65 years of age,
+AGENT [06:21]: if I withdraw it,
+CUSTOMER [06:23]: the money will be returned, right?
+AGENT [06:25]: Yes, sir.
+CUSTOMER [06:27]: This is what happens in this.
+AGENT [06:29]: For example, you take a policy of 60 lakhs.
+CUSTOMER [06:31]: And you have a policy of 70 years of age.
+AGENT [06:33]: In this, you get the benefit of early exit.
+CUSTOMER [06:35]: In which, your age
+AGENT [06:37]: from 60 to 64
+CUSTOMER [06:39]: will be the benefit of early exit.
+AGENT [06:41]: So, your total return value is
+CUSTOMER [06:43]: 4,82,025 rupees, sir.
+AGENT [06:45]: Yes.
+CUSTOMER [06:47]: So, you get this benefit,
+AGENT [06:49]: this additional.
+CUSTOMER [06:51]: So, I will get this, right?
+AGENT [06:53]: Sir, it is mentioned.
+CUSTOMER [06:55]: You actually bought it from the third party, sir.
+AGENT [06:57]: Yes.
+CUSTOMER [06:59]: So, I can't tell you about
+AGENT [07:01]: what you provided to the third party, sir.
+CUSTOMER [07:03]: I can check your application here.
+AGENT [07:05]: I can see your premium here.
+CUSTOMER [07:07]: But,
+AGENT [07:09]: Yes.
+CUSTOMER [07:11]: But, don't you have a mention in it, sir?
+AGENT [07:13]: That it has come to you?
+CUSTOMER [07:15]: No, no.
+AGENT [07:17]: There is no mention in it.
+CUSTOMER [07:19]: I mean, it is a great quality that they mentioned something like this.
+CUSTOMER [07:21]: Why, sir?
+CUSTOMER [07:23]: Sir, when you buy a bag from Bajaj,
+AGENT [07:25]: Bajaj also gives you good service.
+CUSTOMER [07:27]: There is no problem with anyone.
+AGENT [07:29]: Like, even at the time of the claim,
+CUSTOMER [07:31]: you will request for the claim, right?
+AGENT [07:33]: Yes.
+CUSTOMER [07:35]: So, our ADM will go through your address
+AGENT [07:37]: within 24 hours of your claim, sir.
+CUSTOMER [07:39]: If you take it through Policy Bazaar,
+AGENT [07:41]: then first, the advisor of Policy Bazaar
+CUSTOMER [07:43]: will verify your details.
+AGENT [07:45]: Then, they will submit it in Bajaj.
+CUSTOMER [07:47]: Then, the advisors of Bajaj
+AGENT [07:49]: will go through your address and verify your details.
+CUSTOMER [07:51]: If there is any mismatch in it,
+AGENT [07:53]: then there is a chance of your claim being rejected, sir.
+CUSTOMER [07:55]: Yes.
+AGENT [07:59]: So, you bought it through the third party.
+CUSTOMER [08:01]: If you want, you can buy it from Bajaj.
+AGENT [08:03]: You have this option.
+CUSTOMER [08:05]: Earlier, this was your first month, right?
+AGENT [08:07]: Yes.
+CUSTOMER [08:09]: So, you still have this option.
+AGENT [08:11]: You have already paid your medical bills.
+CUSTOMER [08:13]: You have already paid the premium, sir.
+AGENT [08:15]: Yes.
+CUSTOMER [08:17]: Now, you will not have to pay the premium.
+AGENT [08:19]: Your medical will also not be completed.
+CUSTOMER [08:21]: Your previous medical will remain the same.
+AGENT [08:23]: And you can take a new policy, sir.
+CUSTOMER [08:25]: Can I take a new policy?
+AGENT [08:27]: Yes. Your policy of Bajaj will be cancelled.
+CUSTOMER [08:29]: And you can take a new policy
+AGENT [08:31]: directly from Bajaj.
+CUSTOMER [08:33]: Then, how will it be cancelled?
+AGENT [08:35]: It will be cancelled.
+CUSTOMER [08:37]: You will have to do a mail for that.
+AGENT [08:39]: It will be cancelled.
+CUSTOMER [08:41]: After that, you can take a new policy from Bajaj.
+AGENT [08:43]: Okay.
+CUSTOMER [08:45]: Yes. And look at this.
+AGENT [08:47]: First, your policy is issued.
+CUSTOMER [08:49]: A soft copy is provided to you on the mail.
+AGENT [08:51]: That is, you can check all the details.
+CUSTOMER [08:55]: Whether all your details are correct or not.
+AGENT [08:57]: Then, you will have a hard copy on your mail.
+CUSTOMER [08:59]: It will be written on the address of your house.
+AGENT [09:01]: After that, a hard copy is delivered to your address.
+CUSTOMER [09:03]: And this is what you took.
+AGENT [09:05]: Yes.
+CUSTOMER [09:07]: This is what you took.
+AGENT [09:09]: You processed this on 18th December, sir.
+CUSTOMER [09:11]: Yes.
+AGENT [09:13]: Yes.
+CUSTOMER [09:15]: So, this is your first month.
+AGENT [09:17]: Yes.
+CUSTOMER [09:19]: Yes. And the premium will remain the same as you said.
+AGENT [09:21]: The premium will remain the same, sir.
+CUSTOMER [09:23]: Yes. So, I have changed that too.
+AGENT [09:25]: In that, I have done a premium of 15 years.
+CUSTOMER [09:27]: That means, it was increasing from 4 to 5.
+CUSTOMER [09:29]: What was happening?
+CUSTOMER [09:31]: I have done this for 15 years.
+AGENT [09:33]: For 15 years, I did 1600.
+CUSTOMER [09:35]: That is, first year and then 1800.
+AGENT [09:37]: That means, you have done it in limited payment, sir.
+CUSTOMER [09:39]: Yes.
+AGENT [09:41]: But till now, sir, your limited payment is not visible here, sir.
+CUSTOMER [09:45]: I have done it now.
+AGENT [09:47]: Now, sir.
+CUSTOMER [09:49]: So, it will be visible in your application, sir.
+AGENT [09:51]: Till now, your limited payment is not visible here, sir.
+CUSTOMER [09:55]: Limited means, that means,
+AGENT [09:57]: let's reduce this big year.
+CUSTOMER [10:00]: Hello. Hello.
+AGENT [10:04]: Yes, sir. Tell me.
+CUSTOMER [10:06]: Yes. That means,
+AGENT [10:08]: till 45 years,
+CUSTOMER [10:10]: you have done it for 15 years, sir.
+CUSTOMER [10:12]: What 45 years?
+CUSTOMER [10:14]: Yes, that means,
+AGENT [10:16]: your premium payment was of 45 years.
+CUSTOMER [10:18]: You have done it for 15 years.
+AGENT [10:20]: But till now, your premium payment is not visible here, sir.
+CUSTOMER [10:22]: Till now, your premium payment is only for 45 years.
+AGENT [10:24]: Okay.
+CUSTOMER [10:26]: If we do 15 years,
+AGENT [10:28]: then I will tell you how much premium you get.
+CUSTOMER [10:30]: Till now, your premium payment is only for 45 years, sir.
+AGENT [10:34]: If we do 15 years,
+CUSTOMER [10:36]: then I will tell you how much premium you get.
+AGENT [10:44]: Yes.
+CUSTOMER [10:46]: So, it is 1671 RR, sir.
+AGENT [10:48]: Yes.
+CUSTOMER [10:51]: 1671 RR.
+AGENT [10:53]: Yes.
+CUSTOMER [10:55]: But till now, your premium payment is not visible here, sir.
+AGENT [10:57]: Your premium payment is not visible here, sir.
+CUSTOMER [10:59]: Your premium payment is on regular basis.
+AGENT [11:01]: And your policy has also been issued, sir.
+CUSTOMER [11:03]: You cannot change it after the policy is issued, sir.
+AGENT [11:05]: You cannot change it after the policy is issued, sir.
+CUSTOMER [11:07]: Before your policy is issued,
+AGENT [11:09]: you have to change it.
+CUSTOMER [11:14]: For 15 years?
+AGENT [11:16]: Yes.
+CUSTOMER [11:18]: But today, your policy is not issued.
+AGENT [11:20]: Yes.
+CUSTOMER [11:22]: As we process it today,
+AGENT [11:24]: you have to change it once every 10 days.
+CUSTOMER [11:26]: You have to change it once every 10 days.
+AGENT [11:28]: But your policy has been issued already.
+CUSTOMER [11:30]: But your policy has been issued already.
+AGENT [11:32]: Your policy has been issued on 28th.
+CUSTOMER [11:34]: That is, 3 days before.
+AGENT [11:36]: Yes.
+CUSTOMER [11:38]: The policy has been issued on 28th.
+AGENT [11:40]: You have not updated it.
+CUSTOMER [11:45]: So, it means that it cannot be changed.
+AGENT [11:47]: I have already paid 600 rupees for it.
+CUSTOMER [11:49]: So, your monthly payment is on regular basis.
+AGENT [11:51]: So, your monthly payment is on regular basis.
+CUSTOMER [11:53]: So, your monthly payment is on regular basis.
+AGENT [11:55]: So, they have sent me a copy of it.
+CUSTOMER [11:57]: So, they have sent me a copy of it.
+AGENT [11:59]: Yes. Your money has not been updated yet.
+CUSTOMER [12:01]: Your money has not been updated yet.
+CUSTOMER [12:07]: So, why does it happen later?
+CUSTOMER [12:09]: Because your premium is showing here
+AGENT [12:11]: 102.80 for 60 lakhs.
+CUSTOMER [12:13]: But let me tell you one thing.
+AGENT [12:15]: But let me tell you one thing.
+CUSTOMER [12:17]: For 60 lakhs,
+AGENT [12:19]: premium is showing 1589 and 1868.
+CUSTOMER [12:21]: premium is showing 1589 and 1868.
+AGENT [12:23]: Yes.
+CUSTOMER [12:25]: For the first year.
+AGENT [12:27]: 1589 is showing.
+CUSTOMER [12:29]: For the second year, 1868 is showing.
+AGENT [12:35]: So, same if we...
+CUSTOMER [12:37]: Premium is showing me the same amount.
+AGENT [12:39]: Premium is showing me the same amount.
+CUSTOMER [12:45]: Let us see it.
+CUSTOMER [12:47]: Why have you not chosen 50 lakhs, sir?
+CUSTOMER [12:49]: Why have you not chosen 50 lakhs, sir?
+AGENT [12:51]: If you add 10 lakhs,
+CUSTOMER [12:53]: in that,
+AGENT [12:55]: premium will be a big difference.
+CUSTOMER [12:57]: Sir, there is an actual amount of 50 lakhs, 25 lakhs once a year.
+AGENT [13:00]: This is an actual amount in which your premium is less.
+CUSTOMER [13:04]: If you choose a rotational amount like 60 lakhs, 62 lakhs, 70 lakhs, 85 lakhs, then the premium increases.
+CUSTOMER [13:13]: How much is the premium?
+AGENT [13:15]: If I tell you that there is a premium of 50 lakhs, then the first year you get 1418 lakhs and the second year you get 1450 lakhs.
+AGENT [13:22]: Okay.
+CUSTOMER [13:23]: The policy will remain of 45 years.
+AGENT [13:26]: The premium that you will pay will be paid within 15 years.
+CUSTOMER [13:29]: Yes.
+AGENT [13:30]: And the accidental death benefit is already 50 lakhs.
+CUSTOMER [13:33]: Okay.
+AGENT [13:35]: Yes.
+CUSTOMER [13:36]: So what you get today, both of these come under 1500, sir.
+AGENT [13:42]: 1418 and 1450.
+CUSTOMER [13:44]: Okay.
+AGENT [13:45]: We are taking a policy of 50 lakhs, so we have to pay 1450 rupees.
+CUSTOMER [13:49]: If we increase it by 10 lakhs, then my premium becomes 300 extra, sir.
+AGENT [13:55]: Okay.
+CUSTOMER [13:56]: So all 300, understand, sir.
+AGENT [13:58]: It becomes 1800, sir, in the second year.
+CUSTOMER [14:00]: Yes.
+AGENT [14:01]: So all 300 becomes extra.
+CUSTOMER [14:03]: Okay.
+AGENT [14:04]: Meaning if I cancel the policy.
+CUSTOMER [14:08]: Yes.
+AGENT [14:09]: And then if I take the policy from the budget, then there is no need to do anything medical, right?
+CUSTOMER [14:15]: There is no need to do anything medical and what you have paid, you will not have to pay the premium for this.
+AGENT [14:20]: Only your policy will be blocked and the amount you have paid will be converted into your application.
+CUSTOMER [14:25]: You will not even have to pay.
+AGENT [14:27]: Okay.
+CUSTOMER [14:28]: So will you have to mail it?
+AGENT [14:30]: Yes.
+CUSTOMER [14:31]: You will have to mail it for cancellation.
+AGENT [14:32]: Otherwise, we can process you for cancellation from here.
+CUSTOMER [14:34]: Sir, you can do your new application from here.
+AGENT [14:37]: Yes.
+CUSTOMER [14:38]: Yes.
+AGENT [14:39]: Otherwise, the details you have already told here, we will download the proposal form,
+CUSTOMER [14:43]: then you will see in it what your nominee is, the details you have mentioned, Aadhar details,
+AGENT [14:47]: pen details, everything will be done here.
+CUSTOMER [14:49]: Income proof will not be required, what will be required will be required only for Aadhar.
+AGENT [14:53]: Okay.
+CUSTOMER [14:54]: Otherwise, you have already mentioned all the details here.
+AGENT [14:59]: So will I have to mail the script like this or the policy will be blocked?
+CUSTOMER [15:04]: You have one minute.
+AGENT [15:06]: Yes.
+CUSTOMER [15:07]: Is this your number in this?
+AGENT [15:11]: Yes.
+CUSTOMER [15:12]: What is your mobile number?
+AGENT [15:17]: 7620
+CUSTOMER [15:19]: 7620
+AGENT [15:21]: 86
+CUSTOMER [15:23]: 86
+AGENT [15:24]: 1096
+CUSTOMER [15:28]: 1096
+AGENT [15:29]: 1096
+CUSTOMER [15:30]: 1096
+AGENT [15:31]: 1096
+CUSTOMER [15:32]: But to verify you will have to get the verification code from the policy market.
+AGENT [15:41]: Yes.
+CUSTOMER [15:42]: Tell me.
+AGENT [15:45]: 638125
+CUSTOMER [15:46]: 638125
+AGENT [15:47]: Yes.
+CUSTOMER [15:48]: Hello.
+AGENT [15:49]: Just like this, it is open on the line.
+CUSTOMER [15:50]: Here I am canceling your previous application from here.
+AGENT [15:51]: Check the verification code.
+CUSTOMER [15:52]: Yes.
+AGENT [16:49]: Yes.
+CUSTOMER [16:50]: Yes.
+AGENT [16:51]: Yes.
+CUSTOMER [16:52]: Yes.
+AGENT [17:07]: Yes.
+CUSTOMER [17:08]: Yes.
+AGENT [17:09]: Yes.
+CUSTOMER [17:10]: Yes.
+AGENT [17:11]: Okay.
+CUSTOMER [17:12]: Then one is the verification code.
+AGENT [17:13]: Okay.
+CUSTOMER [17:14]: Can you verify the code for me using this code?
+AGENT [17:15]: Yes.
+CUSTOMER [17:16]: Once the, I mean, I just felt.
+AGENT [17:18]: Yes?
+CUSTOMER [17:19]: That means there will be no problem after you confirm?
+AGENT [17:21]: No no no.
+CUSTOMER [17:22]: No problem is not going to happen.
+CUSTOMER [17:23]: What kind of a policy has it been written?
+CUSTOMER [17:24]: No no no no.
+AGENT [17:25]: Then, no no no.
+CUSTOMER [17:26]: That's it.
+AGENT [17:27]: No problem won't be there from now on that way Sir.
+CUSTOMER [17:28]: Yes because now your free period stands like this.
+AGENT [17:31]: Just like that, you are able to cancel at that time.
+CUSTOMER [17:32]: Sir?
+AGENT [17:33]: Then it is your free period Sir.
+CUSTOMER [17:34]: Yes.
+AGENT [17:35]: So that means, in that situation there was the general recovery period of one month.
+CUSTOMER [17:36]: Yes.
+AGENT [17:37]: I can cancel sir anytime in one month.
+CUSTOMER [17:38]: That means exactly where you have bear inside sir is the normal.
+AGENT [17:39]: So, I have paid at least Rs.1600, right?
+CUSTOMER [17:50]: Yes, as soon as you log in to the new application, we will block your policy. You will not have to pay now.
+AGENT [17:56]: Okay.
+CUSTOMER [17:58]: The amount you have paid will be converted. You will not have to pay now.
+AGENT [18:01]: Because the cancellation fee is still pending.
+CUSTOMER [18:07]: Okay.
+AGENT [18:09]: I was telling you that I can call you back.
+CUSTOMER [18:13]: Actually, this is an IVR call. You will not be able to connect with me again.
+AGENT [18:18]: That's why I was guiding you properly. I had already checked your subject here.
+CUSTOMER [18:22]: I was thinking about the mail.
+AGENT [18:28]: Okay.
+CUSTOMER [18:30]: As soon as you cancel, I will do the mail.
+CUSTOMER [18:39]: Why do you have to do the mail?
+CUSTOMER [18:41]: If we will do it from here, you will get the mail.
+AGENT [18:42]: You will not have to do the mail, sir.
+CUSTOMER [18:44]: I have already sent you the verification code.
+AGENT [18:47]: If we do it from here, you will not have to do the mail.
+CUSTOMER [18:51]: Okay.
+AGENT [18:52]: We will log in to the new application from here.
+CUSTOMER [18:55]: We will fill the details that you have already mentioned in the new application.
+AGENT [19:00]: If you get the mail from Bajaj, you can check everything on the mail.
+CUSTOMER [19:06]: Then you will get the option to block there.
+AGENT [19:09]: To block the policy.
+CUSTOMER [19:11]: If you want, I will guide you. You can do it from the website of Bajaj.
+AGENT [19:15]: You will come to the website of www.bajajlifeinsurance.com.
+CUSTOMER [19:19]: You have selected that thing in your policy.
+AGENT [19:21]: You will select that thing there and process it further.
+CUSTOMER [19:24]: I will guide you once.
+AGENT [19:25]: I will check everything in the captic.
+CUSTOMER [19:28]: Yes.
+AGENT [19:29]: Open your Google or Google Chrome.
+CUSTOMER [19:31]: Yes.
+AGENT [19:32]: Search there. www.bajajlifeinsurance.com.
+CUSTOMER [19:36]: Yes. I have done it.
+CUSTOMER [19:46]: Yes. What is coming now?
+CUSTOMER [19:48]: The term plan, name, etc.
+AGENT [19:51]: Look below. The most preferred plan is coming.
+CUSTOMER [19:54]: No. No. I have not logged in.
+AGENT [19:59]: No. No. Do not log in.
+CUSTOMER [20:01]: Below is the most preferred plan.
+AGENT [20:02]: In that, your ICQO term plan which you had taken.
+CUSTOMER [20:04]: Yes.
+AGENT [20:05]: You will see that term plan.
+CUSTOMER [20:06]: Yes.
+AGENT [20:07]: First, you must be seeing Subham Gill's photo on the display.
+CUSTOMER [20:09]: Yes.
+AGENT [20:10]: Yes.
+CUSTOMER [20:11]: Come down a little.
+AGENT [20:12]: You will see the most preferred plan.
+CUSTOMER [20:13]: Yes.
+AGENT [20:14]: In that, if you slide, you will see the ICQO term plan.
+CUSTOMER [20:17]: Yes.
+AGENT [20:18]: One minute.
+CUSTOMER [20:19]: Yes.
+AGENT [20:20]: Term insurance plan, saving plan. Is it in that?
+CUSTOMER [20:24]: No. Its insurance will come down.
+AGENT [20:26]: Yes.
+CUSTOMER [20:27]: Yes.
+AGENT [20:28]: You will see the most preferred plan, sir.
+CUSTOMER [20:33]: In that, the plans for your every goal.
+CUSTOMER [20:43]: No. No. One minute. What are you saying?
+CUSTOMER [20:46]: By now, the plans for every life goal.
+AGENT [20:51]: No. No. No. Come down a little.
+CUSTOMER [20:54]: Yes.
+CUSTOMER [20:55]: What is there?
+CUSTOMER [20:56]: Why Bajaj Life Eaters?
+AGENT [21:01]: Sir, you will come down a little.
+CUSTOMER [21:03]: Yes.
+AGENT [21:04]: So, the plan for your every life goal is coming.
+CUSTOMER [21:07]: Yes.
+AGENT [21:08]: Yes.
+CUSTOMER [21:09]: Yes.
+AGENT [21:10]: Slide a little there.
+CUSTOMER [21:11]: First, you will see Bajaj Life Eaters 2 below.
+AGENT [21:18]: Yes.
+CUSTOMER [21:19]: The plan for your every life goal will be seen below.
+AGENT [21:20]: You will see two or three plans.
+CUSTOMER [21:21]: Eaters will be seen.
+AGENT [21:22]: If you will slide, you will see Bajaj Life ICQO 2 in it.
+CUSTOMER [21:26]: Yes.
+AGENT [21:27]: Yes.
+CUSTOMER [21:28]: Yes.
+AGENT [21:29]: Yes.
+CUSTOMER [21:30]: Yes.
+AGENT [21:31]: Yes.
+CUSTOMER [21:32]: Wait a minute.
+CUSTOMER [21:33]: Why don't you repeat this number once?
+CUSTOMER [21:37]: Which one?
+AGENT [21:38]: It will be in a moment.
+CUSTOMER [21:39]: Yes.
+AGENT [21:40]: Repeat that number once.
+CUSTOMER [21:41]: 7620
+AGENT [21:42]: 7620
+CUSTOMER [21:43]: 861016
+AGENT [21:44]: 861096
+CUSTOMER [21:46]: ile
+AGENT [21:47]: 861096
+CUSTOMER [21:48]: yes.
+AGENT [21:49]: Wait a second.
+CUSTOMER [21:50]: Now, what are you getting there?
+AGENT [21:51]: It is going in the show.
+CUSTOMER [21:52]: You clicked is on Bina, isn't it?
+AGENT [21:58]: Yes.
+CUSTOMER [21:59]: Yes.
+AGENT [22:00]: Okay.
+CUSTOMER [22:01]: Now, it is coming a option to fill the details there.
+AGENT [22:02]: No.
+CUSTOMER [22:03]: Yes.
+AGENT [22:11]: Did you answer that question?
+CUSTOMER [22:12]: Yes.
+AGENT [22:13]: Oh!
+CUSTOMER [22:14]: It is boxed.
+AGENT [22:15]: Oh!
+CUSTOMER [22:16]: Click on buy now and you will get the option to fill up the details.
+AGENT [22:21]: Fill up your details there.
+CUSTOMER [22:24]: One minute is coming. It is not working.
+CUSTOMER [22:27]: Is it not working? Is it loading from the life goal?
+CUSTOMER [22:30]: Yes.
+AGENT [22:31]: Wait a minute. It will come.
+CUSTOMER [22:43]: They have issued a claim card.
+AGENT [22:47]: Sorry?
+CUSTOMER [22:49]: They have issued a claim card.
+AGENT [22:52]: They will come with the policy bond.
+CUSTOMER [22:58]: If you have a policy, it will come like this.
+AGENT [23:01]: If you have a hard copy, it will come like this.
+CUSTOMER [23:04]: It will change.
+CUSTOMER [23:06]: What happens?
+CUSTOMER [23:07]: This is a new policy, so everything will change.
+AGENT [23:09]: Yes, everything will change.
+CUSTOMER [23:11]: All your new details will come.
+AGENT [23:13]: You have already said that you have changed the limited payment.
+CUSTOMER [23:17]: Even if your policy bond comes now, you have not changed it yet.
+AGENT [23:21]: You have changed it after the policy issue.
+CUSTOMER [23:24]: If a new policy bond comes, then you will not get the one with changes.
+AGENT [23:26]: The previous bond will come.
+CUSTOMER [23:28]: Okay, but it will work according to this.
+CUSTOMER [23:31]: What are you saying?
+CUSTOMER [23:33]: Sorry?
+AGENT [23:34]: That means it will remain in the bond.
+CUSTOMER [23:37]: Yes, your previous, your previous details, the regular pay one, will remain the same details.
+AGENT [23:45]: If you get this new one now?
+CUSTOMER [23:47]: No, if you get this new one now, what you will feel now,
+AGENT [23:50]: then your new one will come, the police bond.
+CUSTOMER [23:53]: Okay.
+AGENT [23:54]: Yes.
+CUSTOMER [23:55]: If you get it changed, then it will not be able to be updated.
+CUSTOMER [23:57]: When you buy a new policy, all the details will be already updated, right sir?
+CUSTOMER [24:03]: Yes.
+AGENT [24:05]: I will not need to change anything later.
+CUSTOMER [24:07]: Then I will get the new policy bond.
+AGENT [24:09]: The one I have filled on my ad, I will get all the details.
+CUSTOMER [24:11]: There will be no changes.
+AGENT [24:13]: I will get to see what I have processed in the substitute.
+CUSTOMER [24:15]: Yes, here, recent photograph, address proof, income proof.
+CUSTOMER [24:20]: What else?
+CUSTOMER [24:22]: Up here, you are getting the calculated premium page.
+AGENT [24:24]: Yes.
+CUSTOMER [24:25]: One minute.
+AGENT [24:27]: Yes, the calculated premium page.
+CUSTOMER [24:29]: Yes, fill your details there.
+AGENT [24:33]: I have done it once.
+CUSTOMER [24:35]: When did you do it?
+AGENT [24:37]: One minute, I will do it again.
+CUSTOMER [24:48]: The date of birth has also not been changed there.
+AGENT [24:51]: Date of birth as per Aadhaar card, mention that.
+CUSTOMER [24:54]: Yes.
+AGENT [24:56]: Was there a separate date of birth in the previous policy, sir?
+CUSTOMER [24:59]: Yes, that is not according to Aadhaar card.
+AGENT [25:02]: It is not according to Aadhaar card?
+CUSTOMER [25:04]: No.
+CUSTOMER [25:05]: But why, sir?
+CUSTOMER [25:07]: They will have to change it.
+AGENT [25:10]: Then the new policy bond that you will get, your Aadhaar number will also not be mentioned there.
+CUSTOMER [25:17]: No, it will not be there.
+AGENT [25:20]: It is there.
+CUSTOMER [25:22]: But the date of birth will be mentioned in your old one, sir.
+AGENT [25:24]: Because your policy has started.
+CUSTOMER [25:26]: It has already been taken from printing dispatch.
+AGENT [25:28]: Yes.
+CUSTOMER [25:30]: So, the policy bond that you will get now,
+AGENT [25:32]: the details of your previous date of birth will only be visible on the policy bond, sir.
+CUSTOMER [25:37]: Okay.
+AGENT [25:38]: So, won't that be a problem?
+CUSTOMER [25:40]: It will be a problem, sir.
+AGENT [25:41]: Because your current date of birth will not be updated on the policy bond.
+CUSTOMER [25:44]: Yes.
+AGENT [25:45]: The date of birth of your Aadhaar card will not be mentioned.
+CUSTOMER [25:47]: You have already made two or three changes in one application.
+AGENT [25:50]: Still, two or three things are pending, sir.
+CUSTOMER [25:52]: Yes.
+AGENT [25:54]: So, I will tell you for this.
+CUSTOMER [25:56]: If you want, you can generate a new policy, sir.
+AGENT [25:59]: Based on your new update details.
+CUSTOMER [26:01]: But why didn't you mention the date of birth of your Aadhaar card, sir?
+AGENT [26:05]: No.
+CUSTOMER [26:09]: It is a bit of an issue of my budget.
+CUSTOMER [26:14]: What is the issue?
+CUSTOMER [26:16]: As you just said, your Aadhaar card is 2000, right?
+AGENT [26:19]: Yes, 2000.
+CUSTOMER [26:20]: It means that my Aadhaar card is 2001.
+AGENT [26:24]: It is 2001.
+CUSTOMER [26:26]: Yes.
+AGENT [26:27]: And the rest of the Aadhaar card is 2000.
+CUSTOMER [26:32]: So, it is 2000.
+AGENT [26:35]: And the rest of the Aadhaar card is 2001.
+CUSTOMER [26:37]: Yes.
+AGENT [26:38]: So, if we put 2001 on your Aadhaar card, then your premium will change here as well.
+CUSTOMER [26:43]: Just like you change your date of birth in the policy, sir.
+AGENT [26:46]: Yes.
+CUSTOMER [26:47]: Because the premium of the policy is based on age and income.
+AGENT [26:50]: Yes.
+CUSTOMER [26:51]: Your date of birth will change and then your premium will change there, sir.
+AGENT [26:54]: Yes.
+CUSTOMER [26:55]: Yes.
+AGENT [26:56]: Tell me your date of birth on your Aadhaar card, sir.
+CUSTOMER [26:59]: March 4, 2001.
+AGENT [27:01]: March 4, 2001.
+CUSTOMER [27:03]: Yes.
+AGENT [27:04]: So, now your age is 25, then your age will be 24.
+CUSTOMER [27:11]: Yes.
+AGENT [27:12]: So, your age will be 24.
+CUSTOMER [27:19]: So, the policy term will be, your earlier age was 45, now it will be 46.
+AGENT [27:25]: Yes.
+CUSTOMER [27:26]: Right?
+AGENT [27:27]: Yes.
+CUSTOMER [27:28]: Yes.
+AGENT [27:29]: The policy will be of 60 lakhs.
+CUSTOMER [27:37]: I will mention 50 lakhs now.
+AGENT [27:40]: And the premium term will be 15 years.
+CUSTOMER [27:45]: If the policy is 60, then it will be 4 years.
+AGENT [27:55]: We do a 60 lakhs policy, which is a monthly policy, by doing a premium for 15 years.
+CUSTOMER [28:00]: You have yes or no one.
+AGENT [28:21]: Yes.
+CUSTOMER [28:22]: So, in this case, your income is 1604 rupees from the second year.
+AGENT [28:24]: In that, you were spending approximately 1800 rupees from the second year.
+CUSTOMER [28:28]: Yes.
+AGENT [28:30]: In this, your income is, let me tell you.
+CUSTOMER [28:32]: Approximately 1800 rupees. Right.
+AGENT [28:40]: So, in this, your income is, if we see the age,
+CUSTOMER [28:42]: here, our premium is decreasing.
+AGENT [28:44]: Okay.
+CUSTOMER [28:46]: Because, the higher the age,
+AGENT [28:48]: the premium increases.
+CUSTOMER [28:50]: If you are mentioning your age here,
+AGENT [28:52]: your age is mentioned.
+CUSTOMER [28:54]: Now, you are showing 1670 rupees from the first year.
+AGENT [28:56]: Which you have taken.
+CUSTOMER [28:58]: 1670 from the first year.
+AGENT [29:00]: In which, if I update your age here and check,
+CUSTOMER [29:02]: which is your AYAT PRADHAAR card.
+AGENT [29:04]: Yes.
+CUSTOMER [29:06]: So, your income from the first year,
+AGENT [29:11]: is 1554 rupees from the first year.
+CUSTOMER [29:13]: And 1604 rupees from the second year.
+AGENT [29:15]: Which is 1670 rupees from the first year.
+CUSTOMER [29:17]: From the first year.
+AGENT [29:19]: In the current one.
+CUSTOMER [29:21]: There will be a lot of changes in this.
+AGENT [29:23]: For this, you would have been better
+CUSTOMER [29:25]: if you would have got it directly from Bajaj.
+AGENT [29:27]: And you would have cancelled your previous policy.
+CUSTOMER [29:29]: And now, you don't even have to pay the premium.
+AGENT [29:31]: Instead, you would have got the refund date here.
+CUSTOMER [29:33]: And you would have got the refund.
+AGENT [29:35]: Which you have already paid 1670 rupees.
+CUSTOMER [29:37]: Your over here is 1554 rupees.
+AGENT [29:41]: 1254 minus 1670.
+CUSTOMER [29:43]: You would have got the refund of 116 from this.
+AGENT [29:45]: This new policy would have started.
+CUSTOMER [29:47]: You would have got the refund of 116.
+AGENT [29:49]: Okay.
+CUSTOMER [29:51]: After starting this new policy.
+AGENT [29:53]: Yes.
+CUSTOMER [29:55]: This is 10 lakh rupees.
+AGENT [29:57]: Yes.
+CUSTOMER [29:59]: Now, I have told you that this is 60 lakhs.
+AGENT [30:01]: The 1554 premium that I have told you.
+CUSTOMER [30:03]: Yes.
+AGENT [30:05]: I have told you that this is for 60 lakhs.
+CUSTOMER [30:07]: Okay.
+AGENT [30:09]: The 60 lakhs that you have paid for 1670 rupees.
+CUSTOMER [30:11]: Yes.
+AGENT [30:13]: You would have got 1554 rupees monthly.
+CUSTOMER [30:15]: From the first year.
+CUSTOMER [30:17]: What if I did it for 50 lakhs?
+CUSTOMER [30:19]: Let me tell you for 50 lakhs.
+AGENT [30:21]: It would have been better if it was 50 lakhs.
+CUSTOMER [30:23]: Because you would have got to see a lot of difference.
+AGENT [30:25]: Let's go with another amount.
+CUSTOMER [30:27]: So, you would have got.
+AGENT [30:33]: 1387.
+CUSTOMER [30:43]: From the first year.
+AGENT [30:45]: From the second year.
+CUSTOMER [30:47]: From the second year.
+AGENT [30:49]: 1415.
+CUSTOMER [30:51]: 1415 rupees.
+AGENT [30:53]: For 15 years.
+CUSTOMER [30:55]: Yes. For 15 years.
+AGENT [30:57]: For 50 lakhs.
+CUSTOMER [30:59]: For the first year, you would have got 1387.
+AGENT [31:01]: So, you would have got 1400 rupees.
+CUSTOMER [31:03]: And for the second year, you would have got 1415.
+AGENT [31:05]: So, you would have got 1400 rupees.
+CUSTOMER [31:07]: Okay.
+AGENT [31:09]: So, you would have got 1300 rupees difference.
+CUSTOMER [31:11]: Yes.
+AGENT [31:13]: As per the details of Aadhaar,
+CUSTOMER [31:15]: whatever you were doing,
+AGENT [31:17]: you would have got everything correctly.
+CUSTOMER [31:22]: So, now,
+AGENT [31:24]: if it gets cancelled from here,
+CUSTOMER [31:26]: there won't be any issue, right?
+AGENT [31:28]: There won't be any issue, sir.
+CUSTOMER [31:30]: That's why you had connected the call
+AGENT [31:32]: directly to Bajaj.
+CUSTOMER [31:34]: Connect the call directly to Bajaj, sir.
+AGENT [31:36]: Yes. That's why I connected the call.
+CUSTOMER [31:38]: Yes.
+AGENT [31:40]: I mean, they also gave me the budget.
+CUSTOMER [31:42]: But what did you do?
+AGENT [31:44]: Because if you go through a third party,
+CUSTOMER [31:46]: then you will get to see the difference, right?
+AGENT [31:48]: If you go through a third party
+CUSTOMER [31:50]: and directly buy from Bajaj, sir.
+AGENT [31:52]: Yes.
+CUSTOMER [31:54]: It will be fine.
+AGENT [31:56]: So,
+CUSTOMER [31:58]: if you keep 50 lakhs,
+AGENT [32:00]: 50 lakhs will be correct.
+CUSTOMER [32:02]: That 1387 comes with 50 lakhs.
+AGENT [32:04]: And the rental cover in that,
+CUSTOMER [32:06]: you will get that, right?
+AGENT [32:08]: I have already added 50 lakhs in your cost.
+CUSTOMER [32:10]: Yes.
+AGENT [32:12]: And...
+CUSTOMER [32:14]: What you have paid earlier,
+AGENT [32:16]: you have paid 1670.
+CUSTOMER [32:18]: You have paid twice.
+AGENT [32:20]: Including both times.
+CUSTOMER [32:22]: 1670 minus 1387.
+AGENT [32:24]: Here, you will get to see the difference of 283.
+CUSTOMER [32:26]: On the contrary, you will get the return of 283.
+AGENT [32:28]: Yes.
+CUSTOMER [32:30]: 283?
+AGENT [32:32]: 283.
+CUSTOMER [32:34]: Yes.
+AGENT [32:37]: So, for that,
+CUSTOMER [32:39]: what is the cancellation?
+AGENT [32:41]: See, I have already changed the verification code for you.
+CUSTOMER [32:43]: Have you done it just now?
+AGENT [32:47]: Yes, I have done it just now.
+CUSTOMER [32:49]: Okay.
+AGENT [32:55]: 56...
+CUSTOMER [32:57]: 56...
+AGENT [32:59]: 0837.
+CUSTOMER [33:01]: 08...
+AGENT [33:03]: 37.
+CUSTOMER [33:28]: Wait a second.
+AGENT [33:30]: I have put a request for cancellation from here.
+CUSTOMER [33:32]: You will also get a call from the policy board.
+AGENT [33:34]: Your name is Vaibhav Chaudhary.
+CUSTOMER [33:36]: Normally, you had kept three people.
+AGENT [33:38]: Shivaji Chaudhary and Shivaji Baulal Chaudhary.
+CUSTOMER [33:40]: Yes.
+AGENT [33:42]: Right.
+CUSTOMER [33:44]: Right.
+CUSTOMER [33:51]: So, is it necessary to have a blood relation for nine months?
+CUSTOMER [33:53]: Yes.
+AGENT [33:55]: See, if you want, there will be a blood relation.
+CUSTOMER [33:57]: Otherwise, if there is no blood relation,
+AGENT [33:59]: I need a mail consent from you
+CUSTOMER [34:01]: that which family
+AGENT [34:03]: does to their brother's son.
+CUSTOMER [34:05]: Then, there,
+AGENT [34:07]: I need an email confirmation from you, sir.
+CUSTOMER [34:09]: Okay.
+AGENT [34:11]: Okay.
+CUSTOMER [34:13]: You can change it later also, right?
+AGENT [34:15]: Normally, you can change it at any time, sir.
+CUSTOMER [34:17]: Now, see,
+AGENT [34:19]: I have made my son a nominee.
+CUSTOMER [34:21]: I have taken the policy for 45 years.
+AGENT [34:23]: In 45 years,
+CUSTOMER [34:25]: what will happen?
+AGENT [34:27]: I don't know, sir.
+CUSTOMER [34:29]: If anything happens,
+AGENT [34:31]: if we keep it fixed,
+CUSTOMER [34:33]: then there will be no option to change it.
+AGENT [34:35]: So, normally, you can change it at any time.
+CUSTOMER [34:37]: Okay.
+AGENT [34:39]: Yes.
+CUSTOMER [34:41]: Do you have any other number, sir?
+AGENT [34:43]: No, this is the same.
+CUSTOMER [34:45]: This is the same number, right? Okay.
+AGENT [35:19]: Yes, Mulin, sir.
+CUSTOMER [35:21]: Yes.
+AGENT [35:23]: You have received a message of cancellation, right?
+CUSTOMER [35:25]: You have received a mail.
+AGENT [35:27]: Please check it.
+CUSTOMER [35:33]: Yes, I have received a mail.
+AGENT [35:35]: You have received it, right?
+CUSTOMER [35:37]: Yes.
+AGENT [35:39]: Please forward it to me.
+CUSTOMER [35:41]: I will tell you the mail id.
+AGENT [35:43]: Please forward it.
+CUSTOMER [35:45]: Within 4 to 12 days.
+AGENT [35:48]: Within 24 hours.
+CUSTOMER [35:50]: Within 24 hours.
+AGENT [35:52]: Expected resolution time
+CUSTOMER [35:54]: within 12 to
+AGENT [35:56]: 14 days.
+CUSTOMER [35:58]: Please forward it to me.
+AGENT [36:00]: I will tell you the mail id.
+CUSTOMER [36:02]: Okay.
+AGENT [36:04]: Tell me.
+CUSTOMER [36:06]: om.kumar
+AGENT [36:10]: om.kumar
+CUSTOMER [36:12]: kumar
+AGENT [36:14]: 01
+CUSTOMER [36:16]: One minute.
+AGENT [36:18]: kumar
+CUSTOMER [36:20]: 1
+AGENT [36:22]: at the rate
+CUSTOMER [36:27]: at the rate
+AGENT [36:29]: alpha
+CUSTOMER [36:31]: at the rate
+AGENT [36:33]: itf
+CUSTOMER [36:35]: itf
+AGENT [36:37]: dot
+CUSTOMER [36:39]: dot
+AGENT [36:41]: bazaj life dot com
+CUSTOMER [36:45]: b a j a j
+AGENT [36:47]: L Ife dot com
+CUSTOMER [36:49]: batch
+AGENT [36:53]: L I s.p.
+CUSTOMER [36:54]: L IFE life
+AGENT [36:55]: life dot com
+CUSTOMER [36:57]: form dot
+AGENT [36:57]: yes
+CUSTOMER [36:58]: address
+AGENT [36:59]: yes
+CUSTOMER [37:00]: itf
+AGENT [37:02]: yes
+CUSTOMER [37:02]: dot
+AGENT [37:03]: yes
+CUSTOMER [37:04]: bajajlife.com
+AGENT [37:06]: yes right
+CUSTOMER [37:07]: but there is no
+AGENT [37:09]: receipt
+CUSTOMER [37:09]: what is it
+AGENT [37:13]: forward
+CUSTOMER [37:14]: what is it
+AGENT [37:15]: forward
+CUSTOMER [37:15]: yes
+AGENT [37:16]: forward
+CUSTOMER [37:18]: but
+AGENT [37:18]: there is no
+CUSTOMER [37:19]: image
+AGENT [37:20]: no
+CUSTOMER [37:21]: actually
+AGENT [37:22]: image
+CUSTOMER [37:23]: is not
+AGENT [37:23]: available
+CUSTOMER [37:23]: official
+AGENT [37:24]: employee
+CUSTOMER [37:24]: all employees
+AGENT [37:25]: are working
+CUSTOMER [37:26]: click on it
+AGENT [37:27]: so you will not
+CUSTOMER [37:28]: see it
+AGENT [37:29]: yes
+CUSTOMER [37:30]: I have
+AGENT [37:31]: forwarded
+CUSTOMER [37:32]: it
+AGENT [37:33]: see what
+CUSTOMER [37:33]: is it
+AGENT [37:34]: you must have
+CUSTOMER [37:37]: received a
+AGENT [37:37]: message from
+CUSTOMER [37:38]: bajaj
+AGENT [37:38]: with image
+CUSTOMER [37:38]: you must have
+AGENT [37:39]: received a
+CUSTOMER [37:39]: message from
+AGENT [37:40]: official
+CUSTOMER [37:40]: bajaj
+AGENT [37:41]: yes
+CUSTOMER [37:43]: you have
+AGENT [37:44]: forwarded
+CUSTOMER [37:46]: it
+AGENT [37:46]: yes
+CUSTOMER [37:47]: mail
+AGENT [37:48]: mail
+CUSTOMER [37:49]: has come
+AGENT [37:49]: yes
+CUSTOMER [37:50]: now
+AGENT [37:52]: as you
+CUSTOMER [37:52]: came to
+AGENT [37:52]: your
+CUSTOMER [37:53]: website
+AGENT [37:54]: as you
+CUSTOMER [37:54]: chose your
+AGENT [37:54]: details
+CUSTOMER [37:55]: open
+AGENT [37:56]: page
+CUSTOMER [37:57]: in
+AGENT [37:58]: chrome
+CUSTOMER [37:58]: yes
+AGENT [37:59]: yes
+CUSTOMER [38:00]: yes
+AGENT [38:00]: select the
+CUSTOMER [38:01]: icq template
+AGENT [38:02]: and
+CUSTOMER [38:03]: your
+AGENT [38:03]: ad
+CUSTOMER [38:04]: data
+AGENT [38:04]: birth
+CUSTOMER [38:05]: adharkar
+AGENT [38:05]: mention
+CUSTOMER [38:06]: all
+AGENT [38:06]: correct
+CUSTOMER [38:07]: correct
+AGENT [38:08]: yes
+CUSTOMER [38:09]: so
+AGENT [38:10]: sorry
+CUSTOMER [38:11]: he is saying
+AGENT [38:12]: we are sorry
+CUSTOMER [38:13]: based on the
+AGENT [38:14]: information
+CUSTOMER [38:15]: so we are unable
+AGENT [38:16]: to request
+CUSTOMER [38:17]: product to you
+AGENT [38:18]: at moment
+CUSTOMER [38:19]: one minute
+AGENT [38:20]: I will send you
+CUSTOMER [38:21]: the link
+AGENT [38:22]: from here
+CUSTOMER [38:25]: the message
+AGENT [38:26]: from bajaj on whatsapp
+CUSTOMER [38:27]: write hi there
+AGENT [38:53]: ok send me the link
+CUSTOMER [38:54]: open it
+AGENT [38:55]: yes
+CUSTOMER [38:56]: ok
+AGENT [38:57]: ok
+CUSTOMER [38:58]: ok
+AGENT [38:59]: ok
+CUSTOMER [39:00]: I will send it to the
+AGENT [39:02]: same
+CUSTOMER [39:04]: in 2
+AGENT [39:05]: 1
+CUSTOMER [39:07]: 2
+AGENT [39:07]: 2
+CUSTOMER [39:08]: 3
+AGENT [39:09]: 1
+CUSTOMER [39:10]: 5
+AGENT [39:12]: ok
+CUSTOMER [39:13]: thank you
+AGENT [39:14]: ok
+CUSTOMER [39:15]: ok
+AGENT [39:16]: you have
+CUSTOMER [39:17]: no problem
+AGENT [39:19]: bye
+CUSTOMER [39:19]: thanks
+AGENT [39:21]: bye
+CUSTOMER [39:21]: bye
+AGENT [39:22]: bye
+CUSTOMER [39:22]: bye
+AGENT [39:23]: bye
+CUSTOMER [39:23]: bye
+AGENT [39:23]: bye
+CUSTOMER [39:23]: bye
+AGENT [39:24]: see you
+CUSTOMER [39:24]: next week
+AGENT [39:26]: by
+CUSTOMER [39:26]: next week
+AGENT [39:27]: bye
+CUSTOMER [39:28]: bye
+AGENT [39:28]: bye
+CUSTOMER [39:28]: bye
