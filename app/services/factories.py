@@ -29,7 +29,7 @@ import numpy as np
 from app.clustering.engine import ClusterEngine
 from app.clustering.incremental import IncrementalAssigner
 from app.models.enums import EdgeRelation, Intent, Language
-from app.models.schemas import ClusterRecord, ExtractedQuestion
+from app.models.schemas import CanonicalFAQ, ClusterRecord, ExtractedQuestion
 from app.services.canonicalization.faq import (
     ClusterContext,
     ClusterExample,
@@ -108,7 +108,7 @@ async def _fetch_cluster_context_for_canon(cluster_id: UUID) -> ClusterContext:
                 for r in examples_raw
                 if embeddings.get(r["id"])
             ]
-            centroid = list(cluster.get("centroid") or [])
+            centroid = _vec_to_list(cluster.get("centroid"))
             dominant_intents_raw = cluster.get("dominant_intents") or []
             dominant_intents = [
                 Intent(i) if isinstance(i, str) and i in Intent._value2member_map_ else Intent.OTHER
@@ -236,7 +236,7 @@ async def _fetch_active_clusters_async() -> list[ClusterRecord]:
             rows = glue.fetch_active_clusters(session)
             out: list[ClusterRecord] = []
             for r in rows:
-                centroid = list(r.get("centroid") or [])
+                centroid = _vec_to_list(r.get("centroid"))
                 intents = [
                     Intent(i)
                     if isinstance(i, str) and i in Intent._value2member_map_
@@ -371,14 +371,56 @@ async def _persist_batch_async(created, merged, dissolved) -> dict[str, int]:
 
 async def _fetch_cluster_examples_for_detail_async(
     cluster_id: UUID,
-) -> list[ExtractedQuestion]:
-    def _work() -> list[ExtractedQuestion]:
+) -> tuple[ClusterRecord, list[ExtractedQuestion], CanonicalFAQ | None]:
+    """Return ``(cluster_record, examples, canonical_faq)`` for a cluster.
+
+    Matches the ``FetchClusterExamples`` contract that ``ClusterEngine.cluster_detail``
+    unpacks. (Previously returned only the examples list, which unpacked into
+    "too many values to unpack (expected 3)".)
+    """
+    from sqlalchemy import text as _sql
+
+    def _work() -> tuple[ClusterRecord, list[ExtractedQuestion], CanonicalFAQ | None]:
         with sync_session() as session:
+            crow = (
+                session.execute(
+                    _sql(
+                        "SELECT id, label, canonical_question, centroid, "
+                        "dominant_language, dominant_intents, frequency, "
+                        "last_updated, is_stable FROM semantic_clusters "
+                        "WHERE id = :id"
+                    ),
+                    {"id": str(cluster_id)},
+                )
+                .mappings()
+                .first()
+            )
+            if crow is None:
+                raise LookupError(f"cluster {cluster_id} not found")
+            intents = [
+                Intent(i)
+                if isinstance(i, str) and i in Intent._value2member_map_
+                else Intent.OTHER
+                for i in (crow.get("dominant_intents") or [])
+            ]
+            record = ClusterRecord(
+                id=UUID(str(crow["id"])),
+                label=crow.get("label"),
+                canonical_question=crow.get("canonical_question"),
+                centroid=_vec_to_list(crow.get("centroid")),
+                dominant_language=_lang(crow.get("dominant_language")),
+                dominant_intents=intents,
+                frequency=int(crow.get("frequency") or 0),
+                last_updated=crow["last_updated"],
+                representative_question_ids=[],
+                is_stable=bool(crow.get("is_stable", True)),
+            )
+
             rows = glue.get_cluster_examples(session, cluster_id, limit=20)
-            out: list[ExtractedQuestion] = []
+            examples: list[ExtractedQuestion] = []
             for r in rows:
                 try:
-                    out.append(
+                    examples.append(
                         ExtractedQuestion(
                             id=UUID(str(r["id"])),
                             call_id=UUID(str(r["call_id"])),
@@ -400,7 +442,38 @@ async def _fetch_cluster_examples_for_detail_async(
                     )
                 except Exception:  # pragma: no cover — best-effort
                     continue
-            return out
+
+            frow = (
+                session.execute(
+                    _sql(
+                        "SELECT id, cluster_id, canonical_question, "
+                        "canonical_question_en, suggested_answer, language, "
+                        "confidence, version, created_at, updated_at "
+                        "FROM canonical_faqs WHERE cluster_id = :id "
+                        "ORDER BY version DESC LIMIT 1"
+                    ),
+                    {"id": str(cluster_id)},
+                )
+                .mappings()
+                .first()
+            )
+            faq = (
+                CanonicalFAQ(
+                    id=UUID(str(frow["id"])),
+                    cluster_id=UUID(str(frow["cluster_id"])),
+                    canonical_question=frow["canonical_question"],
+                    canonical_question_en=frow.get("canonical_question_en"),
+                    suggested_answer=frow.get("suggested_answer"),
+                    language=_lang(frow.get("language")),
+                    confidence=float(frow.get("confidence") or 0.0),
+                    version=int(frow.get("version") or 1),
+                    created_at=frow["created_at"],
+                    updated_at=frow["updated_at"],
+                )
+                if frow is not None
+                else None
+            )
+            return record, examples, faq
 
     return await asyncio.to_thread(_work)
 
@@ -438,6 +511,18 @@ def _first_intent(raw) -> Intent:
         if isinstance(r, str) and r in Intent._value2member_map_:
             return Intent(r)
     return Intent.OTHER
+
+
+def _vec_to_list(value) -> list[float]:
+    """Coerce a pgvector value (ndarray | list | None) to a plain float list.
+
+    With the pgvector codec registered, ``vector`` columns load as numpy
+    arrays, so the old ``list(value or [])`` idiom raised "truth value of an
+    array is ambiguous". This is None-safe and array-safe.
+    """
+    if value is None:
+        return []
+    return [float(x) for x in value]
 
 
 def _lang(raw) -> Language:

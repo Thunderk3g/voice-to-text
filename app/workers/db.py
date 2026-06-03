@@ -16,7 +16,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Iterator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -25,6 +25,21 @@ from app.core.config import get_settings
 
 _engine: Engine | None = None
 _SessionFactory: sessionmaker[Session] | None = None
+
+
+def _register_pgvector(dbapi_connection, _connection_record) -> None:
+    """Register the pgvector type adapters on each new psycopg connection.
+
+    The ORM columns use ``pgvector.sqlalchemy.Vector``, but the clustering code
+    reads/writes vectors via raw ``text()`` SQL, which bypasses that type. Without
+    this, psycopg returns a ``vector`` column as its text form ``"[0.1,0.2,...]"``
+    — and ``list(...)`` over that string yields a per-row-variable list of single
+    characters, crashing ``np.asarray`` with an "inhomogeneous shape" error.
+    Registering the adapter makes reads return ndarrays and writes accept lists.
+    """
+    from pgvector.psycopg import register_vector
+
+    register_vector(dbapi_connection)
 
 
 def _get_engine() -> Engine:
@@ -38,6 +53,7 @@ def _get_engine() -> Engine:
             max_overflow=10,
             future=True,
         )
+        event.listen(_engine, "connect", _register_pgvector)
         _SessionFactory = sessionmaker(
             bind=_engine, autoflush=False, autocommit=False, future=True
         )
