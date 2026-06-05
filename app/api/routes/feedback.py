@@ -69,8 +69,18 @@ async def submit_feedback(
             error_type="feedback_persist_failed",
         ) from exc
 
+    # The remediation tasks consume the feedback PAYLOAD, not the annotation
+    # row id. merge/split/relabel/reassign take the payload dict (they read
+    # payload["source_id"], payload["cluster_id"], ...); canonicalize
+    # (REGENERATE_FAQ) takes a bare cluster_id string. Passing annotation_id
+    # here made every task raise "'str' object has no attribute 'get'".
+    if payload.action == FeedbackAction.REGENERATE_FAQ:
+        task_arg: object = (payload.payload or {}).get("cluster_id")
+    else:
+        task_arg = payload.payload
+
     try:
-        task_id = send(task_name, annotation_id)
+        task_id = send(task_name, task_arg)
     except Exception as exc:  # noqa: BLE001
         logger.exception(
             "feedback_dispatch_failed",
