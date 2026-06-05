@@ -156,6 +156,12 @@ services:
       - "8080:8080"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    volumes:
+      # Share the HF model cache with the workers so the API's in-process e5
+      # query-embedder (used by POST /search) loads the already-downloaded
+      # model instead of re-fetching ~2GB on the first request — which
+      # otherwise blocks long enough for the frontend proxy to ECONNRESET.
+      - hf_cache:/app/.cache/huggingface
     command:
       - "sh"
       - "-c"
@@ -195,15 +201,52 @@ services:
     # the HF hub cache to /app/.cache/huggingface.
     volumes:
       - hf_cache:/app/.cache/huggingface
-    # Consume both the CPU queue and the embedding queue so embeddings run on
-    # CPU here when worker-gpu is not started (default on Mac / no-GPU hosts).
-    # concurrency=2: each forked worker that runs v2t.transcribe loads its OWN
-    # ~3GB copy of the Whisper large-v3 model (the model cache is per-process,
-    # not shared across prefork children). >2 concurrent large-v3 loads OOM the
-    # Docker VM. Keep this in step with the host RAM (≈3GB/worker for large-v3).
+    # FAST lane: does NOT consume `stt.heavy`, so slow local-Whisper jobs
+    # (routed there by start_call_pipeline) never land here — this worker stays
+    # available for fast cloud (Sarvam) transcription + the light downstream
+    # stages (extract/embed/cluster) and so is never starved. Also serves the
+    # embedding queue on no-GPU hosts.
     # -E emits task events so Flower's live view (active/processed tasks) works.
     command: ["celery", "-A", "app.workers.celery_app", "worker",
               "--loglevel=INFO", "-Q", "celery,gpu.heavy,default", "--concurrency=2", "-E"]
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$(hostname) >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # Celery worker — dedicated HEAVY lane for slow, CPU-bound local Whisper
+  # transcription (queue `stt.heavy`). Isolating Whisper here keeps it from
+  # saturating worker-cpu and starving fast cloud (Sarvam) transcription +
+  # the light downstream stages. It also consumes the fast lanes so it adds
+  # general throughput when no Whisper job is running. concurrency=2: each
+  # fork loads its own ~3GB large-v3 (cache is per-process); >2 risks OOM.
+  # -----------------------------------------------------------------------
+  worker-stt:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker-cpu
+    image: v2t/worker-cpu:local
+    container_name: v2t-worker-stt
+    restart: unless-stopped
+    <<: *app-env
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - hf_cache:/app/.cache/huggingface
+    command: ["celery", "-A", "app.workers.celery_app", "worker",
+              "--loglevel=INFO", "-Q", "stt.heavy,celery,gpu.heavy,default", "--concurrency=2", "-E"]
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$(hostname) >/dev/null 2>&1"]
       interval: 30s

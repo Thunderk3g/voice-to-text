@@ -26,6 +26,12 @@ from app.workers.db import sync_session
 
 log = get_logger("v2t.workers.pipelines")
 
+# Dedicated queue for slow, CPU-bound local Whisper transcription. Routing it
+# here (consumed by a separate worker) keeps it from saturating the default
+# lane and starving fast/cloud (Sarvam) transcription + the light downstream
+# stages (extract/embed/cluster). See docker-compose `worker-stt`.
+STT_HEAVY_QUEUE = "stt.heavy"
+
 
 def _is_transcript(call_id: str) -> bool:
     """Look up whether this call was registered as a pre-labeled transcript."""
@@ -43,6 +49,27 @@ def _is_transcript(call_id: str) -> bool:
     return bool(row["is_transcript"])
 
 
+def _stt_provider(call_id: str) -> str:
+    """Effective STT provider for routing: per-call metadata override, else the
+    global ``settings.stt_provider``. Mirrors ``make_transcriber``'s fallback so
+    routing and execution agree on which provider runs."""
+    with sync_session() as session:
+        row = (
+            session.execute(
+                text("SELECT metadata->>'stt_provider' AS p FROM calls WHERE id = :cid"),
+                {"cid": call_id},
+            )
+            .mappings()
+            .first()
+        )
+    provider = (row or {}).get("p")
+    if not provider:
+        from app.core.config import get_settings
+
+        provider = get_settings().stt_provider
+    return provider
+
+
 def start_call_pipeline(call_id: str | UUID) -> Any:
     """Dispatch the head stage for a single call.
 
@@ -56,14 +83,20 @@ def start_call_pipeline(call_id: str | UUID) -> Any:
     """
     cid = str(call_id)
     is_transcript = _is_transcript(cid)
+    queue: str | None = None
     if is_transcript:
         log.info("pipeline_dispatch_transcript", call_id=cid)
         first_stage = celery_app.signature("v2t._load_transcript", args=(cid,))
     else:
         log.info("pipeline_dispatch_audio", call_id=cid)
         first_stage = celery_app.signature("v2t.transcribe", args=(cid,))
+        # Slow CPU-bound local Whisper -> dedicated heavy lane. Fast cloud
+        # (Sarvam) transcription stays on the default lane so small jobs aren't
+        # starved behind multi-minute Whisper transcriptions.
+        if _stt_provider(cid) == "whisper":
+            queue = STT_HEAVY_QUEUE
 
-    result = first_stage.apply_async()
+    result = first_stage.apply_async(queue=queue) if queue else first_stage.apply_async()
     # Log WHERE the head was queued so a stuck pipeline is diagnosable: it must
     # land on a queue the worker consumes (default queue = "celery").
     log.info(
@@ -72,6 +105,7 @@ def start_call_pipeline(call_id: str | UUID) -> Any:
         is_transcript=is_transcript,
         head_task=first_stage.task,
         head_task_id=result.id,
+        queue=queue or celery_app.conf.task_default_queue,
         default_queue=celery_app.conf.task_default_queue,
     )
     return result
