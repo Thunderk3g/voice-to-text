@@ -230,34 +230,27 @@ def make_memory_graph_builder() -> MemoryGraphBuilder:
 # ---------------------------------------------------------------------------
 # Cluster engine — wires every callable.
 # ---------------------------------------------------------------------------
-async def _fetch_active_clusters_async() -> list[ClusterRecord]:
-    def _work() -> list[ClusterRecord]:
+async def _fetch_active_clusters_async() -> list[tuple[UUID, list[float], int]]:
+    """Active clusters as ``(cluster_id, centroid, member_count)`` tuples.
+
+    This is the ``FetchActiveClusters`` contract that BOTH consumers index
+    positionally — ``IncrementalAssigner.assign`` (``c[0]/c[1]/c[2]``) and
+    ``ClusterEngine.rebatch_all`` (``c[0]/c[1]``). Returning richer
+    ``ClusterRecord`` objects here broke that contract: once any cluster
+    existed, the cluster stage raised ``'ClusterRecord' object is not
+    subscriptable`` and the per-cluster canonicalize + memory-edge fan-out
+    never ran (0 FAQs, 0 memory edges)."""
+    def _work() -> list[tuple[UUID, list[float], int]]:
         with sync_session() as session:
             rows = glue.fetch_active_clusters(session)
-            out: list[ClusterRecord] = []
-            for r in rows:
-                centroid = _vec_to_list(r.get("centroid"))
-                intents = [
-                    Intent(i)
-                    if isinstance(i, str) and i in Intent._value2member_map_
-                    else Intent.OTHER
-                    for i in (r.get("dominant_intents") or [])
-                ]
-                out.append(
-                    ClusterRecord(
-                        id=UUID(str(r["id"])),
-                        label=r.get("label"),
-                        canonical_question=r.get("canonical_question"),
-                        centroid=centroid,
-                        dominant_language=_lang(r.get("dominant_language")),
-                        dominant_intents=intents,
-                        frequency=int(r.get("frequency") or 0),
-                        last_updated=r["last_updated"],
-                        representative_question_ids=[],
-                        is_stable=bool(r.get("is_stable", True)),
-                    )
+            return [
+                (
+                    UUID(str(r["id"])),
+                    _vec_to_list(r.get("centroid")),
+                    int(r.get("frequency") or 0),
                 )
-            return out
+                for r in rows
+            ]
 
     return await asyncio.to_thread(_work)
 

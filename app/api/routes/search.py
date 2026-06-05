@@ -79,7 +79,14 @@ async def search(
     if payload.intents:
         stmt = stmt.where(ExtractedQuestionORM.intent.in_(payload.intents))
 
-    stmt = stmt.order_by(distance_expr.asc()).limit(payload.top_k)
+    # Order by the *similarity label* (descending), NOT by re-emitting
+    # ``distance_expr`` in the ORDER BY. Reusing the same pgvector
+    # ``<=>`` expression object in both the SELECT and the ORDER BY makes
+    # asyncpg mis-bind the vector parameter and the query silently returns
+    # ZERO rows (the join itself yields rows fine). Ordering by the selected
+    # alias references the column once and is semantically identical
+    # (ascending distance == descending similarity).
+    stmt = stmt.order_by(similarity_expr.desc()).limit(payload.top_k)
 
     try:
         rows = (await db.execute(stmt)).all()

@@ -4,6 +4,7 @@ Unit tests for IncrementalAssigner threshold logic with stub callables.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 import numpy as np
@@ -92,6 +93,68 @@ async def test_cold_start_returns_empty():
     emb = _make_emb(np.ones(8, dtype=np.float32))
     members = await assigner.assign([emb])
     assert members == []
+
+
+@pytest.mark.asyncio
+async def test_factory_active_clusters_are_assigner_consumable(monkeypatch):
+    """Regression: `_fetch_active_clusters_async` must yield the tuple contract
+    `(cluster_id, centroid, count)` that `IncrementalAssigner.assign` indexes
+    (c[0]/c[1]/c[2]). It previously returned `ClusterRecord` objects, so once
+    any cluster existed the cluster stage crashed with
+    `'ClusterRecord' object is not subscriptable`, killing the per-cluster
+    canonicalize + memory-edge fan-out (0 FAQs, 0 memory edges)."""
+    import app.services.factories as fac
+
+    d = 8
+    rng = np.random.default_rng(7)
+    centroid = l2_normalize(rng.normal(size=(d,)).astype(np.float32))
+    cid = uuid4()
+    fake_rows = [
+        {
+            "id": str(cid),
+            "label": None,
+            "canonical_question": None,
+            "centroid": centroid.tolist(),
+            "dominant_language": "hi",
+            "dominant_intents": [],
+            "frequency": 5,
+            "last_updated": datetime.now(timezone.utc),
+            "is_stable": True,
+        }
+    ]
+
+    class _DummyCtx:
+        def __enter__(self):
+            return object()
+
+        def __exit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(fac, "sync_session", lambda: _DummyCtx())
+    monkeypatch.setattr(fac.glue, "fetch_active_clusters", lambda session: fake_rows)
+
+    clusters = await fac._fetch_active_clusters_async()
+    # The consumer indexes positionally — each item must be a 3-tuple.
+    assert all(len(c) == 3 for c in clusters)
+    cluster_id, vec, count = clusters[0]
+    assert cluster_id == cid
+    assert len(vec) == d
+    assert count == 5
+
+    # End-to-end: feed the real producer into the assigner (the path that
+    # raised TypeError before the fix). A near-centroid embedding must assign.
+    persisted: list = []
+
+    async def _persist(members, updates):
+        persisted.extend(members)
+
+    assigner = IncrementalAssigner(
+        fac._fetch_active_clusters_async, _persist, threshold=0.5
+    )
+    emb = _make_emb(centroid + 0.01 * rng.normal(size=(d,)).astype(np.float32))
+    members = await assigner.assign([emb])
+    assert len(members) == 1
+    assert members[0].cluster_id == cid
 
 
 @pytest.mark.asyncio

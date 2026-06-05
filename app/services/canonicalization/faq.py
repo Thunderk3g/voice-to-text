@@ -146,18 +146,21 @@ def _pick_central_examples(
         return []
     centroid = np.asarray(ctx.centroid, dtype=np.float32)
 
-    scored: list[tuple[float, int, ClusterExample]] = []
-    for ex in ctx.examples:
+    scored: list[tuple[float, int, int, ClusterExample]] = []
+    for i, ex in enumerate(ctx.examples):
         try:
             sim = cosine_sim(np.asarray(ex.embedding, dtype=np.float32), centroid)
         except Exception:  # noqa: BLE001 — bad vector → push to the back
             sim = -1.0
-        # Negative sim so we get descending order via stable sort; tiebreak
-        # by negative text length so longer text wins among equal sims.
-        scored.append((-sim, -len(ex.text), ex))
+        # Negative sim so we get descending order via stable sort; tiebreak by
+        # negative text length so longer text wins among equal sims. The
+        # enumerate index is a final, always-comparable tiebreaker so two fully
+        # tied entries never fall through to comparing ClusterExample (frozen,
+        # unorderable -> TypeError).
+        scored.append((-sim, -len(ex.text), i, ex))
 
     scored.sort()
-    return [tup[2] for tup in scored[:k]]
+    return [tup[3] for tup in scored[:k]]
 
 
 def _str_or_none(value: object) -> str | None:

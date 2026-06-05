@@ -145,7 +145,7 @@ def list_clusters(
 ) -> list[dict[str, Any]]:
     """List clusters (used by canonicalization sweep, analytics, etc.)."""
     sql = """
-        SELECT id, label, canonical_question, dominant_language,
+        SELECT id, label, canonical_question, centroid, dominant_language,
                dominant_intents, frequency, last_updated, is_stable
         FROM semantic_clusters
     """
