@@ -1,0 +1,7 @@
+AGENT [00:01]: Hello. Hello.
+CUSTOMER [00:03]: I am talking to Vaishali ji.
+AGENT [00:05]: Yes.
+CUSTOMER [00:06]: Ma'am, this is Nusman from Bajaj Life Insurance.
+AGENT [00:09]: Yes.
+CUSTOMER [00:11]: Ma'am, were you looking for a plan for yourself?
+AGENT [00:14]: No ma'am, no.

@@ -1,0 +1,7 @@
+AGENT [00:00]: Hello, very good evening, I am talking to Mr. Bhuma Darbar.
+CUSTOMER [00:08]: Hello.
+AGENT [00:10]: Yes.
+CUSTOMER [00:11]: Are you speaking?
+AGENT [00:13]: Yes.
+CUSTOMER [00:14]: Bajaj Lab Insurance Company is speaking to you.
+AGENT [00:18]: Investment policy.

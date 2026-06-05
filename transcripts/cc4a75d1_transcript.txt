@@ -1,0 +1,7 @@
+AGENT [00:03]: Hello. Very good afternoon. I'm talking to Ms. Jigisha Patel.
+CUSTOMER [00:08]: Yes.
+AGENT [00:09]: Hello, Jigisha ma'am. I'm Naneshwar Bhatgur, Bajaj Life Insurance Company, sir.
+CUSTOMER [00:13]: Yes.
+AGENT [00:14]: Yes. You visited our official website regarding investment policy. That's why I called you.
+CUSTOMER [00:20]: No, ma'am. I haven't visited at all.
+AGENT [00:23]: Okay.

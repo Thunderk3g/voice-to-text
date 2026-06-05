@@ -1,0 +1,6 @@
+AGENT [00:03]: Hello?
+CUSTOMER [00:04]: Hello?
+AGENT [00:05]: Yes?
+CUSTOMER [00:08]: Hello?
+AGENT [00:11]: Hmm.
+CUSTOMER [00:12]: Okay, that's all.

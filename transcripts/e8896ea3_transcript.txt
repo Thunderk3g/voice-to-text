@@ -1,0 +1,4 @@
+AGENT [00:00]: hello hello uh yes sir good evening central decide calling from budget life insurance company
+CUSTOMER [00:10]: yes actually this call is regarding life insurance policy sir
+AGENT [00:14]: okay yes are you looking for new life insurance policy i don't even i have more insurance
+CUSTOMER [00:21]: okay okay so i will update from my side thank you so this call is recorded and played 8985 thank you
