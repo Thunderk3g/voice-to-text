@@ -1,7 +1,7 @@
 """
 FastAPI dependency providers.
 
-Heavy, stateful clients (embedding model, Ollama HTTP client) are created
+Heavy, stateful clients (embedding model, Groq HTTP client) are created
 ONCE per process and reused across requests. The API process is async,
 so threading concerns for these singletons are handled inside the
 service classes themselves.
@@ -59,11 +59,11 @@ def get_embedding_service() -> "EmbeddingService":
 
 @lru_cache(maxsize=1)
 def get_llm_client():  # type: ignore[no-untyped-def]
-    """Process-wide Ollama (OpenAI-compatible) HTTP client."""
+    """Process-wide Groq (OpenAI-compatible) HTTP client."""
 
     from app.services.factories import get_llm_client as _factory
 
-    logger.info("ollama_client_init")
+    logger.info("groq_client_init")
     return _factory()
 
 
@@ -87,7 +87,7 @@ async def get_cluster_engine(
 async def get_memory_graph_builder(
     db: "AsyncSession" = Depends(get_db),  # noqa: ARG001 — same reason
 ) -> "MemoryGraphBuilder":
-    """Fully-wired MemoryGraphBuilder (Ollama + DB-backed neighbor fetch)."""
+    """Fully-wired MemoryGraphBuilder (Groq + DB-backed neighbor fetch)."""
     from app.services.factories import make_memory_graph_builder
 
     return make_memory_graph_builder()

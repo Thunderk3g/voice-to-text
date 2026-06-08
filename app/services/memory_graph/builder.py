@@ -30,7 +30,7 @@ from app.core.config import Settings, get_settings
 from app.models.enums import EdgeRelation, Intent, Language
 from app.models.schemas import MemoryEdge
 from app.prompts import RELATION_INFERENCE_SYSTEM, RELATION_INFERENCE_USER_TEMPLATE
-from app.services.llm.ollama_client import OllamaClient
+from app.services.llm.groq_client import GroqClient
 
 logger = structlog.get_logger(__name__)
 
@@ -69,7 +69,7 @@ class MemoryGraphBuilder:
 
     def __init__(
         self,
-        client: OllamaClient,
+        client: GroqClient,
         get_cluster_neighbors_async: GetNeighbors,
         list_clusters_async: ListClusters | None = None,
         settings: Settings | None = None,

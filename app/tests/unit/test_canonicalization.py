@@ -20,7 +20,7 @@ from app.services.canonicalization.faq import (
     ClusterExample,
     FAQCanonicalizer,
 )
-from app.services.llm.ollama_client import OllamaClient
+from app.services.llm.groq_client import GroqClient
 
 
 def _openai_chat_payload(content: str) -> dict:
@@ -102,7 +102,7 @@ async def test_canonicalize_happy_path() -> None:
     base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         router.post("/chat/completions").mock(side_effect=_route_handler)
-        client = OllamaClient()
+        client = GroqClient()
         canon = FAQCanonicalizer(client, get_examples)
         faq = await canon.canonicalize(cluster_id)
         await client.aclose()
@@ -147,7 +147,7 @@ async def test_canonicalize_caps_examples_at_twelve() -> None:
     base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         router.post("/chat/completions").mock(side_effect=_handler)
-        client = OllamaClient()
+        client = GroqClient()
         canon = FAQCanonicalizer(client, get_examples)
         faq = await canon.canonicalize(cluster_id)
         await client.aclose()
@@ -183,7 +183,7 @@ async def test_canonicalize_falls_back_to_top_example_when_llm_empty() -> None:
                 ),
             )
         )
-        client = OllamaClient()
+        client = GroqClient()
         canon = FAQCanonicalizer(client, get_examples)
         faq = await canon.canonicalize(cluster_id)
         await client.aclose()
@@ -207,7 +207,7 @@ async def test_canonicalize_raises_on_empty_cluster() -> None:
             examples=[],
         )
 
-    client = OllamaClient()
+    client = GroqClient()
     canon = FAQCanonicalizer(client, get_examples)
     with pytest.raises(ValueError):
         await canon.canonicalize(cluster_id)

@@ -29,7 +29,7 @@ import structlog
 from app.models.enums import Intent, Language
 from app.models.schemas import CanonicalFAQ
 from app.prompts import CANONICAL_FAQ_SYSTEM, CANONICAL_FAQ_USER_TEMPLATE
-from app.services.llm.ollama_client import OllamaClient
+from app.services.llm.groq_client import GroqClient
 from app.utils.vector import cosine_sim
 
 logger = structlog.get_logger(__name__)
@@ -68,7 +68,7 @@ class FAQCanonicalizer:
 
     def __init__(
         self,
-        client: OllamaClient,
+        client: GroqClient,
         get_cluster_examples_async: GetClusterExamples,
     ) -> None:
         self._client = client

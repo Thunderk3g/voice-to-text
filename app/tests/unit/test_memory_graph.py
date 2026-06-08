@@ -16,7 +16,7 @@ import respx
 
 from app.core.config import get_settings
 from app.models.enums import EdgeRelation, Intent, Language
-from app.services.llm.ollama_client import OllamaClient
+from app.services.llm.groq_client import GroqClient
 from app.services.memory_graph.builder import (
     ClusterSummary,
     MemoryGraphBuilder,
@@ -98,7 +98,7 @@ async def test_min_sim_filter_drops_low_neighbors() -> None:
                 ),
             )
         )
-        client = OllamaClient()
+        client = GroqClient()
         builder = MemoryGraphBuilder(client, get_neighbors)
         edges = await builder.build_edges_for(source_id)
         await client.aclose()
@@ -153,7 +153,7 @@ async def test_weight_threshold_drops_weak_relations() -> None:
     base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         router.post("/chat/completions").mock(side_effect=_handler)
-        client = OllamaClient()
+        client = GroqClient()
         builder = MemoryGraphBuilder(client, get_neighbors)
         edges = await builder.build_edges_for(source_id)
         await client.aclose()
@@ -199,7 +199,7 @@ async def test_caps_edges_at_max_per_cluster() -> None:
     base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         route = router.post("/chat/completions").mock(side_effect=_handler)
-        client = OllamaClient()
+        client = GroqClient()
         builder = MemoryGraphBuilder(client, get_neighbors)
         edges = await builder.build_edges_for(source_id)
         await client.aclose()
@@ -239,7 +239,7 @@ async def test_skips_self_loop() -> None:
                 ),
             )
         )
-        client = OllamaClient()
+        client = GroqClient()
         builder = MemoryGraphBuilder(client, get_neighbors)
         edges = await builder.build_edges_for(source_id)
         await client.aclose()
@@ -282,7 +282,7 @@ async def test_rebuild_global_fans_out() -> None:
                 ),
             )
         )
-        client = OllamaClient()
+        client = GroqClient()
         builder = MemoryGraphBuilder(client, get_neighbors, list_clusters)
         total = await builder.rebuild_global()
         await client.aclose()
@@ -295,7 +295,7 @@ async def test_rebuild_global_requires_list_callable() -> None:
     async def get_neighbors(cid, top_k):
         return []
 
-    client = OllamaClient()
+    client = GroqClient()
     builder = MemoryGraphBuilder(client, get_neighbors)
     with pytest.raises(RuntimeError):
         await builder.rebuild_global()

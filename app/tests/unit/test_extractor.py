@@ -1,7 +1,7 @@
 """Unit tests for ``app.services.extraction.llm_extractor.LLMExtractor``.
 
-The Ollama HTTP layer is mocked via ``respx`` so we exercise the real
-``OllamaClient`` retry / JSON-parse path.
+The Groq HTTP layer is mocked via ``respx`` so we exercise the real
+``GroqClient`` retry / JSON-parse path.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from app.core.config import get_settings
 from app.models.enums import Language, Speaker
 from app.models.schemas import UtteranceSchema
 from app.services.extraction.llm_extractor import LLMExtractor
-from app.services.llm.ollama_client import OllamaClient
+from app.services.llm.groq_client import GroqClient
 
 
 def _utt(call_id, text: str, speaker: Speaker = Speaker.CUSTOMER) -> UtteranceSchema:
@@ -86,7 +86,7 @@ async def test_extractor_parses_fenced_json_and_stamps_call_id() -> None:
         router.post("/chat/completions").mock(
             return_value=httpx.Response(200, json=_openai_chat_payload(fenced))
         )
-        client = OllamaClient()
+        client = GroqClient()
         extractor = LLMExtractor(client)
         result = await extractor.extract(call_id, utts)
         await client.aclose()
@@ -135,7 +135,7 @@ async def test_extractor_skips_malformed_questions() -> None:
                 200, json=_openai_chat_payload(json.dumps(payload))
             )
         )
-        client = OllamaClient()
+        client = GroqClient()
         extractor = LLMExtractor(client)
         result = await extractor.extract(call_id, utts)
         await client.aclose()
@@ -152,7 +152,7 @@ async def test_extractor_empty_utterances_short_circuits() -> None:
     base = settings.llm_base_url.rstrip("/")
     with respx.mock(base_url=base, assert_all_called=False) as router:
         route = router.post("/chat/completions")
-        client = OllamaClient()
+        client = GroqClient()
         extractor = LLMExtractor(client)
         result = await extractor.extract(call_id, [])
         await client.aclose()
@@ -177,7 +177,7 @@ async def test_extractor_handles_missing_questions_key() -> None:
                 json=_openai_chat_payload(json.dumps({"foo": "bar"})),
             )
         )
-        client = OllamaClient()
+        client = GroqClient()
         extractor = LLMExtractor(client)
         result = await extractor.extract(call_id, utts)
         await client.aclose()
