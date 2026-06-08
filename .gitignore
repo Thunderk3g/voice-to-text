@@ -54,6 +54,11 @@ data/sample_audio/*
 !data/sample_audio/.gitkeep
 data/sample_transcripts/.seeded.json
 
+# Raw dataset audio — bulk local-only corpus (thousands of mp3s, multi-GB).
+# Too large for the repo; kept out of git. The 17 already-tracked preprocessed
+# calls stay tracked (gitignore does not untrack existing files).
+dataset/*.mp3
+
 # Local model caches
 .cache/
 hf_cache/
