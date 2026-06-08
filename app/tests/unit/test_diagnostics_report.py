@@ -67,3 +67,23 @@ def test_render_markdown_contains_key_sections():
     assert "Coarse clusters" in md
     assert "c1" in md
     assert "Question vs. complaint" in md
+
+
+def test_render_markdown_no_coarse_cluster_message():
+    findings = assemble_findings(
+        [_obs("c1", size=4, intents=["a"] * 4)],  # small -> not coarse
+        qtype_distribution={"question": 4},
+        intent_distribution={"billing": 4},
+    )
+    md = render_markdown(findings)
+    assert "_No coarse clusters detected" in md
+
+
+def test_assemble_findings_dispersion_none_is_preserved():
+    obs = _obs("c1", size=20, intents=["a"] * 10 + ["b"] * 10, dispersion=None)
+    findings = assemble_findings(
+        [obs],
+        qtype_distribution={},
+        intent_distribution={},
+    )
+    assert findings["all_clusters"][0]["dispersion"] is None

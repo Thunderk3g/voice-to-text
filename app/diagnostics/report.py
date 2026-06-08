@@ -36,7 +36,7 @@ def flag_coarse(
     purity_threshold: float,
 ) -> bool:
     """A cluster is 'coarse' (distinct issues merged) when it is both large and
-    intent-impure: size >= threshold AND intent_purity < threshold.
+    intent-impure: size >= size_threshold AND intent_purity < purity_threshold.
     """
     return (
         obs.size >= size_threshold
