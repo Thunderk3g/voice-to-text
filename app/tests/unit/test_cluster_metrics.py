@@ -49,6 +49,7 @@ def test_size_stats_basic():
     assert stats["max"] == 100
     assert stats["min"] == 1
     assert stats["median"] == 3
+    assert stats["p90"] == 100  # ceiling nearest-rank: idx = ceil(0.9*5)-1 = 4
 
 
 def test_size_stats_empty():
@@ -71,3 +72,10 @@ def test_mean_cosine_distance_orthogonal_is_one():
 
 def test_mean_cosine_distance_empty_is_zero():
     assert mean_cosine_distance_to_centroid([], [1.0, 0.0]) == 0.0
+
+
+def test_mean_cosine_distance_zero_row_vector_treated_as_maximal():
+    # A zero-norm member is clamped to distance 1.0 (maximally divergent);
+    # averaged with an identical-to-centroid member (distance 0.0) -> 0.5.
+    result = mean_cosine_distance_to_centroid([[0.0, 0.0], [1.0, 0.0]], [1.0, 0.0])
+    assert result == pytest.approx(0.5, abs=1e-6)

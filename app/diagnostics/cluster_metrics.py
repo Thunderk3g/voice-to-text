@@ -43,7 +43,13 @@ def intent_purity(labels: Sequence[str]) -> float:
 
 
 def size_stats(sizes: Sequence[int]) -> dict[str, float]:
-    """Summary statistics over a list of cluster sizes."""
+    """Summary statistics over a list of cluster sizes.
+
+    ``p90`` uses the ceiling-based nearest-rank method (the 90th-percentile
+    value is an actual element of the input, not interpolated). ``mean`` is
+    rounded to 2 decimal places for display; all other values are exact.
+    Empty input returns count/min/max/p90 = 0 and mean/median = 0.0.
+    """
     if not sizes:
         return {"count": 0, "min": 0, "max": 0, "mean": 0.0, "median": 0.0, "p90": 0}
     ordered = sorted(sizes)
@@ -53,7 +59,7 @@ def size_stats(sizes: Sequence[int]) -> dict[str, float]:
         "min": ordered[0],
         "max": ordered[-1],
         "mean": round(sum(ordered) / len(ordered), 2),
-        "median": median(ordered),
+        "median": float(median(ordered)),
         "p90": ordered[p90_idx],
     }
 
@@ -65,7 +71,11 @@ def mean_cosine_distance_to_centroid(
     """Mean cosine distance (1 - cosine similarity) of members to the centroid.
 
     Higher = members are more spread out = the cluster is internally diverse.
-    Empty ``vectors`` returns 0.0.
+    Empty ``vectors`` returns 0.0. A zero-norm member vector is treated as
+    maximally divergent (distance 1.0 from any centroid).
+
+    Inputs are assumed finite: the caller pulls vectors from pgvector, which
+    stores finite floats. NaN/inf inputs are not guarded and will propagate.
     """
     if len(vectors) == 0:
         return 0.0
