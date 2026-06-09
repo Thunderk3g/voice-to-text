@@ -8,10 +8,12 @@
 # STT:        Sarvam.ai (hosted, Indic-accurate) OR open-source faster-whisper
 #             on CPU — selected by STT_PROVIDER. (No Servo AI dependency.)
 # Embeddings: local multilingual-e5-large on CPU by default (EMBEDDING_PROVIDER
-#             =local); the CPU worker handles the embedding queue.
-# worker-gpu: opt-in only (CUDA). It is behind the "gpu" compose profile and
-#             does NOT start by default — Mac can't pass through the GPU.
-#             NVIDIA/Linux users enable it with: docker compose --profile gpu up
+#             =local). The dedicated `worker-embed` service consumes the
+#             embedding queue (gpu.heavy) on CPU, isolated from worker-cpu.
+# worker-gpu: opt-in only (CUDA) — a GPU alternative to worker-embed. Behind the
+#             "gpu" compose profile, does NOT start by default (Mac can't pass
+#             through the GPU). Enable with: docker compose --profile gpu up
+#             (scale worker-embed to 0 if you want GPU-only embedding).
 #
 # Usage:
 #   cp .env.opensource .env   # or: cp .env.sarvam .env   (set SARVAM_API_KEY)
@@ -204,11 +206,13 @@ services:
     # FAST lane: does NOT consume `stt.heavy`, so slow local-Whisper jobs
     # (routed there by start_call_pipeline) never land here — this worker stays
     # available for fast cloud (Sarvam) transcription + the light downstream
-    # stages (extract/embed/cluster) and so is never starved. Also serves the
-    # embedding queue on no-GPU hosts.
+    # stages (extract/cluster/canon) and so is never starved. The heavy
+    # embedding queue (`gpu.heavy`) is intentionally NOT consumed here — it is
+    # isolated on the dedicated `worker-embed` service so the ~2GB e5 model
+    # load never competes with these light stages.
     # -E emits task events so Flower's live view (active/processed tasks) works.
     command: ["celery", "-A", "app.workers.celery_app", "worker",
-              "--loglevel=INFO", "-Q", "celery,gpu.heavy,default", "--concurrency=2", "-E"]
+              "--loglevel=INFO", "-Q", "celery,default", "--concurrency=2", "-E"]
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$(hostname) >/dev/null 2>&1"]
       interval: 30s
@@ -246,7 +250,7 @@ services:
     volumes:
       - hf_cache:/app/.cache/huggingface
     command: ["celery", "-A", "app.workers.celery_app", "worker",
-              "--loglevel=INFO", "-Q", "stt.heavy,celery,gpu.heavy,default", "--concurrency=2", "-E"]
+              "--loglevel=INFO", "-Q", "stt.heavy,celery,default", "--concurrency=2", "-E"]
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$(hostname) >/dev/null 2>&1"]
       interval: 30s
@@ -257,8 +261,51 @@ services:
       - v2t-net
 
   # -----------------------------------------------------------------------
-  # Celery worker — GPU queue (embedding). The only GPU consumer in
-  # the worker fleet now that STT/diarization are out of scope.
+  # Celery worker — dedicated EMBEDDING lane (queue `gpu.heavy`) on CPU.
+  # This is the embedding consumer on no-GPU hosts. Isolating the ~2GB
+  # multilingual-e5-large load here (concurrency=1 → one model copy) keeps it
+  # from competing with the light extract/cluster/canon stages on worker-cpu.
+  # Reuses the worker-cpu image (same pinned torch/sentence-transformers).
+  # When the opt-in `worker-gpu` (profile "gpu") is enabled it ALSO consumes
+  # `gpu.heavy`; to embed on GPU only, scale this service to 0.
+  # -----------------------------------------------------------------------
+  worker-embed:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker-cpu
+    image: v2t/worker-cpu:local
+    container_name: v2t-worker-embed
+    restart: unless-stopped
+    <<: *app-env
+    environment:
+      # Force CPU regardless of the .env default so this worker never tries to
+      # load the model on a GPU that isn't present.
+      EMBEDDING_DEVICE: cpu
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - hf_cache:/app/.cache/huggingface
+    command: ["celery", "-A", "app.workers.celery_app", "worker",
+              "--loglevel=INFO", "-Q", "gpu.heavy", "--concurrency=1", "-E"]
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$(hostname) >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    networks:
+      - v2t-net
+
+  # -----------------------------------------------------------------------
+  # Celery worker — GPU queue (embedding). Opt-in alternative to worker-embed
+  # for hosts with an NVIDIA GPU; consumes the same `gpu.heavy` queue.
   # -----------------------------------------------------------------------
   worker-gpu:
     build:
@@ -273,6 +320,10 @@ services:
     # Single merge key: combine env-file + GPU deploy reservation. Two separate
     # `<<:` keys in one mapping is a duplicate-key error in strict YAML parsers.
     <<: [*app-env, *gpu-deploy]
+    environment:
+      # Pin to CUDA so this worker loads on the GPU even though the shared .env
+      # defaults EMBEDDING_DEVICE=cpu for the no-GPU worker-embed path.
+      EMBEDDING_DEVICE: cuda
     depends_on:
       api:
         condition: service_healthy
