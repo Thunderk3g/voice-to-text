@@ -1,8 +1,8 @@
 """
-Unit tests: bare-list recovery in the Ollama client.
+Unit tests: bare-list recovery in the Groq client.
 
-Local models (e.g. Gemma) sometimes return the inner array directly instead
-of the ``{"questions": [...]}`` object the schema asks for. ``_sole_array_property``
+Some models sometimes return the inner array directly instead of the
+``{"questions": [...]}`` object the schema asks for. ``_sole_array_property``
 lets ``chat_json`` recover by wrapping the list under the schema's single
 array property — but only when that's unambiguous.
 """
@@ -10,7 +10,7 @@ array property — but only when that's unambiguous.
 from __future__ import annotations
 
 from app.prompts.extraction_schema import EXTRACTION_RESPONSE_SCHEMA
-from app.services.llm.ollama_client import _sole_array_property
+from app.services.llm.groq_client import _sole_array_property
 
 
 def test_extraction_schema_sole_array_property_is_questions() -> None:

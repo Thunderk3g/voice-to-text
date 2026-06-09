@@ -372,15 +372,22 @@ Smoke-test result after the fix:
 
 | Service | Skipped because | Impact |
 |---|---|---|
-| `worker-gpu` | Docker Desktop on this host has no NVIDIA runtime | The `gpu.heavy` Celery queue (embeddings) has no consumer. Ingest -> extract works, but embedding -> clustering -> FAQ stalls. |
-| `ollama` / `ollama-init` | `.env` points the LLM at Groq, not Ollama | None. Dead code in this configuration. |
+| `worker-gpu` | Docker Desktop on this host has no NVIDIA runtime | None for embeddings — the dedicated `worker-embed` service consumes the `gpu.heavy` queue on CPU (see below). `worker-gpu` is now an opt-in GPU alternative, behind the `gpu` compose profile. |
+| `ollama` / `ollama-init` | `.env` points the LLM at Groq, not Ollama | None. Already removed from `docker-compose.yml`; only a stale header comment remains. |
 
-### To unblock embeddings
+### Embeddings on CPU (resolved)
 
-Two options:
+The `gpu.heavy` (embedding) queue is consumed by the **`worker-embed`** service:
+it reuses the `Dockerfile.worker-cpu` image (which already pins `torch==2.4.1` +
+`sentence-transformers==3.3.1`), runs `-Q gpu.heavy --concurrency=1`, and pins
+`EMBEDDING_DEVICE=cpu`. `.env` also defaults `EMBEDDING_DEVICE=cpu`. So
+`ingest -> extract -> embed -> cluster -> FAQ` runs end-to-end with no GPU.
 
-1. **Install NVIDIA Container Toolkit** on Docker Desktop and bring `worker-gpu` up.
-2. **Add a CPU embedding worker** — clone `Dockerfile.worker-gpu` as `Dockerfile.worker-embed-cpu`, drop the CUDA base, set `EMBEDDING_DEVICE=cpu`, listen on the same `gpu.heavy` queue. Slower but functional.
+To embed on a GPU instead: `docker compose --profile gpu up` (brings up
+`worker-gpu`, which pins `EMBEDDING_DEVICE=cuda`) and optionally
+`docker compose up -d --scale worker-embed=0` so the two don't both consume the
+queue. Previously this section recommended building a CPU worker from scratch —
+that's now done as `worker-embed` in compose.
 
 ---
 

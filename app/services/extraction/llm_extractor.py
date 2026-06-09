@@ -3,7 +3,7 @@ LLM-driven customer-question extractor.
 
 Walks a call transcript (list of ``UtteranceSchema``), chunks it on turn
 boundaries (~3500 tokens / ~12k chars), and runs each chunk through the
-Ollama JSON-mode chat completion using the prompts in
+Groq JSON-mode chat completion using the prompts in
 ``app.prompts.extraction``.
 
 Each returned question dict is validated against ``ExtractedQuestion``;
@@ -31,7 +31,7 @@ from app.prompts import EXTRACTION_USER_TEMPLATE
 from app.prompts.extraction import build_transcript_block
 from app.prompts.extraction_lang import detect_dominant_language, system_prompt_for
 from app.prompts.extraction_schema import EXTRACTION_RESPONSE_SCHEMA
-from app.services.llm.ollama_client import OllamaClient
+from app.services.llm.groq_client import GroqClient
 from app.utils.lang import detect_language
 
 logger = structlog.get_logger(__name__)
@@ -45,7 +45,7 @@ _CHUNK_CHAR_BUDGET = 12_000
 class LLMExtractor:
     """Extract structured customer questions from a diarized call."""
 
-    def __init__(self, client: OllamaClient) -> None:
+    def __init__(self, client: GroqClient) -> None:
         self._client = client
 
     async def extract(
@@ -186,8 +186,8 @@ def _coerce_questions(
             extraction_processed.labels(status="invalid").inc()
             continue
 
-        # Local models (e.g. Gemma via Ollama) don't reliably honor the strict
-        # schema: they use alias keys (query/question/...) and omit language.
+        # Some models don't reliably honor the strict schema: they use alias
+        # keys (query/question/...) and omit language.
         # Be liberal in what we accept so usable questions aren't dropped.
         if not item.get("raw_text"):
             for _alt in ("query", "question", "text", "utterance", "normalized_text"):

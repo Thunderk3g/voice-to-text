@@ -4,7 +4,7 @@ JSON-schema for the customer-question extraction LLM call.
 This mirrors the shape consumed by ``LLMExtractor._coerce_questions`` and the
 ``ExtractedQuestion`` Pydantic model. The Intent / Language / QuestionType
 enums are inlined as ``enum`` lists so providers that honor strict JSON-schema
-mode (Groq, OpenAI, Ollama 0.5+) can reject malformed outputs before they
+mode (Groq, OpenAI) can reject malformed outputs before they
 reach our Pydantic validator.
 
 Keep this in sync with:

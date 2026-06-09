@@ -37,7 +37,7 @@ from app.services.canonicalization.faq import (
 )
 from app.services.embedding.e5 import EmbeddingService
 from app.services.extraction.llm_extractor import LLMExtractor
-from app.services.llm.ollama_client import OllamaClient
+from app.services.llm.groq_client import GroqClient
 from app.services.memory_graph.builder import (
     ClusterSummary,
     MemoryGraphBuilder,
@@ -48,17 +48,17 @@ from app.workers.db import sync_session
 
 
 # ---------------------------------------------------------------------------
-# Shared singletons. The OllamaClient is HTTP-only so cheap to keep around;
+# Shared singletons. The GroqClient is HTTP-only so cheap to keep around;
 # the EmbeddingService loads ~2 GB of model so we very much want to share it.
 # ---------------------------------------------------------------------------
-_llm_client: OllamaClient | None = None
+_llm_client: GroqClient | None = None
 _embedding_service: EmbeddingService | None = None
 
 
-def get_llm_client() -> OllamaClient:
+def get_llm_client() -> GroqClient:
     global _llm_client
     if _llm_client is None:
-        _llm_client = OllamaClient()
+        _llm_client = GroqClient()
     return _llm_client
 
 
@@ -70,7 +70,7 @@ def get_embedding_service() -> EmbeddingService:
 
 
 # ---------------------------------------------------------------------------
-# LLM extractor — only needs the Ollama client.
+# LLM extractor — only needs the Groq client.
 # ---------------------------------------------------------------------------
 def make_llm_extractor() -> LLMExtractor:
     return LLMExtractor(get_llm_client())

@@ -84,10 +84,10 @@ class Settings(BaseSettings):
     whisper_compute_type: str = "int8"
     whisper_language: str = ""  # empty string = auto-detect
 
-    # ---- LLM (OpenAI-compatible — Groq / Ollama / vLLM / OpenAI) ----
-    llm_base_url: str = "http://host.docker.internal:11434/v1"
-    llm_api_key: SecretStr = SecretStr("ollama")  # Ollama ignores; placeholder
-    llm_model: str = "gemma4:latest"
+    # ---- LLM (OpenAI-compatible — Groq / vLLM / OpenAI) ----
+    llm_base_url: str = "https://api.groq.com/openai/v1/"
+    llm_api_key: SecretStr = SecretStr("")  # set via LLM_API_KEY in .env
+    llm_model: str = "openai/gpt-oss-120b"
     llm_max_tokens: int = 1024
     llm_temperature: float = 0.1
     llm_request_timeout_s: int = 180

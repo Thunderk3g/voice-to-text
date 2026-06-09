@@ -1,22 +1,24 @@
 """
-Async Ollama (OpenAI-compatible) chat client used by every LLM-driven service.
+Async Groq (OpenAI-compatible) chat client used by every LLM-driven service.
 
-Ollama exposes the OpenAI chat-completions API at ``${LLM_BASE_URL}/chat/completions``
-(default ``http://ollama:11434/v1``). We wrap ``openai.AsyncOpenAI`` so that:
+Groq exposes the OpenAI chat-completions API at ``${LLM_BASE_URL}/chat/completions``
+(default ``https://api.groq.com/openai/v1/``). We wrap ``openai.AsyncOpenAI`` so that:
 
   * All callers go through a single retry / timeout surface.
   * JSON-mode (``response_format={"type": "json_object"}``) is requested.
-    Ollama accepts this on its OpenAI-compat endpoint and translates it to
-    its native ``format: "json"`` constraint. We *also* defensively run the
-    raw content back through ``parse_llm_json`` — some Ollama builds wrap
+    Groq accepts this on its OpenAI-compat endpoint. We *also* defensively
+    run the raw content back through ``parse_llm_json`` — some models wrap
     the payload in fences or trail prose.
   * Transient HTTP / network errors are retried with exponential backoff
     via ``tenacity``.
 
+The wrapper is provider-neutral (it only speaks the OpenAI ``/v1`` dialect),
+so pointing ``LLM_BASE_URL`` at any compatible endpoint works unchanged.
+
 Public API:
 
-  * ``OllamaClient.chat_json(system, user, ...)`` -> dict
-  * ``OllamaClient.chat_text(system, user, ...)`` -> str
+  * ``GroqClient.chat_json(system, user, ...)`` -> dict
+  * ``GroqClient.chat_text(system, user, ...)`` -> str
 """
 
 from __future__ import annotations
@@ -71,8 +73,8 @@ _RETRY_EXC: tuple[type[BaseException], ...] = (
 )
 
 
-class OllamaClient:
-    """Thin async wrapper around ``AsyncOpenAI`` pointing at the Ollama server."""
+class GroqClient:
+    """Thin async wrapper around ``AsyncOpenAI`` pointing at the Groq endpoint."""
 
     def __init__(
         self,
@@ -120,8 +122,8 @@ class OllamaClient:
 
         When ``json_schema`` is provided we ask the model for strict
         JSON-schema-validated output (supported by Groq's OpenAI-compatible
-        endpoint and by Ollama 0.5+). Without a schema we fall back to the
-        looser ``json_object`` mode, which most providers tolerate.
+        endpoint). Without a schema we fall back to the looser
+        ``json_object`` mode, which most providers tolerate.
 
         Retries transient errors *and* JSON-parse failures so that a model
         glitch (fences, trailing prose) gets a second chance on a fresh
@@ -159,35 +161,35 @@ class OllamaClient:
                     parsed = parse_llm_json(content)
                 except LLMJsonError:
                     logger.warning(
-                        "ollama.json_parse_failed",
+                        "groq.json_parse_failed",
                         attempt=attempt.retry_state.attempt_number,
                         snippet=content[:200],
                     )
                     raise
 
                 if isinstance(parsed, list):
-                    # Some local models (e.g. Gemma via Ollama) ignore the
-                    # object wrapper and return the inner array directly. If the
-                    # schema declares a single top-level array property, wrap the
-                    # list under that key so callers get the expected object.
+                    # Some models ignore the object wrapper and return the
+                    # inner array directly. If the schema declares a single
+                    # top-level array property, wrap the list under that key
+                    # so callers get the expected object.
                     wrap_key = _sole_array_property(json_schema)
                     if wrap_key is not None:
                         logger.info(
-                            "ollama.wrapped_bare_list",
+                            "groq.wrapped_bare_list",
                             key=wrap_key,
                             n_items=len(parsed),
                         )
                         return {wrap_key: parsed}
 
                 if not isinstance(parsed, dict):
-                    logger.warning("ollama.json_not_object", kind=type(parsed).__name__)
+                    logger.warning("groq.json_not_object", kind=type(parsed).__name__)
                     raise LLMJsonError(
                         f"expected JSON object, got {type(parsed).__name__}"
                     )
                 return parsed
 
         # Unreachable — AsyncRetrying re-raises on exhaustion.
-        raise LLMJsonError("Ollama chat_json exhausted retries")
+        raise LLMJsonError("Groq chat_json exhausted retries")
 
     async def chat_text(
         self,
@@ -216,7 +218,7 @@ class OllamaClient:
                     extra=extra,
                 )
 
-        raise RuntimeError("Ollama chat_text exhausted retries")
+        raise RuntimeError("Groq chat_text exhausted retries")
 
     async def aclose(self) -> None:
         """Release underlying HTTP resources."""
@@ -254,7 +256,7 @@ class OllamaClient:
             kwargs.update(extra)
 
         logger.debug(
-            "ollama.request",
+            "groq.request",
             model=kwargs["model"],
             temperature=kwargs["temperature"],
             max_tokens=kwargs["max_tokens"],
@@ -263,9 +265,9 @@ class OllamaClient:
 
         resp = await self._client.chat.completions.create(**kwargs)
         if not resp.choices:
-            raise LLMJsonError("Ollama returned no choices")
+            raise LLMJsonError("Groq returned no choices")
 
         content = resp.choices[0].message.content or ""
         if not content.strip():
-            raise LLMJsonError("Ollama returned empty content")
+            raise LLMJsonError("Groq returned empty content")
         return content

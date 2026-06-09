@@ -1,5 +1,5 @@
 """LLM client wrappers."""
 
-from app.services.llm.ollama_client import OllamaClient
+from app.services.llm.groq_client import GroqClient
 
-__all__ = ["OllamaClient"]
+__all__ = ["GroqClient"]

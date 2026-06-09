@@ -7,7 +7,7 @@ Run all benchmarks::
 
 Skip individual stages::
 
-    python -m app.scripts.benchmark --skip-clustering --skip-ollama
+    python -m app.scripts.benchmark --skip-clustering --skip-groq
 
 The benchmarks are intentionally synthetic so they don't depend on a fully
 populated database — they exercise just the components whose performance we
@@ -221,20 +221,20 @@ async def bench_pgvector_search(
 
 
 # ---------------------------------------------------------------------------
-# Bench 4 — Ollama extraction round-trip
+# Bench 4 — Groq extraction round-trip
 # ---------------------------------------------------------------------------
-async def bench_ollama_extraction(call_path: str | None = None) -> BenchResult:
-    """Run a JSON-mode extraction against Ollama using a real sample transcript.
+async def bench_groq_extraction(call_path: str | None = None) -> BenchResult:
+    """Run a JSON-mode extraction against Groq using a real sample transcript.
 
-    Skips cleanly if Ollama is unreachable.
+    Skips cleanly if Groq is unreachable.
     """
     from app.prompts import EXTRACTION_SYSTEM, EXTRACTION_USER_TEMPLATE
-    from app.services.llm.ollama_client import OllamaClient
+    from app.services.llm.groq_client import GroqClient
 
     sample_path = Path(call_path or "data/sample_transcripts/call_001_hindi.json")
     if not sample_path.exists():
         return BenchResult(
-            name="ollama_extraction",
+            name="groq_extraction",
             status="skipped",
             note=f"sample transcript not found: {sample_path}",
         )
@@ -243,7 +243,7 @@ async def bench_ollama_extraction(call_path: str | None = None) -> BenchResult:
         utterances = json.loads(sample_path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as exc:
         return BenchResult(
-            name="ollama_extraction",
+            name="groq_extraction",
             status="error",
             note=f"failed to read sample: {exc}",
         )
@@ -261,16 +261,16 @@ async def bench_ollama_extraction(call_path: str | None = None) -> BenchResult:
         except Exception:  # noqa: BLE001
             rendered_user = json.dumps(utterances, ensure_ascii=False)
 
-    client = OllamaClient()
+    client = GroqClient()
     try:
         t0 = time.perf_counter()
         try:
             parsed = await client.chat_json(EXTRACTION_SYSTEM, rendered_user)
         except (httpx.HTTPError, OSError) as exc:
             return BenchResult(
-                name="ollama_extraction",
+                name="groq_extraction",
                 status="skipped",
-                note=f"Ollama unreachable: {exc}",
+                note=f"Groq unreachable: {exc}",
             )
         elapsed = time.perf_counter() - t0
     finally:
@@ -278,7 +278,7 @@ async def bench_ollama_extraction(call_path: str | None = None) -> BenchResult:
 
     questions = parsed.get("questions") if isinstance(parsed, dict) else None
     return BenchResult(
-        name="ollama_extraction",
+        name="groq_extraction",
         status="ok",
         metrics={
             "sample": sample_path.name,
@@ -328,10 +328,10 @@ async def _async_main(args: argparse.Namespace) -> list[BenchResult]:
     else:
         results.append(await bench_pgvector_search(api_url=args.api_url))
 
-    if args.skip_ollama:
-        results.append(BenchResult("ollama_extraction", "skipped", note="--skip-ollama"))
+    if args.skip_groq:
+        results.append(BenchResult("groq_extraction", "skipped", note="--skip-groq"))
     else:
-        results.append(await bench_ollama_extraction(call_path=args.ollama_sample))
+        results.append(await bench_groq_extraction(call_path=args.groq_sample))
 
     return results
 
@@ -345,10 +345,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--embed-n", type=int, default=1000)
     parser.add_argument("--cluster-n", type=int, default=10_000)
     parser.add_argument("--cluster-dim", type=int, default=1024)
-    parser.add_argument("--ollama-sample", default=None)
+    parser.add_argument("--groq-sample", default=None)
     parser.add_argument("--skip-clustering", action="store_true")
     parser.add_argument("--skip-search", action="store_true")
-    parser.add_argument("--skip-ollama", action="store_true")
+    parser.add_argument("--skip-groq", action="store_true")
     return parser.parse_args(argv)
 
 
