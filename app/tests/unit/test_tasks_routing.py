@@ -11,7 +11,14 @@ from __future__ import annotations
 import pytest
 
 from app.workers import celery_app as celery_module
-from app.workers.celery_app import celery_app
+
+# Import the tasks module for its decorator side effects: ``@celery_app.task``
+# only registers a task when the module is imported. At runtime the worker does
+# this via ``include=["app.workers.tasks"]`` at startup; in-process (here) we
+# must import it explicitly, otherwise ``test_known_tasks_registered`` sees an
+# empty registry.
+import app.workers.tasks  # noqa: E402,F401
+from app.workers.celery_app import celery_app  # noqa: E402
 
 
 GPU_TASKS = ["v2t.embed"]
