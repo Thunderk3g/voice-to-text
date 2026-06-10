@@ -13,7 +13,7 @@ filled best-effort by locating a substring of ``raw_text`` inside an
 utterance.
 
 Prometheus counter ``extraction_processed`` is bumped per question with
-``status`` in ``{"ok", "invalid", "skipped"}``.
+``status`` in ``{"ok", "invalid", "skipped", "degraded", "ungrounded"}``.
 """
 
 from __future__ import annotations
@@ -201,6 +201,22 @@ def _coerce_questions(
                 item.get("normalized_text") or item.get("raw_text") or ""
             )
 
+        # Gemma frequently omits the classification fields entirely; Pydantic
+        # then fills intent=other / confidence=0.0 / gloss=None silently.
+        # Keep the row but make the degradation observable.
+        _DEFAULTED_FIELDS = ("intent", "confidence", "english_gloss")
+        missing_fields = [
+            f for f in _DEFAULTED_FIELDS if item.get(f) in (None, "")
+        ]
+        if missing_fields:
+            logger.warning(
+                "extractor.fields_defaulted",
+                call_id=str(call_id),
+                missing=missing_fields,
+                raw_text=(item.get("raw_text") or "")[:80],
+            )
+            extraction_processed.labels(status="degraded").inc()
+
         # Stamp call_id + extraction time before validation so they're
         # always populated regardless of LLM output.
         item.setdefault("call_id", str(call_id))
@@ -222,6 +238,22 @@ def _coerce_questions(
         # Best-effort utterance match by substring of raw_text.
         if question.utterance_id is None:
             question.utterance_id = _match_utterance_id(question.raw_text, chunk)
+
+        # Hallucination guard: a real extraction's raw_text comes verbatim
+        # from the call, so it must match some utterance. We can only judge
+        # this when we have the chunk.
+        if question.utterance_id is None and chunk:
+            from app.core.config import get_settings
+
+            logger.warning(
+                "extractor.ungrounded_question",
+                call_id=str(call_id),
+                raw_text=question.raw_text[:80],
+                dropped=get_settings().extraction_drop_ungrounded,
+            )
+            extraction_processed.labels(status="ungrounded").inc()
+            if get_settings().extraction_drop_ungrounded:
+                continue
 
         out.append(question)
         extraction_processed.labels(status="ok").inc()
