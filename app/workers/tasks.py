@@ -910,23 +910,32 @@ def _persist_canonical_faq(session, faq: Any) -> None:
     )
     # Denormalize onto the cluster row so analytics/diagnostics see a label
     # without joining canonical_faqs. English form preferred for the label.
+    # Skip when there is nothing to write (avoids '' vs NULL ambiguity), and
+    # guard against an older-version task committing last (version race) via
+    # the NOT EXISTS check on canonical_faqs.
     label = (d.get("canonical_question_en") or d.get("canonical_question") or "")[:120]
-    session.execute(
-        text(
-            """
-            UPDATE semantic_clusters
-            SET canonical_question = :canonical_question,
-                label = :label,
-                last_updated = NOW()
-            WHERE id = :cluster_id
-            """
-        ),
-        {
-            "cluster_id": str(d["cluster_id"]),
-            "canonical_question": d.get("canonical_question", ""),
-            "label": label,
-        },
-    )
+    if label.strip():
+        session.execute(
+            text(
+                """
+                UPDATE semantic_clusters
+                SET canonical_question = :canonical_question,
+                    label = :label,
+                    last_updated = NOW()
+                WHERE id = :cluster_id
+                  AND NOT EXISTS (
+                      SELECT 1 FROM canonical_faqs cf
+                      WHERE cf.cluster_id = :cluster_id AND cf.version > :version
+                  )
+                """
+            ),
+            {
+                "cluster_id": str(d["cluster_id"]),
+                "canonical_question": d.get("canonical_question", ""),
+                "label": label,
+                "version": int(d.get("version", 1)),
+            },
+        )
 
 
 def _persist_memory_edges(session, edges: Iterable[Any]) -> None:

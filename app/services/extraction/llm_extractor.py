@@ -15,7 +15,8 @@ utterance.
 Prometheus counter ``extraction_processed`` is bumped per question with
 ``status`` in ``{"ok", "invalid", "skipped", "degraded", "ungrounded"}``;
 ``ok`` and ``degraded`` are mutually exclusive — a kept-but-degraded item
-counts only as ``degraded``.
+counts only as ``degraded``, and ``degraded`` is bumped only for items
+that are actually kept (dropped items count as ``invalid``/``ungrounded``).
 """
 
 from __future__ import annotations
@@ -234,7 +235,6 @@ def _coerce_questions(
                 missing=missing_fields,
                 raw_text=(item.get("raw_text") or "")[:80],
             )
-            extraction_processed.labels(status="degraded").inc()
 
         # Stamp call_id + extraction time before validation so they're
         # always populated regardless of LLM output.
@@ -272,6 +272,8 @@ def _coerce_questions(
             if drop_ungrounded:
                 continue
 
+        if missing_fields:
+            extraction_processed.labels(status="degraded").inc()
         out.append(question)
         if not missing_fields:
             extraction_processed.labels(status="ok").inc()

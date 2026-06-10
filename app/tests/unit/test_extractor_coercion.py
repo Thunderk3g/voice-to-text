@@ -194,6 +194,24 @@ def test_grounded_question_kept() -> None:
     assert out[0].utterance_id == chunk[0].id
 
 
+def test_degraded_and_ungrounded_item_is_dropped(monkeypatch) -> None:
+    """An item missing fields AND matching no utterance is dropped outright."""
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "extraction_drop_ungrounded", True)
+    call_id = uuid4()
+    chunk = [_utterance("Hello, I am calling about my renewal date.")]
+    payload = {
+        "questions": [
+            {"raw_text": "What are the tax benefits of ULIP plans?", "language": "en"}
+        ]
+    }
+
+    out = _coerce_questions(payload, call_id, chunk)
+
+    assert out == []
+
+
 def test_empty_chunk_cannot_ground_so_question_is_kept() -> None:
     """Callers that pass no chunk (tests, future batch paths) keep questions."""
     call_id = uuid4()

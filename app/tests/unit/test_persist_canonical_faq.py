@@ -39,6 +39,9 @@ def test_faq_insert_also_backfills_cluster_label() -> None:
     # Label prefers the English canonical form.
     assert update_params["label"] == "How do I change my premium payment frequency?"
     assert update_params["canonical_question"].startswith("प्रीमियम")
+    # Version-race guard: only backfill when no newer canonical version exists.
+    assert update_params["version"] == 1
+    assert "not exists" in update_sql.lower()
 
 
 def test_label_falls_back_to_original_language() -> None:
@@ -56,3 +59,19 @@ def test_label_falls_back_to_original_language() -> None:
 
     _, update_params = session.statements[1]
     assert update_params["label"] == "How do I file a claim?"
+
+
+def test_empty_canonical_question_skips_backfill() -> None:
+    session = _RecordingSession()
+    faq = {
+        "cluster_id": uuid4(),
+        "canonical_question": "",
+        "canonical_question_en": None,
+        "language": "en",
+        "confidence": 0.0,
+        "version": 1,
+    }
+
+    _persist_canonical_faq(session, faq)
+
+    assert len(session.statements) == 1  # INSERT only, no cluster UPDATE
