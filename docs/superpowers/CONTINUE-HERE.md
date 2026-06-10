@@ -8,9 +8,10 @@ This file is the resume point. Read it first, then the Task 4 interpretation, th
 
 ## TL;DR — what to do next
 
-1. **Task 4 is DONE** (2026-06-10). Findings: `docs/superpowers/diagnostics/2026-06-08-phase-a-findings.{md,json}`; decision record: `docs/superpowers/diagnostics/2026-06-10-task4-interpretation.md`. **Read the interpretation — it re-scopes Phase B.**
-2. **Headline verdict:** the bottleneck is *extraction*, not clustering. Only 3/26 clustered calls have any extracted questions; 13/16 questions are hallucinated (ungrounded, `raw_text` matches no utterance) with intent/confidence/gloss silently Pydantic-defaulted because Gemma omits the fields; 17/24 empty calls are Urdu/`other`-language. Plus two cluster-integrity bugs (stale frequency on dissolved clusters; canonical FAQ never backfilled to `semantic_clusters.label`). HDBSCAN tuning is **deferred** until after re-extraction.
-3. **Execute Phase B (re-scoped):** plan at `docs/superpowers/plans/2026-06-10-phase-b-extraction-reliability.md` — B1 strict validation+grounding, B2 Urdu/other language coverage, B3 cluster integrity fixes, B4 re-run pipeline + re-run diagnostics, then take the original granularity/sub-taxonomy decisions on trustworthy numbers.
+1. **Phase B (extraction reliability) is DONE** (2026-06-10, branch `feat/phase-b-extraction-reliability`, 9 commits, 139 unit tests green, fully reviewed). Read `docs/superpowers/diagnostics/2026-06-10-phase-b-rerun-comparison.md` first — it has the before/after numbers and the revisited gated decisions.
+2. **Result:** the DB now holds only trustworthy questions — 4 questions, 100% grounded, 0 defaulted intents (was 16 questions, 81% hallucinated garbage). The new guards caught and dropped 12 hallucination attempts during the re-run. Clusters=0 is expected (4 questions < hdbscan_min_cluster_size=8).
+3. **New binding constraint: data volume / extraction recall.** 23/27 calls yield zero questions (8 agent-only; ~17 Urdu where gemma4 recall looks weak). Next steps (Phase B.2 candidates, see comparison doc): ingest more query-rich calls; A/B a stronger multilingual model vs `gemma4:latest` for extraction (swap `llm_model` in config); once corpus has ≥ a few dozen questions, lower `hdbscan_min_cluster_size` and re-run `phase_a_diagnostics` for the original granularity decision. Phase C (`discrepancy_type`) stays scoped, gated on volume.
+4. Earlier context: Task 4 findings `diagnostics/2026-06-08-phase-a-findings.{md,json}`, interpretation `diagnostics/2026-06-10-task4-interpretation.md`, executed plan `plans/2026-06-10-phase-b-extraction-reliability.md`.
 
 ### Run diagnostics on this machine (macOS — no local 3.11 venv)
 ```bash
