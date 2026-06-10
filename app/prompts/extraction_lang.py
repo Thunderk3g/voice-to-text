@@ -47,7 +47,9 @@ _OVERLAYS: dict[Bucket, str] = {
         "پریمیم (premium), کلیم (claim). Customers phrase questions "
         "indirectly and politely. Keep `normalized_text` in the customer's "
         "script. `english_gloss` must ALWAYS be provided. Extract questions "
-        "even when phrased as statements of confusion or requests.\n\n"
+        "even when phrased as statements of confusion or requests. For the "
+        "`language` field use `other` for Arabic-script Urdu and `hi-roman` "
+        "for Roman transliteration (`ur` is not an allowed value).\n\n"
     ),
     "other": (
         "LANGUAGE HINT: Dominant language is non-Hindi non-English (Tamil, "

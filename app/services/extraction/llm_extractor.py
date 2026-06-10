@@ -13,7 +13,9 @@ filled best-effort by locating a substring of ``raw_text`` inside an
 utterance.
 
 Prometheus counter ``extraction_processed`` is bumped per question with
-``status`` in ``{"ok", "invalid", "skipped", "degraded", "ungrounded"}``.
+``status`` in ``{"ok", "invalid", "skipped", "degraded", "ungrounded"}``;
+``ok`` and ``degraded`` are mutually exclusive — a kept-but-degraded item
+counts only as ``degraded``.
 """
 
 from __future__ import annotations
@@ -25,7 +27,9 @@ from uuid import UUID
 import structlog
 from pydantic import ValidationError
 
+from app.core.config import get_settings
 from app.core.observability import extraction_processed, llm_calls
+from app.models.enums import Language
 from app.models.schemas import ExtractedQuestion, ExtractionResult, UtteranceSchema
 from app.prompts import EXTRACTION_USER_TEMPLATE
 from app.prompts.extraction import build_transcript_block
@@ -40,6 +44,10 @@ logger = structlog.get_logger(__name__)
 # ~3500 tokens worth of English/Hindi text is roughly 12k chars. Chunking
 # on turn boundaries keeps the speaker context intact.
 _CHUNK_CHAR_BUDGET = 12_000
+
+# Fields Gemma frequently omits; Pydantic then fills intent=other /
+# confidence=0.0 / gloss=None silently. We keep such rows but flag them.
+_DEFAULTED_FIELDS: tuple[str, ...] = ("intent", "confidence", "english_gloss")
 
 
 class LLMExtractor:
@@ -176,6 +184,8 @@ def _coerce_questions(
 
     out: list[ExtractedQuestion] = []
     now = datetime.now(timezone.utc)
+    drop_ungrounded = get_settings().extraction_drop_ungrounded
+    valid_languages = {m.value for m in Language}
     for item in raw_list:
         if not isinstance(item, dict):
             logger.warning(
@@ -200,11 +210,20 @@ def _coerce_questions(
             item["language"] = detect_language(
                 item.get("normalized_text") or item.get("raw_text") or ""
             )
+        elif item["language"] not in valid_languages:
+            # Gemma sometimes emits codes outside the enum (e.g. "ur");
+            # repair instead of letting validation drop a usable question.
+            logger.warning(
+                "extractor.language_coerced",
+                call_id=str(call_id),
+                original=item["language"],
+            )
+            item["language"] = detect_language(
+                item.get("normalized_text") or item.get("raw_text") or ""
+            )
 
-        # Gemma frequently omits the classification fields entirely; Pydantic
-        # then fills intent=other / confidence=0.0 / gloss=None silently.
-        # Keep the row but make the degradation observable.
-        _DEFAULTED_FIELDS = ("intent", "confidence", "english_gloss")
+        # Gemma frequently omits the classification fields entirely; keep the
+        # row but make the degradation observable.
         missing_fields = [
             f for f in _DEFAULTED_FIELDS if item.get(f) in (None, "")
         ]
@@ -243,20 +262,19 @@ def _coerce_questions(
         # from the call, so it must match some utterance. We can only judge
         # this when we have the chunk.
         if question.utterance_id is None and chunk:
-            from app.core.config import get_settings
-
             logger.warning(
                 "extractor.ungrounded_question",
                 call_id=str(call_id),
                 raw_text=question.raw_text[:80],
-                dropped=get_settings().extraction_drop_ungrounded,
+                dropped=drop_ungrounded,
             )
             extraction_processed.labels(status="ungrounded").inc()
-            if get_settings().extraction_drop_ungrounded:
+            if drop_ungrounded:
                 continue
 
         out.append(question)
-        extraction_processed.labels(status="ok").inc()
+        if not missing_fields:
+            extraction_processed.labels(status="ok").inc()
 
     return out
 

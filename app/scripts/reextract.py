@@ -48,8 +48,19 @@ def run(statuses: list[str], apply: bool) -> int:
             {"ids": ids},
         ).scalar_one() if ids else 0
 
+        n_overrides = session.execute(
+            text(
+                "SELECT COUNT(*) FROM extracted_questions"
+                " WHERE call_id = ANY(:ids) AND human_override = TRUE"
+            ),
+            {"ids": ids},
+        ).scalar_one() if ids else 0
+
         print(f"Selected {len(calls)} calls (statuses={statuses}); "
               f"{n_questions} extracted_questions would be purged.")
+        if n_overrides > 0:
+            print(f"WARNING: {n_overrides} human-override (gold-label) questions"
+                  " will be destroyed.")
         if not calls:
             return 0
         if not apply:
@@ -78,8 +89,20 @@ def run(statuses: list[str], apply: bool) -> int:
         )
         print(f"Purged questions for {len(ids)} calls; pruned {len(pruned)} empty clusters.")
 
+    failed: list[str] = []
     for cid in ids:
-        celery_app.send_task("v2t.extract", args=[cid])
+        try:
+            celery_app.send_task("v2t.extract", args=[cid])
+        except Exception as exc:  # noqa: BLE001 — broker errors vary by transport
+            logger.error("enqueue_failed", call_id=cid, error=str(exc))
+            failed.append(cid)
+    if failed:
+        print(f"WARNING: failed to enqueue {len(failed)} of {len(ids)} calls: "
+              f"{', '.join(failed)}")
+        print("These calls are stuck at diarization_done (NOT covered by the"
+              " default statuses). Recover with:"
+              " python -m app.scripts.reextract --apply --statuses diarization_done")
+        return 1
     print(f"Enqueued v2t.extract for {len(ids)} calls.")
     return 0
 

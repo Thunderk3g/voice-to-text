@@ -139,7 +139,32 @@ def _utterance(text: str):
     )
 
 
-def test_ungrounded_question_dropped_when_chunk_present() -> None:
+def test_invalid_language_value_is_repaired_not_dropped() -> None:
+    """A present-but-invalid language code is overwritten, not fatal."""
+    from structlog.testing import capture_logs
+
+    call_id = uuid4()
+    payload = {
+        "questions": [
+            {"raw_text": "kya claim status check kar sakte hain?", "language": "ur"}
+        ]
+    }
+
+    with capture_logs() as cap_logs:
+        out = _coerce_questions(payload, call_id, [])
+
+    assert len(out) == 1  # question survives despite bogus enum value
+    assert out[0].language.value != "ur"
+    assert any(
+        log["event"] == "extractor.language_coerced" for log in cap_logs
+    )
+
+
+def test_ungrounded_question_dropped_when_chunk_present(monkeypatch) -> None:
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "extraction_drop_ungrounded", True)
+
     call_id = uuid4()
     chunk = [_utterance("Hello, I am calling about my policy renewal date.")]
     payload = {

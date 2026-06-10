@@ -28,10 +28,15 @@ async def test_dissolved_cluster_frequency_recounted(monkeypatch) -> None:
     cid = uuid4()
     await factories._persist_batch_async([], [], [cid])
 
-    dissolved_sql = [
-        sql for sql, _ in recorder.statements if "is_stable" in sql.lower()
+    dissolved = [
+        (sql, params)
+        for sql, params in recorder.statements
+        if "is_stable" in sql.lower()
     ]
-    assert len(dissolved_sql) == 1
-    # The same UPDATE must recount frequency from cluster_members.
-    assert "frequency" in dissolved_sql[0].lower()
-    assert "count(*)" in dissolved_sql[0].lower()
+    assert len(dissolved) == 1
+    sql, params = dissolved[0]
+    # The same UPDATE must recount frequency from cluster_members,
+    # scoped to the dissolved cluster's id.
+    assert "frequency" in sql.lower()
+    assert "count(*)" in sql.lower()
+    assert params["id"] == str(cid)
