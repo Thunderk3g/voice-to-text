@@ -452,7 +452,11 @@ def cluster_call(self, call_id: str) -> None:
         for cid in {str(m.cluster_id) for m in members}:
             _next("v2t.canonicalize", cid)
             _next("v2t.memory_edges", cid)
-        log.info("cluster_done", n_members=len(members))
+        log.info(
+            "cluster_done",
+            n_members=len(members),
+            n_unassigned=len(embeddings) - len(members),
+        )
     except Exception as exc:
         if _is_transient(exc):
             log.warning("cluster_retry", error=str(exc))
@@ -902,6 +906,25 @@ def _persist_canonical_faq(session, faq: Any) -> None:
             "language": str(d.get("language", "en")),
             "confidence": float(d.get("confidence", 0.0)),
             "version": int(d.get("version", 1)),
+        },
+    )
+    # Denormalize onto the cluster row so analytics/diagnostics see a label
+    # without joining canonical_faqs. English form preferred for the label.
+    label = (d.get("canonical_question_en") or d.get("canonical_question") or "")[:120]
+    session.execute(
+        text(
+            """
+            UPDATE semantic_clusters
+            SET canonical_question = :canonical_question,
+                label = :label,
+                last_updated = NOW()
+            WHERE id = :cluster_id
+            """
+        ),
+        {
+            "cluster_id": str(d["cluster_id"]),
+            "canonical_question": d.get("canonical_question", ""),
+            "label": label,
         },
     )
 
