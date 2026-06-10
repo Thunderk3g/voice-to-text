@@ -348,8 +348,16 @@ async def _persist_batch_async(created, merged, dissolved) -> dict[str, int]:
             for cid in dissolved or []:
                 session.execute(
                     _sql(
-                        "UPDATE semantic_clusters SET is_stable = FALSE,"
-                        " last_updated = NOW() WHERE id = :id"
+                        """
+                        UPDATE semantic_clusters
+                        SET is_stable = FALSE,
+                            frequency = (
+                                SELECT COUNT(*) FROM cluster_members
+                                WHERE cluster_id = semantic_clusters.id
+                            ),
+                            last_updated = NOW()
+                        WHERE id = :id
+                        """
                     ),
                     {"id": str(cid)},
                 )

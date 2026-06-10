@@ -1,0 +1,37 @@
+"""Unit tests: batch-reconciliation persistence keeps frequency consistent."""
+
+from __future__ import annotations
+
+from contextlib import contextmanager
+from uuid import uuid4
+
+from app.services import factories
+
+
+class _RecordingSession:
+    def __init__(self) -> None:
+        self.statements: list[tuple[str, dict]] = []
+
+    def execute(self, clause, params=None):
+        self.statements.append((str(clause), params or {}))
+
+
+async def test_dissolved_cluster_frequency_recounted(monkeypatch) -> None:
+    recorder = _RecordingSession()
+
+    @contextmanager
+    def _fake_sync_session():
+        yield recorder
+
+    monkeypatch.setattr(factories, "sync_session", _fake_sync_session)
+
+    cid = uuid4()
+    await factories._persist_batch_async([], [], [cid])
+
+    dissolved_sql = [
+        sql for sql, _ in recorder.statements if "is_stable" in sql.lower()
+    ]
+    assert len(dissolved_sql) == 1
+    # The same UPDATE must recount frequency from cluster_members.
+    assert "frequency" in dissolved_sql[0].lower()
+    assert "count(*)" in dissolved_sql[0].lower()
