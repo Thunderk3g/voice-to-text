@@ -7,8 +7,8 @@ section based on the detected dominant language of the call. This lifts
 extraction quality on Hindi and Hinglish calls without rewriting the rules.
 
 Detection lives in ``detect_dominant_language`` and is intentionally tiny —
-a fast langid pass on the joined transcript. We bucket into three groups
-(``hi``, ``en``, ``other``) because that's the resolution our prompt overlay
+a fast langid pass on the joined transcript. We bucket into four groups
+(``hi``, ``en``, ``ur``, ``other``) because that's the resolution our prompt overlay
 distinguishes; finer language IDs still flow through the model's own
 ``language`` output field.
 """
@@ -24,7 +24,7 @@ from app.prompts.extraction import EXTRACTION_SYSTEM
 logger = structlog.get_logger(__name__)
 
 
-Bucket = Literal["hi", "en", "other"]
+Bucket = Literal["hi", "en", "ur", "other"]
 
 
 _OVERLAYS: dict[Bucket, str] = {
@@ -40,6 +40,14 @@ _OVERLAYS: dict[Bucket, str] = {
         "drop occasional Hindi words for amounts or relationships (\"lakhs\", "
         "\"chacha\", \"beta\"). Tag those questions language=en unless the "
         "majority of the question is non-English.\n\n"
+    ),
+    "ur": (
+        "LANGUAGE HINT: This call is primarily Urdu (Arabic script or Roman "
+        "transliteration). Insurance terms appear as پالیسی (policy), "
+        "پریمیم (premium), کلیم (claim). Customers phrase questions "
+        "indirectly and politely. Keep `normalized_text` in the customer's "
+        "script. `english_gloss` must ALWAYS be provided. Extract questions "
+        "even when phrased as statements of confusion or requests.\n\n"
     ),
     "other": (
         "LANGUAGE HINT: Dominant language is non-Hindi non-English (Tamil, "
@@ -73,12 +81,13 @@ _HINGLISH_AMBIG = frozenset({"policy", "premium", "sir", "madam"})
 
 
 def detect_dominant_language(text: str) -> Bucket:
-    """Classify the dominant language of a transcript into {hi, en, other}.
+    """Classify the dominant language of a transcript into {hi, en, ur, other}.
 
     Order:
       1. Devanagari codepoint heuristic — wins immediately.
-      2. langid pass; "hi" → hi, "en" → en (subject to Hinglish override),
-         everything else → other.
+      1b. Arabic-script codepoint heuristic — wins immediately (→ ur).
+      2. langid pass; "hi" → hi, "ur"/"ar"/"fa" → ur, "en" → en (subject to
+         Hinglish override), everything else → other.
       3. Hinglish marker check — if langid said en but the text contains
          enough Latin-script Hindi function words, bump to "hi".
     """
@@ -92,6 +101,12 @@ def detect_dominant_language(text: str) -> Bucket:
     if devanagari >= max(20, len(sample) // 50):
         return "hi"
 
+    # 1b. Arabic-script heuristic — Urdu calls transcribed in Arabic script.
+    #     U+0600–U+06FF covers Arabic/Urdu letters incl. ٹ ڈ ے etc.
+    arabic = sum(1 for ch in sample if "؀" <= ch <= "ۿ")
+    if arabic >= max(20, len(sample) // 50):
+        return "ur"
+
     # 2. langid
     langid_bucket: Bucket = "en"
     try:
@@ -100,6 +115,8 @@ def detect_dominant_language(text: str) -> Bucket:
         lang, _ = langid.classify(sample)
         if lang == "hi":
             return "hi"
+        if lang in ("ur", "ar", "fa"):
+            return "ur"
         langid_bucket = "en" if lang == "en" else "other"
     except Exception as exc:  # noqa: BLE001
         logger.debug("langid_failed", error=str(exc))
