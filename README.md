@@ -47,11 +47,12 @@ shipped profiles use this LLM + embedding setup; they differ only in STT
 (open-source Whisper vs. hosted Sarvam). Set `EMBEDDING_PROVIDER=cohere` or point
 `LLM_BASE_URL` at Groq to move those layers to a hosted API instead.
 
-Audio → STT (Whisper natively, or Sarvam chunked on silences <30 s each and
-transcribed in parallel) → heuristic speaker assignment → LLM JSON-mode
-extraction → embedding (local e5 or Cohere) → HDBSCAN + incremental assignment →
-LLM canonicalization + memory edges. Pre-labeled transcript JSON can be ingested
-directly, skipping the STT stage.
+Audio → STT (Sarvam **Batch API** with real diarization behind a rotating
+key pool, or local Whisper/IndicConformer with optional pyannote/stereo-split
+diarization) → speaker role mapping (diarization labels when present, heuristic
+otherwise) → LLM JSON-mode extraction → embedding (local e5 or Cohere) →
+HDBSCAN + incremental assignment → LLM canonicalization + memory edges.
+Pre-labeled transcript JSON can be ingested directly, skipping the STT stage.
 
 See [`docs/architecture.md`](docs/architecture.md) for the full diagram.
 
@@ -306,13 +307,15 @@ pytest app/tests/integration -v       # auto-skipped if DATABASE_URL_SYNC unreac
 
 ## Troubleshooting
 
-- **`SarvamConfigError: SARVAM_API_KEY is not set`** — set `SARVAM_API_KEY` in `.env`
-  and rebuild the workers, switch to the open-source profile (`STT_PROVIDER=whisper`),
-  or use `STT_PROVIDER=none` and ingest pre-labeled transcripts only.
-- **Sarvam returns `429 Too Many Requests` on long calls** — long audio is split
-  into many <30 s chunks; transcribing them in parallel can exceed Sarvam's rate
-  limit. Use the open-source Whisper profile for long local test calls (no API
-  limits), or lower concurrency / spread the load.
+- **`SarvamConfigError: No Sarvam keys configured`** — set `SARVAM_API_KEYS`
+  (comma-separated pool; one key per Sarvam account) in `.env` and rebuild the
+  workers, switch to the open-source profile (`STT_PROVIDER=whisper`), or use
+  `STT_PROVIDER=none` and ingest pre-labeled transcripts only.
+- **Sarvam returns `429 Too Many Requests`** — the key pool puts the rate-limited
+  key on cooldown and rotates to the next one automatically (`GET /admin/keys`
+  shows pool health). Sustained 429s mean every configured account is saturated:
+  add keys from more accounts or slow ingestion. `429 insufficient_quota_error`
+  means an account's credits are exhausted — it's benched for 24 h.
 - **First Whisper or e5 run sits in `*_running` for minutes** — the first call
   downloads model weights (Whisper `large-v3` ~3 GB, e5-large ~2 GB) into the
   shared `hf_cache` volume. Subsequent runs reuse the cache. Watch
@@ -339,8 +342,11 @@ pytest app/tests/integration -v       # auto-skipped if DATABASE_URL_SYNC unreac
       Ollama / vLLM / OpenAI — swap via `LLM_BASE_URL`)
 - [x] Pluggable embedding backend (hosted Cohere or local e5, `EMBEDDING_PROVIDER`)
 - [ ] Switch pgvector index from ivfflat to HNSW once corpus passes ~1 L vectors
-- [ ] Wire Sarvam **Batch STT API** (returns proper diarization) to replace the
-      on-board speaker heuristic
+- [x] Sarvam **Batch STT API** with real diarization + rotating multi-account
+      key pool (heuristic now only maps speaker IDs to AGENT/CUSTOMER roles)
+- [x] Local diarization for the open-source path (stereo channel split /
+      pyannote community-1) and pluggable local Indic models
+      (`Oriserve/Whisper-Hindi2Hinglish-Apex`, AI4Bharat IndicConformer)
 - [ ] OpenTelemetry collector container wiring (config in `docs/deployment.md`)
 - [ ] Pre-built Grafana dashboard for the v2t Prometheus namespace
 
