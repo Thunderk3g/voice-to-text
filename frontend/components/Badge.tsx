@@ -14,13 +14,13 @@ export function Badge({
     return (
       <span
         className={clsx(
-          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] font-medium tracking-wide",
           className,
         )}
         style={{
-          backgroundColor: `${color}1f`,
+          backgroundColor: `${color}1a`,
           color,
-          border: `1px solid ${color}40`,
+          border: `1px solid ${color}3d`,
         }}
       >
         {children}
@@ -30,7 +30,7 @@ export function Badge({
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-1 rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-medium text-ink-700",
+        "inline-flex items-center gap-1 rounded-full border border-ink-200 bg-ink-100 px-2 py-0.5 font-mono text-[10px] font-medium tracking-wide text-ink-600",
         className,
       )}
     >

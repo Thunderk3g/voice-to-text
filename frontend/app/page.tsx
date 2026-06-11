@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { StatCard, Card } from "@/components/Card";
 import { LoadingBlock } from "@/components/Spinner";
+import { DARK_LAYOUT, CHART_COLORS, type PlotData } from "@/lib/plotly";
 import {
   INTENT_COLOR,
   INTENT_LABEL,
@@ -12,18 +13,8 @@ import {
   type Intent,
   type Language,
 } from "@/lib/types";
-import type { Data, Layout } from "plotly.js";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
-
-const COMMON_LAYOUT: Partial<Layout> = {
-  margin: { l: 40, r: 16, t: 16, b: 40 },
-  paper_bgcolor: "rgba(0,0,0,0)",
-  plot_bgcolor: "rgba(0,0,0,0)",
-  font: { family: "Inter, ui-sans-serif", size: 11, color: "#3f4858" },
-  showlegend: true,
-  legend: { orientation: "h", y: -0.18 },
-};
 
 export default function OverviewPage(): JSX.Element {
   const { data, error, isLoading } = useSWR<AnalyticsSummary>("/analytics");
@@ -32,7 +23,7 @@ export default function OverviewPage(): JSX.Element {
   if (error) {
     return (
       <Card title="Overview">
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-danger-400">
           Failed to load /analytics: {String(error.message ?? error)}
         </p>
       </Card>
@@ -41,7 +32,7 @@ export default function OverviewPage(): JSX.Element {
   if (!data) {
     return (
       <Card title="Overview">
-        <p className="text-sm text-ink-500">No data.</p>
+        <p className="text-sm text-ink-400">No data.</p>
       </Card>
     );
   }
@@ -69,7 +60,7 @@ export default function OverviewPage(): JSX.Element {
     Number((g as { churned_clusters?: number }).churned_clusters ?? 0),
   );
 
-  const intentBarData: Data[] = [
+  const intentBarData: PlotData[] = [
     {
       type: "bar",
       x: topIntents.map(([k]) => INTENT_LABEL[k]),
@@ -79,24 +70,25 @@ export default function OverviewPage(): JSX.Element {
     },
   ];
 
-  const langPieData: Data[] = [
+  const langPieData: PlotData[] = [
     {
       type: "pie",
       labels: langEntries.map(([k]) => LANGUAGE_LABEL[k]),
       values: langEntries.map(([, v]) => v),
+      marker: { colors: CHART_COLORS },
       hole: 0.55,
       textinfo: "label+percent",
     },
   ];
 
-  const growthLineData: Data[] = [
+  const growthLineData: PlotData[] = [
     {
       type: "scatter",
       mode: "lines+markers",
       x: growthDates,
       y: newClusters,
       name: "New",
-      line: { color: "#1f5cf5", width: 2 },
+      line: { color: "#E9A83D", width: 2 },
     },
     {
       type: "scatter",
@@ -104,16 +96,17 @@ export default function OverviewPage(): JSX.Element {
       x: growthDates,
       y: churned,
       name: "Churned",
-      line: { color: "#e11d48", width: 2 },
+      line: { color: "#F2807B", width: 2 },
     },
   ];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex animate-fade-up flex-col gap-6">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Overview</h1>
-        <p className="text-sm text-ink-500">
-          Aggregated stats from /analytics.
+        <div className="kicker">Monitor</div>
+        <h1 className="page-title">Overview</h1>
+        <p className="page-sub">
+          What customers across India are asking — aggregated from every call.
         </p>
       </header>
 
@@ -134,7 +127,7 @@ export default function OverviewPage(): JSX.Element {
           <div className="h-72">
             <Plot
               data={intentBarData}
-              layout={{ ...COMMON_LAYOUT, showlegend: false }}
+              layout={{ ...DARK_LAYOUT, showlegend: false }}
               config={{ displayModeBar: false, responsive: true }}
               style={{ width: "100%", height: "100%" }}
               useResizeHandler
@@ -145,7 +138,7 @@ export default function OverviewPage(): JSX.Element {
           <div className="h-72">
             <Plot
               data={langPieData}
-              layout={COMMON_LAYOUT}
+              layout={DARK_LAYOUT}
               config={{ displayModeBar: false, responsive: true }}
               style={{ width: "100%", height: "100%" }}
               useResizeHandler
@@ -154,14 +147,11 @@ export default function OverviewPage(): JSX.Element {
         </Card>
       </div>
 
-      <Card
-        title="Cluster growth"
-        subtitle="New vs. churned clusters per day."
-      >
+      <Card title="Cluster growth" subtitle="New vs. churned clusters per day.">
         <div className="h-72">
           <Plot
             data={growthLineData}
-            layout={COMMON_LAYOUT}
+            layout={DARK_LAYOUT}
             config={{ displayModeBar: false, responsive: true }}
             style={{ width: "100%", height: "100%" }}
             useResizeHandler

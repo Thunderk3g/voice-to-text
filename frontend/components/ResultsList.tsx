@@ -6,7 +6,7 @@ import type { SearchHit } from "@/lib/types";
 export function ResultsList({ hits }: { hits: SearchHit[] }): JSX.Element {
   if (hits.length === 0) {
     return (
-      <div className="card p-6 text-center text-sm text-ink-500">
+      <div className="card p-6 text-center text-sm text-ink-400">
         No results.
       </div>
     );
@@ -36,14 +36,14 @@ export function ResultsList({ hits }: { hits: SearchHit[] }): JSX.Element {
                   ))}
                 </div>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                <div className="rounded-md bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">
+              <div className="flex shrink-0 flex-col items-end gap-1.5">
+                <div className="rounded-md border border-brand-500/30 bg-brand-500/10 px-2 py-0.5 font-mono text-xs font-semibold tabular-nums text-brand-600">
                   {(h.score * 100).toFixed(1)}%
                 </div>
                 {h.cluster_id && (
                   <Link
                     href={`/clusters/${h.cluster_id}`}
-                    className="text-xs font-medium text-brand-600 hover:underline"
+                    className="text-xs font-medium text-brand-600 underline-offset-4 transition hover:text-brand-700 hover:underline"
                   >
                     View cluster →
                   </Link>

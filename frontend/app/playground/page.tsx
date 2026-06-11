@@ -60,10 +60,11 @@ export default function PlaygroundPage(): JSX.Element {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex animate-fade-up flex-col gap-6">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Retrieval Playground</h1>
-        <p className="text-sm text-ink-500">
+        <div className="kicker">Explore</div>
+        <h1 className="page-title">Retrieval Playground</h1>
+        <p className="page-sub">
           POST /search — cross-lingual semantic search over extracted questions.
         </p>
       </header>
@@ -134,8 +135,8 @@ export default function PlaygroundPage(): JSX.Element {
                     onClick={() => toggleIntent(i)}
                     className={
                       active
-                        ? "rounded-full border border-brand-500 bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700"
-                        : "rounded-full border border-ink-200 bg-white px-2 py-0.5 text-[11px] font-medium text-ink-600 hover:bg-ink-50"
+                        ? "rounded-full border border-brand-500/60 bg-brand-500/15 px-2.5 py-0.5 font-mono text-[10px] font-medium text-brand-600 transition"
+                        : "rounded-full border border-ink-200 bg-ink-100 px-2.5 py-0.5 font-mono text-[10px] font-medium text-ink-500 transition hover:border-ink-300 hover:text-ink-700"
                     }
                   >
                     {INTENT_LABEL[i]}
@@ -146,19 +147,21 @@ export default function PlaygroundPage(): JSX.Element {
           </div>
           <div className="flex items-center gap-3">
             <button type="submit" className="btn-primary" disabled={busy}>
-              {busy && <Spinner size={14} className="border-white/40 border-t-white" />}
+              {busy && (
+                <Spinner size={14} className="border-[#1D1407]/30 border-t-[#1D1407]" />
+              )}
               {busy ? "Searching..." : "Search"}
             </button>
-            {err && <span className="text-xs text-red-600">{err}</span>}
+            {err && <span className="text-xs text-danger-400">{err}</span>}
           </div>
         </form>
       </Card>
 
       {data && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold text-ink-700">
+          <h2 className="font-sans text-sm font-semibold text-ink-700">
             {data.hits.length} hit{data.hits.length === 1 ? "" : "s"} for{" "}
-            <span className="font-mono">"{data.query}"</span>
+            <span className="font-mono text-brand-600">"{data.query}"</span>
           </h2>
           <ResultsList hits={data.hits} />
         </section>

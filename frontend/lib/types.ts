@@ -147,6 +147,8 @@ export interface CallRead {
   created_at: string;
   updated_at: string;
   metadata: CallMetadata;
+  langsmith_trace_id?: string | null;
+  error_message?: string | null;
 }
 
 // ============================================================================
@@ -156,6 +158,7 @@ export interface UtteranceSchema {
   id?: UUIDString | null;
   call_id: UUIDString;
   speaker: Speaker;
+  speaker_id?: string | null;
   start_ts: number;
   end_ts: number;
   text: string;
@@ -328,12 +331,84 @@ export const LANGUAGE_LABEL: Record<Language, string> = {
   [Language.OTHER]: "Other",
 };
 
-export const STT_PROVIDERS = ["whisper", "sarvam"] as const;
+export const STT_PROVIDERS = ["whisper", "sarvam", "indic_conformer"] as const;
 export type STTProvider = (typeof STT_PROVIDERS)[number];
 export const STT_PROVIDER_LABEL: Record<STTProvider, string> = {
   whisper: "Whisper (local)",
   sarvam: "Sarvam (cloud)",
+  indic_conformer: "IndicConformer (local, 22 Indic languages)",
 };
+
+// ============================================================================
+// Admin — Sarvam API key pool health (GET /admin/keys)
+// ============================================================================
+export const KeyState = {
+  HEALTHY: "healthy",
+  COOLDOWN: "cooldown",
+  DISABLED: "disabled",
+} as const;
+export type KeyState = (typeof KeyState)[keyof typeof KeyState];
+
+export interface AdminKeyRead {
+  masked: string;
+  state: KeyState;
+  /** Epoch seconds when a cooled-down key becomes available again. */
+  available_at: number | null;
+  ok_count: number;
+  err_count: number;
+}
+
+// ============================================================================
+// Pipeline stage mapping (raw CallStatus -> friendly stage progression)
+// ============================================================================
+export const PIPELINE_STAGES = [
+  "Transcribe",
+  "Diarize",
+  "Extract",
+  "Embed",
+  "Cluster",
+] as const;
+
+export interface StageInfo {
+  /** Short friendly label for the current state. */
+  label: string;
+  /** Number of pipeline stages fully completed (0..PIPELINE_STAGES.length). */
+  completed: number;
+  /** Index of the stage currently running, or null if idle/terminal. */
+  activeIndex: number | null;
+  kind: "queued" | "running" | "done" | "failed";
+}
+
+export function stageForStatus(status: CallStatus | undefined): StageInfo {
+  switch (status) {
+    case CallStatus.PENDING:
+      return { label: "Queued", completed: 0, activeIndex: null, kind: "queued" };
+    case CallStatus.STT_RUNNING:
+      return { label: "Transcribing", completed: 0, activeIndex: 0, kind: "running" };
+    case CallStatus.STT_DONE:
+      return { label: "Diarizing", completed: 1, activeIndex: 1, kind: "running" };
+    case CallStatus.DIARIZATION_RUNNING:
+      return { label: "Diarizing", completed: 1, activeIndex: 1, kind: "running" };
+    case CallStatus.DIARIZATION_DONE:
+      return { label: "Extracting", completed: 2, activeIndex: 2, kind: "running" };
+    case CallStatus.EXTRACTION_RUNNING:
+      return { label: "Extracting", completed: 2, activeIndex: 2, kind: "running" };
+    case CallStatus.EXTRACTION_DONE:
+      return { label: "Embedding", completed: 3, activeIndex: 3, kind: "running" };
+    case CallStatus.EMBEDDING_DONE:
+      return { label: "Clustering", completed: 4, activeIndex: 4, kind: "running" };
+    case CallStatus.CLUSTERED:
+      return { label: "Done", completed: 5, activeIndex: null, kind: "done" };
+    case CallStatus.FAILED:
+      return { label: "Failed", completed: 0, activeIndex: null, kind: "failed" };
+    default:
+      return { label: "Loading", completed: 0, activeIndex: null, kind: "queued" };
+  }
+}
+
+export function isTerminalStatus(status: CallStatus | undefined): boolean {
+  return status === CallStatus.CLUSTERED || status === CallStatus.FAILED;
+}
 
 export const INTENT_LABEL: Record<Intent, string> = {
   [Intent.POLICY_DETAILS]: "Policy Details",
@@ -354,20 +429,21 @@ export const INTENT_LABEL: Record<Intent, string> = {
 };
 
 // Color per intent for graph node fill and badges.
+// Tuned for legibility on dark surfaces.
 export const INTENT_COLOR: Record<Intent, string> = {
-  [Intent.POLICY_DETAILS]: "#3b82f6",
-  [Intent.PREMIUM_PAYMENT]: "#10b981",
-  [Intent.CLAIM_PROCESS]: "#f59e0b",
-  [Intent.CLAIM_REJECTION]: "#ef4444",
-  [Intent.RENEWAL]: "#8b5cf6",
-  [Intent.NOMINEE_UPDATE]: "#06b6d4",
-  [Intent.DOCUMENT_REQUEST]: "#0ea5e9",
-  [Intent.CANCELLATION]: "#f97316",
-  [Intent.MATURITY_BENEFIT]: "#22c55e",
-  [Intent.HEALTH_COVERAGE]: "#14b8a6",
-  [Intent.EXCLUSIONS]: "#a855f7",
-  [Intent.AGENT_COMPLAINT]: "#e11d48",
-  [Intent.GRIEVANCE]: "#dc2626",
-  [Intent.OTHER_INSURANCE]: "#6366f1",
-  [Intent.OTHER]: "#64748b",
+  [Intent.POLICY_DETAILS]: "#7BA7F7",
+  [Intent.PREMIUM_PAYMENT]: "#4FD1A1",
+  [Intent.CLAIM_PROCESS]: "#F2B65C",
+  [Intent.CLAIM_REJECTION]: "#F2807B",
+  [Intent.RENEWAL]: "#B59CF5",
+  [Intent.NOMINEE_UPDATE]: "#5BCBE3",
+  [Intent.DOCUMENT_REQUEST]: "#6BBCF2",
+  [Intent.CANCELLATION]: "#F79E66",
+  [Intent.MATURITY_BENEFIT]: "#7BD489",
+  [Intent.HEALTH_COVERAGE]: "#52C9B7",
+  [Intent.EXCLUSIONS]: "#C89BF2",
+  [Intent.AGENT_COMPLAINT]: "#F2748F",
+  [Intent.GRIEVANCE]: "#EE6B5F",
+  [Intent.OTHER_INSURANCE]: "#9AA0F0",
+  [Intent.OTHER]: "#9BA3AF",
 };

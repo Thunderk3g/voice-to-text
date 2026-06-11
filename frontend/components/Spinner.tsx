@@ -12,7 +12,7 @@ export function Spinner({
       role="status"
       aria-label="Loading"
       className={clsx(
-        "inline-block animate-spin rounded-full border-2 border-ink-200 border-t-brand-600",
+        "inline-block animate-spin rounded-full border-2 border-ink-300/50 border-t-brand-500",
         className,
       )}
       style={{ width: size, height: size }}
@@ -22,7 +22,7 @@ export function Spinner({
 
 export function LoadingBlock({ label }: { label?: string }): JSX.Element {
   return (
-    <div className="flex items-center gap-2 p-4 text-sm text-ink-500">
+    <div className="flex items-center gap-2.5 p-4 text-sm text-ink-500">
       <Spinner />
       <span>{label ?? "Loading..."}</span>
     </div>

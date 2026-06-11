@@ -5,21 +5,24 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 import clsx from "clsx";
+import { AlertTriangle, Bot, HelpCircle, User } from "lucide-react";
 import { Card } from "@/components/Card";
 import { IntentBadge } from "@/components/IntentBadge";
 import { LanguageBadge } from "@/components/LanguageBadge";
 import { Badge } from "@/components/Badge";
+import { StatusChip, StagePips } from "@/components/StatusChip";
 import { LoadingBlock } from "@/components/Spinner";
-import type {
-  CallRead,
-  ExtractedQuestion,
-  UtteranceSchema,
+import { DARK_LAYOUT, type PlotData, type PlotLayout } from "@/lib/plotly";
+import {
+  isTerminalStatus,
+  type CallRead,
+  type ExtractedQuestion,
+  type UtteranceSchema,
 } from "@/lib/types";
-import type { Data, Layout } from "plotly.js";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
-type Tab = "utterances" | "questions" | "embeddings";
+type Tab = "transcript" | "questions" | "embeddings";
 
 function fmtTs(s: number): string {
   const total = Math.max(0, Math.floor(s));
@@ -28,16 +31,97 @@ function fmtTs(s: number): string {
   return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
 }
 
+function fmtDuration(s: number | null | undefined): string | null {
+  if (s == null) return null;
+  return fmtTs(s);
+}
+
+/** Subtle 3-dot confidence meter (low/med/high). */
+function ConfidenceDots({ value }: { value: number }): JSX.Element {
+  const filled = value >= 0.85 ? 3 : value >= 0.6 ? 2 : 1;
+  return (
+    <span
+      className="inline-flex items-center gap-0.5"
+      title={`confidence ${(value * 100).toFixed(0)}%`}
+    >
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className={clsx(
+            "h-1 w-1 rounded-full",
+            i < filled ? "bg-current opacity-70" : "bg-current opacity-20",
+          )}
+        />
+      ))}
+    </span>
+  );
+}
+
+function UtteranceBubble({ u }: { u: UtteranceSchema }): JSX.Element {
+  const isAgent = u.speaker === "AGENT";
+  const isCustomer = u.speaker === "CUSTOMER";
+
+  return (
+    <div
+      className={clsx(
+        "flex w-full",
+        isAgent ? "justify-start" : isCustomer ? "justify-end" : "justify-center",
+      )}
+    >
+      <div
+        className={clsx(
+          "max-w-[78%] rounded-2xl border px-4 py-2.5 text-sm leading-relaxed",
+          isAgent &&
+            "rounded-bl-md border-jade-200 bg-jade-100/70 text-ink-800",
+          isCustomer &&
+            "rounded-br-md border-brand-200 bg-brand-100/60 text-ink-800",
+          !isAgent &&
+            !isCustomer &&
+            "border-ink-200 bg-ink-100 text-ink-600",
+        )}
+      >
+        <div
+          className={clsx(
+            "mb-1 flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.1em]",
+            isAgent ? "text-jade-600" : isCustomer ? "text-brand-600" : "text-ink-400",
+          )}
+        >
+          <span className="inline-flex items-center gap-1 font-semibold">
+            {isAgent ? (
+              <Bot className="h-3 w-3" />
+            ) : isCustomer ? (
+              <User className="h-3 w-3" />
+            ) : (
+              <HelpCircle className="h-3 w-3" />
+            )}
+            {u.speaker.toLowerCase()}
+            {u.speaker_id ? ` ${u.speaker_id}` : ""}
+          </span>
+          <span className="tabular-nums opacity-80">{fmtTs(u.start_ts)}</span>
+          <LanguageBadge language={u.language} />
+          <ConfidenceDots value={u.confidence} />
+        </div>
+        <div className="whitespace-pre-wrap break-words">{u.text}</div>
+      </div>
+    </div>
+  );
+}
+
 export default function CallDetailPage(): JSX.Element {
   const params = useParams<{ id: string }>();
   const id = params?.id ?? "";
-  const [tab, setTab] = useState<Tab>("utterances");
+  const [tab, setTab] = useState<Tab>("transcript");
 
   const { data: call, error, isLoading } = useSWR<CallRead>(
     id ? `/calls/${id}` : null,
+    {
+      // Keep the header live while the pipeline is still running.
+      refreshInterval: (latest) =>
+        isTerminalStatus(latest?.status) ? 0 : 4000,
+    },
   );
   const { data: utterances } = useSWR<UtteranceSchema[]>(
-    tab === "utterances" && id ? `/calls/${id}/utterances` : null,
+    tab === "transcript" && id ? `/calls/${id}/utterances` : null,
   );
   const { data: questions } = useSWR<ExtractedQuestion[]>(
     tab === "questions" && id ? `/calls/${id}/questions` : null,
@@ -47,7 +131,7 @@ export default function CallDetailPage(): JSX.Element {
   if (error) {
     return (
       <Card>
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-danger-400">
           Failed to load call: {String(error.message ?? error)}
         </p>
       </Card>
@@ -55,38 +139,54 @@ export default function CallDetailPage(): JSX.Element {
   }
   if (!call) return <LoadingBlock />;
 
+  const duration = fmtDuration(call.duration_seconds);
+  const failed = call.status === "failed";
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex animate-fade-up flex-col gap-6">
       <header>
-        <div className="text-xs uppercase tracking-wide text-ink-500">
-          Call {call.id.slice(0, 8)}
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight">{call.source_uri}</h1>
-        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-sm text-ink-500">
-          <Badge>{call.status}</Badge>
+        <div className="kicker">Call {call.id.slice(0, 8)}</div>
+        <h1 className="page-title break-all">{call.source_uri}</h1>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ink-500">
+          <StatusChip status={call.status} />
+          <StagePips status={call.status} />
           {call.detected_language && (
             <LanguageBadge language={call.detected_language} />
           )}
-          {call.is_transcript ? (
-            <Badge>transcript</Badge>
-          ) : (
-            <Badge>audio</Badge>
+          <Badge>{call.is_transcript ? "transcript" : "audio"}</Badge>
+          {duration && (
+            <span className="font-mono text-xs tabular-nums text-ink-500">
+              {duration} min
+            </span>
           )}
-          {call.duration_seconds != null && (
-            <span>· {call.duration_seconds.toFixed(1)}s</span>
-          )}
-          <span>· created {new Date(call.created_at).toLocaleString()}</span>
+          <span className="text-xs text-ink-400">
+            created {new Date(call.created_at).toLocaleString()}
+          </span>
         </div>
       </header>
 
+      {failed && call.error_message && (
+        <div className="flex items-start gap-3 rounded-xl border border-danger-500/40 bg-danger-500/10 px-4 py-3">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-danger-400" />
+          <div>
+            <div className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-danger-400">
+              Pipeline failed
+            </div>
+            <p className="mt-1 break-words text-sm text-danger-300">
+              {call.error_message}
+            </p>
+          </div>
+        </div>
+      )}
+
       <Card title="Metadata">
-        <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+        <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
           {Object.entries(call.metadata).map(([k, v]) => (
             <div key={k}>
-              <dt className="text-xs uppercase tracking-wide text-ink-500">
+              <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-400">
                 {k}
               </dt>
-              <dd className="font-mono text-ink-800 break-all">
+              <dd className="mt-0.5 break-all font-mono text-xs text-ink-700">
                 {v == null
                   ? "—"
                   : typeof v === "object"
@@ -98,16 +198,16 @@ export default function CallDetailPage(): JSX.Element {
         </dl>
       </Card>
 
-      <div className="flex gap-2 border-b border-ink-200">
-        {(["utterances", "questions", "embeddings"] as Tab[]).map((t) => (
+      <div className="flex gap-1 border-b border-ink-200">
+        {(["transcript", "questions", "embeddings"] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
             className={clsx(
-              "border-b-2 px-3 py-2 text-sm font-medium capitalize",
+              "-mb-px border-b-2 px-3.5 py-2 text-sm font-medium capitalize transition",
               tab === t
-                ? "border-brand-600 text-brand-700"
-                : "border-transparent text-ink-500 hover:text-ink-800",
+                ? "border-brand-500 text-brand-600"
+                : "border-transparent text-ink-400 hover:text-ink-700",
             )}
             onClick={() => setTab(t)}
           >
@@ -116,37 +216,32 @@ export default function CallDetailPage(): JSX.Element {
         ))}
       </div>
 
-      {tab === "utterances" && (
+      {tab === "transcript" && (
         <Card padded={false}>
-          <div className="max-h-[600px] overflow-y-auto p-2">
+          <div className="flex items-center justify-between border-b border-ink-200 px-5 py-3">
+            <div className="flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-400">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-jade-500" /> agent
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-brand-500" /> customer
+              </span>
+            </div>
+            {utterances && (
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-400">
+                {utterances.length} utterances
+              </span>
+            )}
+          </div>
+          <div className="flex max-h-[640px] flex-col gap-2.5 overflow-y-auto p-5">
             {!utterances && <LoadingBlock />}
             {utterances && utterances.length === 0 && (
-              <div className="p-6 text-center text-sm text-ink-500">
-                No utterances.
+              <div className="p-6 text-center text-sm text-ink-400">
+                No utterances yet.
               </div>
             )}
             {utterances?.map((u, i) => (
-              <div
-                key={u.id ?? `${i}-${u.start_ts}`}
-                className={clsx(
-                  "mx-2 my-1.5 max-w-[80%] rounded-xl border px-3 py-2 text-sm",
-                  u.speaker === "AGENT"
-                    ? "ml-auto border-brand-200 bg-brand-50 text-ink-900"
-                    : u.speaker === "CUSTOMER"
-                      ? "border-ink-200 bg-white text-ink-900"
-                      : "border-ink-100 bg-ink-50 text-ink-700",
-                )}
-              >
-                <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-wide text-ink-500">
-                  <span className="font-semibold">{u.speaker}</span>
-                  <span>·</span>
-                  <span>
-                    {fmtTs(u.start_ts)} – {fmtTs(u.end_ts)}
-                  </span>
-                  <LanguageBadge language={u.language} />
-                </div>
-                <div>{u.text}</div>
-              </div>
+              <UtteranceBubble key={u.id ?? `${i}-${u.start_ts}`} u={u} />
             ))}
           </div>
         </Card>
@@ -177,7 +272,7 @@ export default function CallDetailPage(): JSX.Element {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-3 py-6 text-center text-ink-500"
+                      className="px-3 py-6 text-center text-ink-400"
                     >
                       No extracted questions.
                     </td>
@@ -191,7 +286,7 @@ export default function CallDetailPage(): JSX.Element {
                       </div>
                       {q.english_gloss &&
                         q.english_gloss !== q.normalized_text && (
-                          <div className="text-xs italic text-ink-500">
+                          <div className="mt-0.5 text-xs italic text-ink-400">
                             {q.english_gloss}
                           </div>
                         )}
@@ -210,7 +305,7 @@ export default function CallDetailPage(): JSX.Element {
                     <td>
                       <LanguageBadge language={q.language} />
                     </td>
-                    <td className="text-right tabular-nums">
+                    <td className="text-right font-mono text-xs tabular-nums">
                       {(q.confidence * 100).toFixed(0)}%
                     </td>
                   </tr>
@@ -233,24 +328,20 @@ function EmbeddingsTab(): JSX.Element {
     x: Math.cos((i / 24) * Math.PI * 2) + (Math.random() - 0.5) * 0.4,
     y: Math.sin((i / 24) * Math.PI * 2) + (Math.random() - 0.5) * 0.4,
   }));
-  const trace: Data[] = [
+  const trace: PlotData[] = [
     {
       type: "scatter",
       mode: "markers",
       x: points.map((p) => p.x),
       y: points.map((p) => p.y),
-      marker: { size: 10, color: "#1f5cf5", opacity: 0.7 },
+      marker: { size: 10, color: "#E9A83D", opacity: 0.7 },
       name: "questions",
     },
   ];
-  const layout: Partial<Layout> = {
+  const layout: PlotLayout = {
+    ...DARK_LAYOUT,
     margin: { l: 30, r: 16, t: 16, b: 30 },
-    paper_bgcolor: "rgba(0,0,0,0)",
-    plot_bgcolor: "rgba(0,0,0,0)",
-    font: { family: "Inter, ui-sans-serif", size: 11, color: "#3f4858" },
     showlegend: false,
-    xaxis: { zeroline: false, showgrid: true, gridcolor: "#e5e7eb" },
-    yaxis: { zeroline: false, showgrid: true, gridcolor: "#e5e7eb" },
   };
   return (
     <Card

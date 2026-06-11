@@ -17,15 +17,22 @@ export function Card({
   padded?: boolean;
 }): JSX.Element {
   return (
-    <section className={clsx("card", padded && "p-4", className)}>
+    <section className={clsx("card", padded && "p-5", className)}>
       {(title || right) && (
-        <header className="mb-3 flex items-start justify-between gap-3">
+        <header
+          className={clsx(
+            "flex items-start justify-between gap-3",
+            padded ? "mb-4" : "border-b border-ink-200 px-5 py-4",
+          )}
+        >
           <div>
             {title && (
-              <h3 className="text-sm font-semibold text-ink-900">{title}</h3>
+              <h3 className="text-sm font-semibold tracking-tight text-ink-900">
+                {title}
+              </h3>
             )}
             {subtitle && (
-              <p className="mt-0.5 text-xs text-ink-500">{subtitle}</p>
+              <p className="mt-0.5 text-xs text-ink-400">{subtitle}</p>
             )}
           </div>
           {right}
@@ -46,14 +53,15 @@ export function StatCard({
   hint?: ReactNode;
 }): JSX.Element {
   return (
-    <div className="card p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-ink-500">
+    <div className="card relative overflow-hidden p-5">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent" />
+      <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-ink-400">
         {label}
       </div>
-      <div className="mt-1 text-3xl font-bold tabular-nums text-ink-900">
+      <div className="mt-2 font-display text-4xl font-semibold tabular-nums tracking-tight text-ink-900">
         {value}
       </div>
-      {hint && <div className="mt-1 text-xs text-ink-500">{hint}</div>}
+      {hint && <div className="mt-1.5 text-xs text-ink-500">{hint}</div>}
     </div>
   );
 }

@@ -46,11 +46,12 @@ export default function MemoryGraphPage(): JSX.Element {
   }, [data, minWeight]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex animate-fade-up flex-col gap-4">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Memory Graph</h1>
-          <p className="text-sm text-ink-500">
+          <div className="kicker">Explore</div>
+          <h1 className="page-title">Memory Graph</h1>
+          <p className="page-sub">
             Cluster-to-cluster semantic relations (Cytoscape, cose-bilkent).
           </p>
         </div>
@@ -83,7 +84,7 @@ export default function MemoryGraphPage(): JSX.Element {
       {isLoading && <LoadingBlock label="Loading graph..." />}
       {error && (
         <Card>
-          <p className="text-sm text-red-600">
+          <p className="text-sm text-danger-400">
             Failed to load /memory-graph: {String(error.message ?? error)}
           </p>
         </Card>
@@ -104,7 +105,7 @@ export default function MemoryGraphPage(): JSX.Element {
 
           <Card title="Selected cluster">
             {!selectedId && (
-              <p className="text-sm text-ink-500">
+              <p className="text-sm text-ink-400">
                 Click a node in the graph to inspect its cluster.
               </p>
             )}
@@ -112,7 +113,7 @@ export default function MemoryGraphPage(): JSX.Element {
             {selected && (
               <div className="flex flex-col gap-3">
                 <div>
-                  <div className="text-xs uppercase tracking-wide text-ink-500">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-400">
                     Cluster {selected.cluster.id.slice(0, 8)}
                   </div>
                   <div className="text-base font-semibold text-ink-900">

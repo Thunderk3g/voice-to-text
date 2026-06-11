@@ -1,14 +1,15 @@
 import { LANGUAGE_LABEL, type Language } from "@/lib/types";
 import { Badge } from "./Badge";
 
+// Tuned for legibility on dark surfaces.
 const LANG_COLOR: Record<Language, string> = {
-  hi: "#0e7490",
-  en: "#1f5cf5",
-  "hi-en": "#9333ea",
-  "hi-roman": "#0891b2",
-  ta: "#15803d",
-  te: "#b45309",
-  other: "#64748b",
+  hi: "#56C2D6",
+  en: "#7BA7F7",
+  "hi-en": "#C89BF2",
+  "hi-roman": "#5BCBE3",
+  ta: "#7BD489",
+  te: "#F2B65C",
+  other: "#9BA3AF",
 };
 
 export function LanguageBadge({ language }: { language: Language }): JSX.Element {

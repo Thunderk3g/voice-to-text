@@ -19,17 +19,18 @@ import {
   type Intent,
   type Language,
 } from "@/lib/types";
-import type { Data, Layout } from "plotly.js";
+import {
+  CHART_COLORS,
+  DARK_LAYOUT,
+  type PlotData,
+  type PlotLayout,
+} from "@/lib/plotly";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
-const COMMON_LAYOUT: Partial<Layout> = {
+const COMMON_LAYOUT: PlotLayout = {
+  ...DARK_LAYOUT,
   margin: { l: 30, r: 16, t: 16, b: 30 },
-  paper_bgcolor: "rgba(0,0,0,0)",
-  plot_bgcolor: "rgba(0,0,0,0)",
-  font: { family: "Inter, ui-sans-serif", size: 11, color: "#3f4858" },
-  showlegend: true,
-  legend: { orientation: "h", y: -0.18 },
 };
 
 export default function ClusterDetailPage(): JSX.Element {
@@ -69,7 +70,7 @@ export default function ClusterDetailPage(): JSX.Element {
   if (error) {
     return (
       <Card>
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-danger-400">
           Failed to load cluster: {String(error.message ?? error)}
         </p>
       </Card>
@@ -84,7 +85,7 @@ export default function ClusterDetailPage(): JSX.Element {
     [Language, number]
   >;
 
-  const intentPie: Data[] = [
+  const intentPie: PlotData[] = [
     {
       type: "pie",
       labels: intentEntries.map(([k]) => INTENT_LABEL[k]),
@@ -95,11 +96,12 @@ export default function ClusterDetailPage(): JSX.Element {
     },
   ];
 
-  const langPie: Data[] = [
+  const langPie: PlotData[] = [
     {
       type: "pie",
       labels: langEntries.map(([k]) => LANGUAGE_LABEL[k]),
       values: langEntries.map(([, v]) => v),
+      marker: { colors: CHART_COLORS },
       hole: 0.55,
       textinfo: "label+percent",
     },
@@ -109,21 +111,19 @@ export default function ClusterDetailPage(): JSX.Element {
   const faq = data.canonical_faq;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex animate-fade-up flex-col gap-6">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-xs uppercase tracking-wide text-ink-500">
-            Cluster {c.id.slice(0, 8)}
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <div className="kicker">Cluster {c.id.slice(0, 8)}</div>
+          <h1 className="page-title">
             {c.canonical_question ?? c.label ?? "(unlabeled cluster)"}
           </h1>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-3 flex flex-wrap gap-1.5">
             <LanguageBadge language={c.dominant_language} />
             {c.dominant_intents.map((i) => (
               <IntentBadge key={i} intent={i} />
             ))}
-            <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-medium text-ink-700">
+            <span className="rounded-full border border-ink-200 bg-ink-100 px-2 py-0.5 font-mono text-[10px] font-medium text-ink-600">
               freq {c.frequency}
             </span>
           </div>
@@ -189,16 +189,16 @@ export default function ClusterDetailPage(): JSX.Element {
               </div>
             )}
             {faq.suggested_answer && (
-              <div className="mt-2 whitespace-pre-wrap rounded-lg bg-ink-50 p-3 text-sm text-ink-800">
+              <div className="mt-2 whitespace-pre-wrap rounded-lg border border-ink-200 bg-ink-100/70 p-3.5 text-sm leading-relaxed text-ink-700">
                 {faq.suggested_answer}
               </div>
             )}
-            <div className="mt-2 text-xs text-ink-500">
+            <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-400">
               v{faq.version} · confidence {(faq.confidence * 100).toFixed(1)}%
             </div>
           </div>
         ) : (
-          <p className="text-sm text-ink-500">No canonical FAQ yet.</p>
+          <p className="text-sm text-ink-400">No canonical FAQ yet.</p>
         )}
       </Card>
 
@@ -241,7 +241,7 @@ export default function ClusterDetailPage(): JSX.Element {
             <tbody>
               {data.examples.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-3 py-6 text-center text-ink-500">
+                  <td colSpan={4} className="px-3 py-6 text-center text-ink-400">
                     No example questions.
                   </td>
                 </tr>
@@ -265,7 +265,7 @@ export default function ClusterDetailPage(): JSX.Element {
                   <td>
                     <LanguageBadge language={q.language} />
                   </td>
-                  <td className="text-right tabular-nums">
+                  <td className="text-right font-mono text-xs tabular-nums">
                     {(q.confidence * 100).toFixed(0)}%
                   </td>
                 </tr>

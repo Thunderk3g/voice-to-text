@@ -55,11 +55,12 @@ export default function ClustersPage(): JSX.Element {
   if (isLoading) return <LoadingBlock label="Loading clusters..." />;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex animate-fade-up flex-col gap-4">
       <header className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Cluster Explorer</h1>
-          <p className="text-sm text-ink-500">
+          <div className="kicker">Explore</div>
+          <h1 className="page-title">Cluster Explorer</h1>
+          <p className="page-sub">
             Browse semantic clusters of customer questions.
           </p>
         </div>
@@ -76,7 +77,7 @@ export default function ClustersPage(): JSX.Element {
 
       {error && (
         <Card>
-          <p className="text-sm text-red-600">
+          <p className="text-sm text-danger-400">
             Failed to load: {String(error.message ?? error)}
           </p>
         </Card>
@@ -96,17 +97,17 @@ export default function ClustersPage(): JSX.Element {
             <tbody>
               {pageRows.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-3 py-6 text-center text-ink-500">
+                  <td colSpan={4} className="px-3 py-6 text-center text-ink-400">
                     No clusters found.
                   </td>
                 </tr>
               )}
               {pageRows.map((r) => (
-                <tr key={r.id} className="hover:bg-ink-50">
+                <tr key={r.id}>
                   <td>
                     <Link
                       href={`/clusters/${r.id}`}
-                      className="font-medium text-brand-700 hover:underline"
+                      className="font-medium text-brand-600 underline-offset-4 transition hover:text-brand-700 hover:underline"
                     >
                       {r.canonical_question}
                     </Link>
@@ -121,7 +122,9 @@ export default function ClustersPage(): JSX.Element {
                       ))}
                     </div>
                   </td>
-                  <td className="text-right tabular-nums">{r.frequency}</td>
+                  <td className="text-right font-mono text-xs tabular-nums">
+                    {r.frequency}
+                  </td>
                 </tr>
               ))}
             </tbody>

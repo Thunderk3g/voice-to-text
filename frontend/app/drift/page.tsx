@@ -5,8 +5,8 @@ import { useMemo } from "react";
 import useSWR from "swr";
 import { Card } from "@/components/Card";
 import { LoadingBlock } from "@/components/Spinner";
+import { DARK_LAYOUT, type PlotData, type PlotLayout } from "@/lib/plotly";
 import type { AnalyticsSummary } from "@/lib/types";
-import type { Data, Layout } from "plotly.js";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
@@ -32,7 +32,7 @@ export default function DriftPage(): JSX.Element {
     }));
   }, [data]);
 
-  const bubble: Data[] = [
+  const bubble: PlotData[] = [
     {
       type: "scatter",
       mode: "markers",
@@ -41,30 +41,29 @@ export default function DriftPage(): JSX.Element {
       text: rows.map((r) => r.label),
       marker: {
         size: rows.map((r) => Math.max(8, Math.sqrt(r.current_size) * 4)),
-        color: "#1f5cf5",
+        color: "#E9A83D",
         opacity: 0.65,
-        line: { color: "#1948dd", width: 1 },
+        line: { color: "#F8C97E", width: 1 },
       },
       hovertemplate:
         "<b>%{text}</b><br>first seen: %{x}<br>growth: %{y:.2f}<br>size: %{marker.size}<extra></extra>",
     },
   ];
 
-  const layout: Partial<Layout> = {
+  const layout: PlotLayout = {
+    ...DARK_LAYOUT,
     margin: { l: 50, r: 16, t: 16, b: 50 },
-    paper_bgcolor: "rgba(0,0,0,0)",
-    plot_bgcolor: "rgba(0,0,0,0)",
-    font: { family: "Inter, ui-sans-serif", size: 11, color: "#3f4858" },
-    xaxis: { title: { text: "First seen" }, gridcolor: "#e5e7eb" },
-    yaxis: { title: { text: "Growth rate" }, gridcolor: "#e5e7eb" },
+    xaxis: { ...DARK_LAYOUT.xaxis, title: { text: "First seen" } },
+    yaxis: { ...DARK_LAYOUT.yaxis, title: { text: "Growth rate" } },
     showlegend: false,
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex animate-fade-up flex-col gap-6">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Drift</h1>
-        <p className="text-sm text-ink-500">
+        <div className="kicker">Monitor</div>
+        <h1 className="page-title">Drift</h1>
+        <p className="page-sub">
           Emerging topics — bubble size = current cluster size.
         </p>
       </header>
@@ -72,7 +71,7 @@ export default function DriftPage(): JSX.Element {
       {isLoading && <LoadingBlock label="Loading drift..." />}
       {error && (
         <Card>
-          <p className="text-sm text-red-600">
+          <p className="text-sm text-danger-400">
             Failed: {String(error.message ?? error)}
           </p>
         </Card>
@@ -108,7 +107,7 @@ export default function DriftPage(): JSX.Element {
                     <tr>
                       <td
                         colSpan={4}
-                        className="px-3 py-6 text-center text-ink-500"
+                        className="px-3 py-6 text-center text-ink-400"
                       >
                         No emerging topics.
                       </td>
@@ -118,10 +117,10 @@ export default function DriftPage(): JSX.Element {
                     <tr key={r.cluster_id || `${i}-${r.label}`}>
                       <td className="font-medium text-ink-900">{r.label}</td>
                       <td className="font-mono text-xs">{r.first_seen}</td>
-                      <td className="text-right tabular-nums">
+                      <td className="text-right font-mono text-xs tabular-nums">
                         {r.growth_rate.toFixed(2)}
                       </td>
-                      <td className="text-right tabular-nums">
+                      <td className="text-right font-mono text-xs tabular-nums">
                         {r.current_size}
                       </td>
                     </tr>
