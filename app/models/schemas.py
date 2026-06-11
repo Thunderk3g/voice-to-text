@@ -36,7 +36,7 @@ class CallMetadata(BaseModel):
     customer_id: str | None = None
     campaign: str | None = None
     channel: str | None = None  # ivr | inbound | outbound | chat-bot
-    stt_provider: Literal["sarvam", "whisper"] | None = None
+    stt_provider: Literal["sarvam", "whisper", "indic_conformer"] | None = None
     received_at: datetime | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
 

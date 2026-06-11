@@ -194,10 +194,14 @@ async def ingest_upload(
     size cap, uploaded to the appropriate bucket, and the standard pipeline is
     dispatched. Returns 202 with the new call_id and the MinIO source_uri.
     """
-    if stt_provider is not None and stt_provider not in ("sarvam", "whisper"):
+    if stt_provider is not None and stt_provider not in (
+        "sarvam",
+        "whisper",
+        "indic_conformer",
+    ):
         raise APIError(
             f"Unsupported stt_provider: {stt_provider!r}. "
-            "Allowed values: 'sarvam', 'whisper'.",
+            "Allowed values: 'sarvam', 'whisper', 'indic_conformer'.",
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             error_type="invalid_stt_provider",
         )
