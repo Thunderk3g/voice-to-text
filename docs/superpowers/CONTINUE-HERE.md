@@ -2,75 +2,26 @@
 
 **Last worked:** 2026-06-10 · **Branch:** `main`
 
-This file is the resume point. Read it first, then the spec, then run the runbook below.
+This file is the resume point. Read it first, then the Task 4 interpretation, then execute Phase B.
 
 ---
 
 ## TL;DR — what to do next
 
-Phase A **Task 4 is still pending** — it needs the pipeline to run on real data, which
-requires unproxied internet (Sarvam STT + Groq LLM calls). Run the runbook below on the
-laptop **without the corporate proxy**, then plan Phase B/C from the findings.
+1. **Phase B (extraction reliability) is DONE** (2026-06-10, branch `feat/phase-b-extraction-reliability`, 9 commits, 139 unit tests green, fully reviewed). Read `docs/superpowers/diagnostics/2026-06-10-phase-b-rerun-comparison.md` first — it has the before/after numbers and the revisited gated decisions.
+2. **Result:** the DB now holds only trustworthy questions — 4 questions, 100% grounded, 0 defaulted intents (was 16 questions, 81% hallucinated garbage). The new guards caught and dropped 12 hallucination attempts during the re-run. Clusters=0 is expected (4 questions < hdbscan_min_cluster_size=8).
+3. **New binding constraint: data volume / extraction recall.** 23/27 calls yield zero questions (8 agent-only; ~17 Urdu where gemma4 recall looks weak). Next steps (Phase B.2 candidates, see comparison doc): ingest more query-rich calls; A/B a stronger multilingual model vs `gemma4:latest` for extraction (swap `llm_model` in config); once corpus has ≥ a few dozen questions, lower `hdbscan_min_cluster_size` and re-run `phase_a_diagnostics` for the original granularity decision. Phase C (`discrepancy_type`) stays scoped, gated on volume.
+4. Earlier context: Task 4 findings `diagnostics/2026-06-08-phase-a-findings.{md,json}`, interpretation `diagnostics/2026-06-10-task4-interpretation.md`, executed plan `plans/2026-06-10-phase-b-extraction-reliability.md`.
 
-## What the 2026-06-10 session found (state of the world)
-
-- **There is no populated DB.** The `voice-to-text_postgres_data` volume has the full
-  migrated schema but **zero rows** in every table (`calls`, `extracted_questions`,
-  `semantic_clusters`, …). A leftover `v2t-postgres-diag` container (same volume,
-  host port 15432) confirmed this; it has been stopped and removed.
-- **The real data is local audio:** `dataset/` holds **11,460 mp3s (~1.1 GB)** of real
-  calls. (17 of them are git-tracked; the rest are untracked. A stray `git status`
-  deletion of the 17 tracked ones was restored with `git checkout -- dataset/`.)
-- `transcripts/*.txt` (17 files) are loose STT outputs — **not ingestible** (the API
-  accepts `.json` transcripts or audio only).
-- `.env` has working `SARVAM_API_KEY` and `LLM_API_KEY` (Groq), so the full
-  audio → STT → extraction → embedding → clustering pipeline is runnable.
-- **New script:** `app/scripts/ingest_dataset_sample.py` — uploads a reproducible
-  random sample of `dataset/*.mp3` to `/ingest/upload` (seeded RNG, idempotent via
-  `dataset/.ingested.json`, batched with progress output). Written for Task 4; not
-  yet exercised against a live API.
-
-## Runbook — Task 4 on the unproxied laptop
-
-```powershell
-# 0. One-time: Python 3.11 venv (system python is 3.10 on the corp laptop — check yours)
-uv venv --python 3.11; .venv\Scripts\pip install -r requirements.txt
-
-# 1. Full stack up (postgres, redis, minio, api, worker-cpu, worker-embed, beat)
-docker compose up -d --build
-
-# 2. Seed the 6 bundled sample transcripts (fast, no STT)
-.venv\Scripts\python.exe -m app.scripts.seed_data --api-url http://localhost:8080
-
-# 3. Ingest a representative sample of real calls (500 ≈ enough for granularity
-#    diagnostics; scale --n up if you have time/credit — state file makes it additive)
-.venv\Scripts\python.exe -m app.scripts.ingest_dataset_sample --n 500
-
-# 4. Wait for the pipeline to drain. Watch progress until (clustered + failed) ≈ total:
-docker exec v2t-postgres psql -U compliance_user -d compliance_db -c "SELECT status, count(*) FROM calls GROUP BY status;"
-#    (Flower is on http://localhost:5555 for queue depth.)
-
-# 5. Force a full HDBSCAN pass (beat only runs it at 02:00 UTC):
-docker exec v2t-worker-cpu celery -A app.workers.celery_app call v2t.batch_recluster
-
-# 6. Run the diagnostics from the host (note the DATABASE_URL override —
-#    .env points at the in-network hostname `postgres`, not localhost):
-$env:DATABASE_URL = "postgresql+asyncpg://compliance_user:compliance_pass@localhost:5432/compliance_db"
-.venv\Scripts\python.exe -m app.scripts.phase_a_diagnostics --top-n 30 --max-members 300
-
-# 7. Commit the findings artifact:
-git add docs/superpowers/diagnostics/2026-06-08-phase-a-findings.md docs/superpowers/diagnostics/2026-06-08-phase-a-findings.json
-git commit -m "docs(diagnostics): phase-A findings on clustering/extraction granularity"
+### Run diagnostics on this machine (macOS — no local 3.11 venv)
+```bash
+docker compose run --rm --no-deps \
+  -v "$(pwd)/app:/app/app" -v "$(pwd)/docs:/app/docs" \
+  --entrypoint python api -m app.scripts.phase_a_diagnostics --top-n 30 --max-members 300
 ```
+(The running `v2t-api` image predates the diagnostics code; the mount overlays current code. Don't `docker exec` into `v2t-api` for long scripts — its restart policy killed one mid-run.)
 
-Notes:
-- Container names: check with `docker ps` — worker container may be `v2t-worker-cpu`
-  or similar per `docker-compose.yml` `container_name`.
-- On the unproxied laptop the corporate-CA TLS bypass baked into the 5 Dockerfiles is
-  unnecessary (it's marked for removal); it shouldn't break anything, but if TLS
-  errors appear, that's the first place to look.
-- `seed_data` / `ingest_dataset_sample` are idempotent (`.seeded.json` /
-  `.ingested.json` state files, both untracked) — safe to re-run.
+---
 
 ## Where we are
 
@@ -92,7 +43,8 @@ Notes:
 - Tests: `app/tests/unit/test_cluster_metrics.py`, `app/tests/unit/test_diagnostics_report.py` (21 passing).
 
 ## Not done
-- **Task 4** — populate the DB (runbook above) + run the diagnostics and record findings. **This gates Phase B/C.**
+- ~~**Task 4**~~ — DONE 2026-06-10; see `diagnostics/2026-06-10-task4-interpretation.md`.
+- **Phase B (re-scoped)** — extraction reliability first; see plan `plans/2026-06-10-phase-b-extraction-reliability.md`.
 
 ## Runtime gotchas
 - System `python` on the corp laptop is **3.10**; the project needs **3.11+** (`StrEnum`). Anything importing `app.db.*` must run via `.venv\Scripts\python.exe`. The pure `app/diagnostics/*` modules happen to run on 3.10, which can mask the problem.

@@ -93,6 +93,11 @@ class Settings(BaseSettings):
     llm_request_timeout_s: int = 180
     llm_insecure_tls: bool = False
 
+    # Drop extracted questions whose raw_text matches no utterance in the
+    # chunk they came from (LLM hallucination guard). Escape hatch: set False
+    # if a future model legitimately paraphrases raw_text.
+    extraction_drop_ungrounded: bool = True
+
     # ---- Embeddings ----
     # Provider dispatch lives in app/services/embedding/e5.py. "local" uses
     # SentenceTransformer (needs the model on disk + optionally a GPU).

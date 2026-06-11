@@ -1,0 +1,54 @@
+{
+  "n_clusters": 2,
+  "n_coarse": 0,
+  "size_threshold": 10,
+  "purity_threshold": 0.6,
+  "size_stats": {
+    "count": 2,
+    "min": 0,
+    "max": 11,
+    "mean": 5.5,
+    "median": 5.5,
+    "p90": 11
+  },
+  "qtype_distribution": {
+    "question": 14,
+    "doubt": 2
+  },
+  "intent_distribution": {
+    "other": 13,
+    "policy_details": 1,
+    "other_insurance": 2
+  },
+  "coarse_clusters": [],
+  "all_clusters": [
+    {
+      "cluster_id": "d0be14fd-4540-4673-84cb-f3a2a31a6acc",
+      "label": null,
+      "canonical_question": null,
+      "frequency": 7,
+      "size": 11,
+      "intent_purity": 1.0,
+      "intent_entropy": 0.0,
+      "dispersion": 0.08,
+      "sample_glosses": [
+        "What is the process for changing the premium payment frequency?",
+        "Can I adjust the premium payment frequency?",
+        "How can I change the premium payment frequency?",
+        "What is the process for updating policy details?",
+        "How can I check my policy status?"
+      ]
+    },
+    {
+      "cluster_id": "0e71e142-fad3-4d6e-9e66-fed29adfb891",
+      "label": null,
+      "canonical_question": null,
+      "frequency": 4,
+      "size": 0,
+      "intent_purity": 1.0,
+      "intent_entropy": 0.0,
+      "dispersion": null,
+      "sample_glosses": []
+    }
+  ]
+}
