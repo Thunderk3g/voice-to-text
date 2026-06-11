@@ -68,3 +68,6 @@ torch_home/
 dist/
 build/
 *.egg
+
+# UI screenshot scratch
+_ui_shots/

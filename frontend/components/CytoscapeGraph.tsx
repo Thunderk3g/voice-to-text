@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import dynamic from "next/dynamic";
 import cytoscape from "cytoscape";
 // @ts-expect-error — cytoscape-cose-bilkent has no types
 import coseBilkent from "cytoscape-cose-bilkent";
@@ -22,18 +21,74 @@ if (typeof window !== "undefined") {
   }
 }
 
-// react-cytoscapejs must be dynamically imported with ssr:false.
-const CytoscapeComponent = dynamic(() => import("react-cytoscapejs"), {
-  ssr: false,
-}) as unknown as React.ComponentType<{
-  elements: ElementDefinition[];
-  layout: cytoscape.LayoutOptions;
-  style: React.CSSProperties;
-  stylesheet: unknown[];
-  cy?: (cy: Core) => void;
-  minZoom?: number;
-  maxZoom?: number;
-}>;
+// Drives cytoscape core directly (no react-cytoscapejs — its prop-diffing
+// breaks on updates with "TypeError: n is not a function").
+const STYLESHEET = [
+  {
+    selector: "node",
+    style: {
+      "background-color": "data(color)",
+      label: "data(label)",
+      width: "data(size)",
+      height: "data(size)",
+      "font-size": 9,
+      color: "#CDD0D7",
+      "text-wrap": "wrap",
+      "text-max-width": "120px",
+      "text-valign": "bottom",
+      "text-margin-y": 4,
+      "border-width": 1,
+      "border-color": "#0E1014",
+      "overlay-opacity": 0,
+    },
+  },
+  {
+    selector: "node.highlight",
+    style: {
+      "border-width": 4,
+      "border-color": "#E9A83D",
+      "z-index": 999,
+    },
+  },
+  {
+    selector: "node.faded",
+    style: { opacity: 0.15 },
+  },
+  {
+    selector: "edge",
+    style: {
+      width: "data(width)",
+      "line-color": "#39404F",
+      "target-arrow-color": "#39404F",
+      "target-arrow-shape": "triangle",
+      "curve-style": "bezier",
+      label: "data(relation)",
+      "font-size": 7,
+      color: "#959CAA",
+      "text-rotation": "autorotate",
+      "text-background-color": "#161922",
+      "text-background-opacity": 0.85,
+      "text-background-padding": "2px",
+      "text-background-shape": "roundrectangle",
+    },
+  },
+  {
+    selector: "edge.faded",
+    style: { opacity: 0.08 },
+  },
+] as unknown as cytoscape.StylesheetJson;
+
+const LAYOUT = {
+  name: "cose-bilkent",
+  animate: false,
+  nodeRepulsion: 4500,
+  idealEdgeLength: 110,
+  edgeElasticity: 0.45,
+  gravity: 0.25,
+  numIter: 2500,
+  tile: true,
+  randomize: true,
+} as unknown as cytoscape.LayoutOptions;
 
 export interface CytoscapeGraphProps {
   nodes: ClusterRecord[];
@@ -48,7 +103,11 @@ export function CytoscapeGraph({
   highlight,
   onNodeClick,
 }: CytoscapeGraphProps): JSX.Element {
+  const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
+  const lastElementsJson = useRef<string>("");
+  const onNodeClickRef = useRef(onNodeClick);
+  onNodeClickRef.current = onNodeClick;
 
   const elements = useMemo<ElementDefinition[]>(() => {
     const maxFreq = Math.max(1, ...nodes.map((n) => n.frequency));
@@ -80,79 +139,43 @@ export function CytoscapeGraph({
     return [...nodeElements, ...edgeElements];
   }, [nodes, edges]);
 
-  const stylesheet = useMemo<unknown[]>(
-    () => [
-      {
-        selector: "node",
-        style: {
-          "background-color": "data(color)",
-          label: "data(label)",
-          width: "data(size)",
-          height: "data(size)",
-          "font-size": 9,
-          color: "#CDD0D7",
-          "text-wrap": "wrap",
-          "text-max-width": "120px",
-          "text-valign": "bottom",
-          "text-margin-y": 4,
-          "border-width": 1,
-          "border-color": "#0E1014",
-          "overlay-opacity": 0,
-        },
-      },
-      {
-        selector: "node.highlight",
-        style: {
-          "border-width": 4,
-          "border-color": "#E9A83D",
-          "z-index": 999,
-        },
-      },
-      {
-        selector: "node.faded",
-        style: { opacity: 0.15 },
-      },
-      {
-        selector: "edge",
-        style: {
-          width: "data(width)",
-          "line-color": "#39404F",
-          "target-arrow-color": "#39404F",
-          "target-arrow-shape": "triangle",
-          "curve-style": "bezier",
-          label: "data(relation)",
-          "font-size": 7,
-          color: "#959CAA",
-          "text-rotation": "autorotate",
-          "text-background-color": "#161922",
-          "text-background-opacity": 0.85,
-          "text-background-padding": "2px",
-          "text-background-shape": "roundrectangle",
-        },
-      },
-      {
-        selector: "edge.faded",
-        style: { opacity: 0.08 },
-      },
-    ],
-    [],
-  );
+  // Create the cytoscape instance once.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const cy = cytoscape({
+      container,
+      style: STYLESHEET,
+      minZoom: 0.1,
+      maxZoom: 3,
+    });
+    cy.on("tap", "node", (evt) => {
+      onNodeClickRef.current?.(evt.target.id());
+    });
+    cyRef.current = cy;
+    // A fresh instance has no elements regardless of what the previous
+    // instance was showing (StrictMode remounts) — force the next sync.
+    lastElementsJson.current = "";
+    return () => {
+      cyRef.current = null;
+      cy.destroy();
+    };
+  }, []);
 
-  const layout = useMemo<cytoscape.LayoutOptions>(
-    () =>
-      ({
-        name: "cose-bilkent",
-        animate: false,
-        nodeRepulsion: 4500,
-        idealEdgeLength: 110,
-        edgeElasticity: 0.45,
-        gravity: 0.25,
-        numIter: 2500,
-        tile: true,
-        randomize: true,
-      }) as unknown as cytoscape.LayoutOptions,
-    [],
-  );
+  // Sync elements; re-layout only when the data actually changed (SWR
+  // revalidation hands us fresh-but-identical arrays).
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    const json = JSON.stringify(elements);
+    if (json === lastElementsJson.current) return;
+    lastElementsJson.current = json;
+    cy.batch(() => {
+      cy.elements().remove();
+      cy.add(elements);
+    });
+    cy.layout(LAYOUT).run();
+  }, [elements]);
 
   // Highlight handling
   useEffect(() => {
@@ -174,24 +197,7 @@ export function CytoscapeGraph({
     });
   }, [highlight, elements]);
 
-  return (
-    <CytoscapeComponent
-      elements={elements}
-      layout={layout}
-      stylesheet={stylesheet}
-      style={{ width: "100%", height: "100%" }}
-      minZoom={0.1}
-      maxZoom={3}
-      cy={(cy) => {
-        cyRef.current = cy;
-        cy.removeListener("tap", "node");
-        cy.on("tap", "node", (evt) => {
-          const id = evt.target.id();
-          if (onNodeClick) onNodeClick(id);
-        });
-      }}
-    />
-  );
+  return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
 }
 
 export default CytoscapeGraph;
