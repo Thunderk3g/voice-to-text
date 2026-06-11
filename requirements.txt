@@ -38,9 +38,14 @@ openai==1.55.0
 
 # Sarvam.ai STT (handles Hindi + 10 Indic languages natively)
 sarvamai>=0.1.10
-pydub==0.25.1                            # audio chunking for >30s clips
-# faster-whisper STT (open-source, local; CPU int8 large-v3 by default)
+pydub==0.25.1                            # duration probe, stereo channel split
+# faster-whisper STT (open-source, local; CT2 auto-convert for HF checkpoints
+# like Oriserve/Whisper-Hindi2Hinglish-Apex)
 faster-whisper==1.0.3
+# Local diarization (LOCAL_DIARIZATION=true): pyannote community-1, gated on HF
+pyannote.audio>=4.0,<5
+# IndicConformer provider (STT_PROVIDER=indic_conformer)
+torchaudio==2.4.1
 
 # Observability
 structlog==24.4.0

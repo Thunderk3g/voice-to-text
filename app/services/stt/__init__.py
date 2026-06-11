@@ -46,6 +46,11 @@ def make_transcriber(provider: str | None = None):
 
         return WhisperTranscriber()
 
+    if provider == "indic_conformer":
+        from app.services.stt.indic_conformer import IndicConformerTranscriber
+
+        return IndicConformerTranscriber()
+
     if provider == "none":
         raise RuntimeError(
             "STT_PROVIDER='none' — audio transcription is disabled "

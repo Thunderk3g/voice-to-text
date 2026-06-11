@@ -26,7 +26,9 @@ actually attempted).
 from __future__ import annotations
 
 import asyncio
+import os
 import threading
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -78,6 +80,11 @@ def _get_model(model: str, device: str, compute_type: str) -> Any:
     """Return a cached ``WhisperModel``, constructing it once per config key.
 
     Thread-safe (Celery may run the sync wrapper from a worker thread).
+
+    ``model`` may be a faster-whisper alias ("large-v3"), a local CTranslate2
+    directory, or any Hugging Face Whisper checkpoint (e.g.
+    ``Oriserve/Whisper-Hindi2Hinglish-Apex``). HF checkpoints that are not
+    already in CTranslate2 format get converted once and cached on disk.
     """
     key = (model, device, compute_type)
     cached = _model_cache.get(key)
@@ -93,13 +100,54 @@ def _get_model(model: str, device: str, compute_type: str) -> Any:
             model=model,
             device=device,
             compute_type=compute_type,
-            note="first run downloads the model weights (large-v3 ~3GB) and can "
-            "take several minutes — the call will sit in stt_running until done",
+            note="first run downloads the model weights and can take several "
+            "minutes — the call will sit in stt_running until done",
         )
-        instance = ctor(model, device=device, compute_type=compute_type)
+        try:
+            instance = ctor(model, device=device, compute_type=compute_type)
+        except (RuntimeError, ValueError) as exc:
+            # faster-whisper only loads CTranslate2 models. A HF repo id
+            # (contains "/") in transformers format lands here — convert it.
+            if "/" not in model:
+                raise
+            logger.info("whisper.ct2_convert_needed", model=model, reason=str(exc))
+            converted = _convert_to_ct2(model, compute_type)
+            instance = ctor(converted, device=device, compute_type=compute_type)
         logger.info("whisper.model_load_done", model=model)
         _model_cache[key] = instance
         return instance
+
+
+def _ct2_cache_dir() -> Path:
+    base = os.environ.get("HF_HOME") or str(Path.home() / ".cache" / "huggingface")
+    return Path(base) / "v2t-ct2"
+
+
+def _convert_to_ct2(model_id: str, compute_type: str) -> str:
+    """Convert a transformers Whisper checkpoint to CTranslate2, once.
+
+    The converted model is cached under the HF cache volume so worker
+    restarts don't re-convert.
+    """
+    target = _ct2_cache_dir() / model_id.replace("/", "__")
+    if (target / "model.bin").exists():
+        return str(target)
+    try:
+        from ctranslate2.converters import TransformersConverter
+    except ImportError as exc:  # pragma: no cover — ships with faster-whisper
+        raise WhisperConfigError(
+            "ctranslate2 is required to convert HF Whisper checkpoints."
+        ) from exc
+    quantization = compute_type if compute_type in ("int8", "int8_float16", "int16", "float16", "float32") else "int8"
+    logger.info("whisper.ct2_convert_start", model=model_id, quantization=quantization)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    TransformersConverter(
+        model_id,
+        copy_files=["tokenizer.json", "preprocessor_config.json"],
+        load_as_float16=quantization in ("int8_float16", "float16"),
+    ).convert(str(target), quantization=quantization, force=True)
+    logger.info("whisper.ct2_convert_done", model=model_id, target=str(target))
+    return str(target)
 
 
 def _reset_model_cache() -> None:
@@ -143,9 +191,15 @@ class WhisperTranscriber:
         responsive.
         """
         utterances = await asyncio.to_thread(self._transcribe_sync, call_id, audio_path)
+        if self._settings.local_diarization and utterances:
+            from app.services.stt.local_diarization import assign_speaker_ids, diarize
+
+            turns = await asyncio.to_thread(diarize, audio_path, self._settings)
+            utterances = assign_speaker_ids(utterances, turns)
         logger.info(
             "whisper.transcribe_done",
             n_utterances=len(utterances),
+            diarized=any(u.speaker_id for u in utterances),
             audio_path=audio_path,
         )
         return utterances
