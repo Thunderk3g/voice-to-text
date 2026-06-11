@@ -166,6 +166,58 @@ def assign_speakers(
     ]
 
 
+def map_speaker_roles(
+    utterances: list[UtteranceSchema],
+    *,
+    extra_brand_tokens: tuple[str, ...] = (),
+) -> list[UtteranceSchema]:
+    """Label diarized utterances: decide which ``speaker_id`` is the AGENT.
+
+    Unlike :func:`assign_speakers` (which has to *segment* speakers too),
+    diarization already grouped the turns — we only score each speaker_id as
+    a whole: greeting tokens weigh heaviest (agents open with the script),
+    then total words spoken (agents talk more), minus interrogative density
+    (customers ask the questions). Utterances without a ``speaker_id`` fall
+    back to the full heuristic.
+    """
+    if not utterances:
+        return []
+    if not any(u.speaker_id for u in utterances):
+        return assign_speakers(utterances, extra_brand_tokens=extra_brand_tokens)
+
+    ids = sorted({u.speaker_id for u in utterances if u.speaker_id})
+    if len(ids) == 1:
+        # Single detected speaker — everything is the customer's side
+        # is as wrong as everything-agent; AGENT matches one-sided
+        # outbound scripts more often.
+        only = ids[0]
+        return [
+            u.model_copy(update={"speaker": Speaker.AGENT if u.speaker_id == only else Speaker.UNKNOWN})
+            for u in utterances
+        ]
+
+    brand = extra_brand_tokens + _DEFAULT_GREETING_TOKENS
+    first_sid = min(utterances, key=lambda u: u.start_ts).speaker_id
+    scores: dict[str, float] = {}
+    for sid in ids:
+        turns = [u for u in utterances if u.speaker_id == sid]
+        greeting_hits = sum(1 for u in turns if _has_any(u.text, brand))
+        words = sum(_word_count(u.text) for u in turns)
+        interrog = sum(_count_any(u.text, _INTERROGATIVE_TOKENS) for u in turns)
+        # First speaker of the call gets a nudge — agents answer/open the line.
+        opens_call = 1.0 if sid == first_sid else 0.0
+        scores[sid] = greeting_hits * 100.0 + words * 0.1 - interrog * 2.0 + opens_call * 10.0
+
+    agent_id = max(ids, key=lambda sid: scores[sid])
+
+    def _role(u: UtteranceSchema) -> Speaker:
+        if not u.speaker_id:
+            return Speaker.UNKNOWN
+        return Speaker.AGENT if u.speaker_id == agent_id else Speaker.CUSTOMER
+
+    return [u.model_copy(update={"speaker": _role(u)}) for u in utterances]
+
+
 def _nearest_labelled(labels: list[Speaker], i: int) -> int | None:
     n = len(labels)
     for d in range(1, n):
@@ -183,4 +235,4 @@ def _flip(s: Speaker) -> Speaker:
     return Speaker.UNKNOWN
 
 
-__all__ = ["assign_speakers"]
+__all__ = ["assign_speakers", "map_speaker_roles"]

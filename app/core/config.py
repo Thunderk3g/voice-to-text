@@ -66,23 +66,58 @@ class Settings(BaseSettings):
     upload_max_mb: int = 200
 
     # ---- STT ----
-    stt_provider: Literal["sarvam", "whisper", "none"] = "sarvam"
+    stt_provider: Literal["sarvam", "whisper", "indic_conformer", "none"] = "sarvam"
 
     # ---- Sarvam.ai STT (active when stt_provider == "sarvam") ----
+    # SARVAM_API_KEYS is a comma-separated pool of subscription keys (each
+    # from its own Sarvam account — rate limits are per account). The single
+    # SARVAM_API_KEY is still honoured as a one-key pool.
     sarvam_api_key: SecretStr = SecretStr("")
-    sarvam_stt_model: str = "saarika:v2.5"
+    sarvam_api_keys: SecretStr = SecretStr("")
+    sarvam_stt_model: str = "saaras:v3"
     sarvam_language_code: str = "unknown"  # "unknown" auto-detects across Sarvam's Indic set
     sarvam_request_timeout_s: int = 60
-    sarvam_chunk_duration_s: int = 25
-    sarvam_chunk_overlap_ms: int = 200
+    sarvam_num_speakers: int = 2
+    # Batch job polling (the batch rate limit counts status polls too).
+    sarvam_batch_poll_interval_s: int = 10
+    sarvam_batch_timeout_s: int = 1800
+    # Key-pool cooldowns: 429 rate-limit backoff range, and how long a key
+    # with exhausted credits stays out of rotation.
+    sarvam_key_cooldown_base_s: float = 10.0
+    sarvam_key_cooldown_max_s: float = 60.0
+    sarvam_quota_disable_s: float = 86_400.0
+
+    def sarvam_key_list(self) -> list[str]:
+        """Pool keys from SARVAM_API_KEYS, falling back to SARVAM_API_KEY."""
+        raw = self.sarvam_api_keys.get_secret_value().strip()
+        keys = [k.strip() for k in raw.split(",") if k.strip()]
+        if not keys:
+            single = self.sarvam_api_key.get_secret_value().strip()
+            if single:
+                keys = [single]
+        return keys
 
     # ---- faster-whisper STT (active when stt_provider == "whisper") ----
     # Open-source local model. Defaults target a CPU-only Linux container
-    # (no GPU); "int8" keeps the large-v3 weights memory-friendly.
+    # (no GPU); "int8" keeps the weights memory-friendly. WHISPER_MODEL
+    # accepts a faster-whisper alias ("large-v3"), a local CTranslate2 dir,
+    # or any HF Whisper checkpoint (auto-converted to CTranslate2 on first
+    # run) — e.g. "Oriserve/Whisper-Hindi2Hinglish-Apex" for noisy Hinglish
+    # telephony.
     whisper_model: str = "large-v3"
     whisper_device: str = "cpu"
     whisper_compute_type: str = "int8"
     whisper_language: str = ""  # empty string = auto-detect
+
+    # ---- Local diarization (whisper / indic_conformer paths) ----
+    # Stereo agent/customer recordings are channel-split for free; mono falls
+    # back to pyannote speaker-diarization-community-1 (gated — needs
+    # HF_TOKEN with accepted terms).
+    local_diarization: bool = False
+    hf_token: SecretStr = SecretStr("")
+
+    # ---- AI4Bharat IndicConformer (active when stt_provider == "indic_conformer") ----
+    indic_conformer_model: str = "ai4bharat/indic-conformer-600m-multilingual"
 
     # ---- LLM (OpenAI-compatible — Groq / vLLM / OpenAI) ----
     llm_base_url: str = "https://api.groq.com/openai/v1/"

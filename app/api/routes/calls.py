@@ -49,6 +49,7 @@ async def get_call(call_id: UUID, db: AsyncSession = Depends(get_db)) -> CallRea
         updated_at=row.updated_at,
         metadata=metadata,
         langsmith_trace_id=row.langsmith_trace_id,
+        error_message=row.error_message,
     )
 
 

@@ -108,10 +108,15 @@ def _is_transient(exc: BaseException) -> bool:
     return isinstance(exc, _transient_exceptions())
 
 
-def _mark_failed(call_id: str | UUID) -> None:
+def _mark_failed(call_id: str | UUID, error: str | None = None) -> None:
     try:
         with sync_session() as session:
-            set_call_status(session, call_id, CallStatus.FAILED.value)
+            set_call_status(
+                session,
+                call_id,
+                CallStatus.FAILED.value,
+                error_message=(error or "")[:2000] or None,
+            )
     except Exception:  # pragma: no cover - best effort
         log.exception("mark_failed_failed", call_id=str(call_id))
 
@@ -207,7 +212,7 @@ def ingest_call(self, call_id: str) -> None:
             log.warning("ingest_retry", error=str(exc))
             raise self.retry(exc=exc)
         log.exception("ingest_failed")
-        _mark_failed(call_id)
+        _mark_failed(call_id, str(exc))
         raise
 
 
@@ -234,7 +239,7 @@ def load_transcript(self, call_id: str) -> None:
             raise self.retry(exc=exc)
         transcripts_loaded.labels(status="error").inc()
         log.exception("load_transcript_failed")
-        _mark_failed(call_id)
+        _mark_failed(call_id, str(exc))
         raise
 
 
@@ -274,7 +279,7 @@ def transcribe_call(self, call_id: str) -> None:
 
             from app.services.audio.io import cleanup_temp, download_to_temp
             from app.services.stt import make_transcriber
-            from app.services.stt.speaker_heuristic import assign_speakers
+            from app.services.stt.speaker_heuristic import map_speaker_roles
 
             audio_path = download_to_temp(source_uri)
             try:
@@ -285,7 +290,9 @@ def transcribe_call(self, call_id: str) -> None:
             finally:
                 cleanup_temp(audio_path)
 
-            utterances = assign_speakers(raw_utterances)
+            # map_speaker_roles uses real diarization labels when present and
+            # falls back to the segmentation heuristic when they're absent.
+            utterances = map_speaker_roles(raw_utterances)
 
             with sync_session() as session:
                 from app.workers.cluster_glue import insert_utterances
@@ -304,7 +311,7 @@ def transcribe_call(self, call_id: str) -> None:
             raise self.retry(exc=exc)
         sarvam_transcribed.labels(status="error").inc()
         log.exception("transcribe_failed")
-        _mark_failed(call_id)
+        _mark_failed(call_id, str(exc))
         raise
 
 
@@ -319,6 +326,7 @@ def _utt_dict(call_id: str, u) -> dict:
     return {
         "call_id": call_id,
         "speaker": str(d.get("speaker", "UNKNOWN")),
+        "speaker_id": d.get("speaker_id"),
         "start_ts": float(d.get("start_ts", 0.0)),
         "end_ts": float(d.get("end_ts", 0.0)),
         "text": d.get("text", ""),
@@ -374,7 +382,7 @@ def extract_call(self, call_id: str) -> None:
             raise self.retry(exc=exc)
         extraction_processed.labels(status="error").inc()
         log.exception("extract_failed")
-        _mark_failed(call_id)
+        _mark_failed(call_id, str(exc))
         raise
 
 
@@ -411,7 +419,7 @@ def embed_call(self, call_id: str) -> None:
             log.warning("embed_retry", error=str(exc))
             raise self.retry(exc=exc)
         log.exception("embed_failed")
-        _mark_failed(call_id)
+        _mark_failed(call_id, str(exc))
         raise
 
 
@@ -462,7 +470,7 @@ def cluster_call(self, call_id: str) -> None:
             log.warning("cluster_retry", error=str(exc))
             raise self.retry(exc=exc)
         log.exception("cluster_failed")
-        _mark_failed(call_id)
+        _mark_failed(call_id, str(exc))
         raise
 
 

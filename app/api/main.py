@@ -31,6 +31,7 @@ from app.api.errors import (
     unhandled_exception_handler,
 )
 from app.api.routes import (
+    admin,
     analytics,
     calls,
     clusters,
@@ -142,6 +143,7 @@ def create_app() -> FastAPI:
     app.include_router(memory_graph.router)
     app.include_router(analytics.router)
     app.include_router(feedback.router)
+    app.include_router(admin.router)
 
     # ---- Prometheus ----
     @app.get("/metrics", include_in_schema=False)

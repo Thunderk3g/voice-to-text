@@ -58,6 +58,7 @@ langid==1.1.6
 indic-transliteration==2.3.67
 
 # Testing
+fakeredis==2.36.1
 pytest==8.3.4
 pytest-asyncio==0.24.0
 pytest-cov==6.0.0

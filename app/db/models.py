@@ -118,6 +118,7 @@ class Call(Base):
     langsmith_trace_id: Mapped[str | None] = mapped_column(
         String(128), nullable=True, index=True
     )
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -157,6 +158,7 @@ class Utterance(Base):
     speaker: Mapped[Speaker] = mapped_column(
         SpeakerEnum, nullable=False, default=Speaker.UNKNOWN
     )
+    speaker_id: Mapped[str | None] = mapped_column(String(16), nullable=True)
     start_ts: Mapped[float] = mapped_column(Float, nullable=False)
     end_ts: Mapped[float] = mapped_column(Float, nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)

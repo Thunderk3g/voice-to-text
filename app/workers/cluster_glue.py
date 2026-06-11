@@ -237,12 +237,20 @@ def fetch_questions_for_call(
     return [dict(r) for r in rows]
 
 
-def set_call_status(session: Session, call_id: UUID | str, status: str) -> None:
+def set_call_status(
+    session: Session,
+    call_id: UUID | str,
+    status: str,
+    error_message: str | None = None,
+) -> None:
+    # error_message is intentionally overwritten on every transition: a call
+    # that re-enters the pipeline after a failure sheds its stale error.
     session.execute(
         text(
-            "UPDATE calls SET status = :s, updated_at = NOW() WHERE id = :cid"
+            "UPDATE calls SET status = :s, error_message = :err, updated_at = NOW() "
+            "WHERE id = :cid"
         ),
-        {"s": status, "cid": str(call_id)},
+        {"s": status, "err": error_message, "cid": str(call_id)},
     )
 
 
@@ -254,13 +262,14 @@ def insert_utterances(
         return
     for r in rows:
         r.setdefault("call_id", str(call_id))
+        r.setdefault("speaker_id", None)
     session.execute(
         text(
             """
-            INSERT INTO utterances (call_id, speaker, start_ts, end_ts, text,
-                                    language, confidence, words, created_at)
-            VALUES (:call_id, :speaker, :start_ts, :end_ts, :text,
-                    :language, :confidence, :words, NOW())
+            INSERT INTO utterances (call_id, speaker, speaker_id, start_ts, end_ts,
+                                    text, language, confidence, words, created_at)
+            VALUES (:call_id, :speaker, :speaker_id, :start_ts, :end_ts,
+                    :text, :language, :confidence, :words, NOW())
             """
         ),
         rows,

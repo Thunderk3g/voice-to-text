@@ -68,6 +68,7 @@ class CallRead(BaseModel):
     updated_at: datetime
     metadata: CallMetadata
     langsmith_trace_id: str | None = None
+    error_message: str | None = None
 
 
 # ============================================================================
@@ -81,6 +82,10 @@ class UtteranceSchema(BaseModel):
     id: UUID | None = None
     call_id: UUID
     speaker: Speaker
+    speaker_id: str | None = Field(
+        default=None,
+        description='Raw diarization speaker label (e.g. "0", "1") before AGENT/CUSTOMER mapping.',
+    )
     start_ts: float = Field(..., description="Seconds from call start.")
     end_ts: float
     text: str
