@@ -53,8 +53,17 @@ WORKDIR /build
 
 COPY requirements.txt ./
 
-RUN pip install --upgrade pip setuptools wheel \
- && pip install -r requirements.txt
+# CPU-only torch for the API image: the +cpu wheels on the PyTorch index are
+# ~190MB vs 888MB+~1.5GB of nvidia-* deps from PyPI, and PEP 440 makes pip
+# prefer 2.8.0+cpu over 2.8.0 when both satisfy torch==2.8.0. GPU torch lives
+# in Dockerfile.worker-gpu only.
+ENV PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cpu
+
+# Cache mount keeps downloaded wheels across builds — the corp proxy tends to
+# drop large downloads (torch/CUDA wheels), so retries must not start from zero.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    PIP_NO_CACHE_DIR=0 pip install --upgrade pip setuptools wheel \
+ && PIP_NO_CACHE_DIR=0 pip install --retries 10 --timeout 120 -r requirements.txt
 
 
 # -------------------------------------------------------------------------
