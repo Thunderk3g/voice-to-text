@@ -1,0 +1,29 @@
+# LMS free-text DISPOSITION (lower-cased) -> CallDisposition value.
+# Seeded from the distinct values in Campaign Intelligence leads_canonical.csv.
+"ringing": no_response
+"call not connected/beep tone": no_response
+"ivr tone": no_response
+"short hang up": no_response
+"call back - ringing": no_response
+"call back later": callback_requested
+"buy later": callback_requested
+"just browsing": not_interested
+"ni - due to service": not_interested
+"ni - due to product": not_interested
+"ni - due to price": not_interested
+"ni - need offline policy": not_interested
+"ne - ne due to income": not_eligible
+"ne - ne due to documents not avaible(education)": not_eligible
+"ne - ne due to documents not avaible": not_eligible
+"ne - ne due to medical history": not_eligible
+"nw - incorrect request": wrong_number
+"incorrect request": wrong_number
+"nw - never left name and number": wrong_number
+"never left name and number": wrong_number
+"nw - dnc": dnd
+"nw - service request": service_request
+"nw - duplicate sale closed(already assisted)": service_request
+"follow up for payment": follow_up_payment
+"meeting scheduled": other
+"looking for other product(health or loan)": not_interested
+"loan requirement": not_interested
