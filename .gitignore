@@ -71,3 +71,6 @@ build/
 
 # UI screenshot scratch
 _ui_shots/
+
+# Claude Code local settings (per-developer; do not commit)
+.claude/settings.local.json
