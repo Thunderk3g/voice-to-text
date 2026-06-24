@@ -32,6 +32,7 @@ from app.core.observability import calls_ingested
 from app.models.enums import CallStatus
 from app.models.schemas import CallCreate, CallMetadata
 from app.services.audio.io import save_upload
+from app.utils.crux_id import crux_call_id_from_name
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["ingest"])
@@ -250,8 +251,12 @@ async def ingest_upload(
                 error_type="upload_storage_failed",
             ) from exc
 
+        crux_id = crux_call_id_from_name(safe_name)
         metadata = CallMetadata(
-            campaign=campaign, channel=channel, stt_provider=stt_provider
+            campaign=campaign,
+            channel=channel,
+            stt_provider=stt_provider,
+            extra={"crux_call_id": crux_id} if crux_id else {},
         )
         call_id = await _create_and_dispatch(
             db,
