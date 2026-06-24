@@ -39,6 +39,7 @@ from app.api.routes import (
     feedback,
     health,
     ingest,
+    knowledge_graph,
     memory_graph,
     search,
 )
@@ -141,6 +142,7 @@ def create_app() -> FastAPI:
     app.include_router(clusters.router)
     app.include_router(faq.router)
     app.include_router(memory_graph.router)
+    app.include_router(knowledge_graph.router)
     app.include_router(analytics.router)
     app.include_router(feedback.router)
     app.include_router(admin.router)
