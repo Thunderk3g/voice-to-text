@@ -114,3 +114,15 @@ class SentimentLabel(StrEnum):
     POSITIVE = "positive"
     NEUTRAL = "neutral"
     NEGATIVE = "negative"
+
+
+class CallDirection(StrEnum):
+    """Direction of a telephony call, as seen from the contact-centre.
+
+    Crux CDRs encode this as MT (mobile-terminated -> inbound) / MO
+    (mobile-originated -> outbound); see app.services.cdr.loader._parse_direction.
+    """
+
+    INBOUND = "inbound"
+    OUTBOUND = "outbound"
+    UNKNOWN = "unknown"

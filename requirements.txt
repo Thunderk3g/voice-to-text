@@ -64,6 +64,10 @@ opentelemetry-instrumentation-sqlalchemy==0.55b1
 langid==1.1.6
 indic-transliteration==2.3.67
 
+# Data processing (CDR loader, enrichment join, disposition crosswalk)
+pandas==3.0.3                            # CDR/CSV parsing + CI enrichment join (dtype=str)
+PyYAML==6.0.3                            # disposition_crosswalk.yaml loader
+
 # Testing
 fakeredis==2.36.1
 pytest==8.3.4
