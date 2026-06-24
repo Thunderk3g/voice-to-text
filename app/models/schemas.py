@@ -16,12 +16,14 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import (
+    CallDisposition,
     CallStatus,
     EdgeRelation,
     FeedbackAction,
     Intent,
     Language,
     QuestionType,
+    SentimentLabel,
     Speaker,
 )
 
@@ -135,6 +137,44 @@ class ExtractionResult(BaseModel):
     questions: list[ExtractedQuestion]
     used_model: str
     raw_response: str | None = None  # for audit
+
+
+# ============================================================================
+# Per-call analysis (lead + disposition + sentiment)
+# ============================================================================
+class Lead(BaseModel):
+    """Lead attributes distilled from a call. Every field optional/grounded."""
+
+    full_name: str | None = None
+    phone: str | None = Field(default=None, description="Normalized 10-digit mobile (join key).")
+    email: str | None = None
+    age: int | None = None
+    gender: str | None = None
+    occupation: str | None = None
+    education: str | None = None
+    income_band: str | None = None
+    pincode: str | None = None
+    product_interest: str | None = None
+    policy_no: str | None = None
+    callback_time: str | None = None
+    grounded_fields: list[str] = Field(default_factory=list)
+
+
+class CallAnalysis(BaseModel):
+    lead: Lead = Field(default_factory=Lead)
+    disposition: CallDisposition = CallDisposition.OTHER
+    disposition_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    disposition_rationale: str | None = None
+    sentiment: SentimentLabel = SentimentLabel.NEUTRAL
+    sentiment_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    escalation: bool = False
+
+
+class CallAnalysisResult(BaseModel):
+    call_id: UUID
+    analysis: CallAnalysis
+    used_model: str
+    raw_response: str | None = None
 
 
 # ============================================================================

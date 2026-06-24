@@ -59,6 +59,8 @@ class CallStatus(StrEnum):
     DIARIZATION_DONE = "diarization_done"
     EXTRACTION_RUNNING = "extraction_running"
     EXTRACTION_DONE = "extraction_done"
+    ANALYSIS_RUNNING = "analysis_running"
+    ANALYSIS_DONE = "analysis_done"
     EMBEDDING_DONE = "embedding_done"
     CLUSTERED = "clustered"
     FAILED = "failed"
@@ -88,3 +90,27 @@ class EdgeRelation(StrEnum):
     OPPOSES = "opposes"             # opposite stance (e.g. complaint vs satisfaction)
     CAUSED_BY = "caused_by"         # A is a downstream effect of B
     CO_OCCURS = "co_occurs"         # frequently appear in same call
+
+
+class CallDisposition(StrEnum):
+    """Outcome of an inbound service call (separate axis from the LMS DISPOSITION)."""
+
+    RESOLVED = "resolved"
+    INFO_PROVIDED = "info_provided"
+    CALLBACK_REQUESTED = "callback_requested"
+    FOLLOW_UP_PAYMENT = "follow_up_payment"
+    COMPLAINT = "complaint"
+    ESCALATION = "escalation"
+    NOT_INTERESTED = "not_interested"
+    NOT_ELIGIBLE = "not_eligible"
+    SERVICE_REQUEST = "service_request"
+    WRONG_NUMBER = "wrong_number"
+    DND = "dnd"
+    NO_RESPONSE = "no_response"
+    OTHER = "other"
+
+
+class SentimentLabel(StrEnum):
+    POSITIVE = "positive"
+    NEUTRAL = "neutral"
+    NEGATIVE = "negative"
