@@ -82,14 +82,35 @@ class FeedbackAction(StrEnum):
 
 
 class EdgeRelation(StrEnum):
-    """Semantic relationships between clusters in the memory graph."""
+    """Semantic relationships used across two graphs.
 
+    Two families share this enum:
+
+    * **Cluster relations** (memory graph): inter-cluster semantic links emitted
+      by ``app.services.memory_graph`` — ``LEADS_TO`` … ``CO_OCCURS``.
+    * **Entity relations** (call knowledge graph): typed edges between the
+      LEAD / CALL / AGENT / CAMPAIGN / PRODUCT / DISPOSITION / SENTIMENT
+      entities emitted by ``app.services.knowledge_graph.build``. Each carries an
+      inline ``# src->dst`` node-type hint.
+    """
+
+    # --- Cluster relations (memory graph) --------------------------------- #
     LEADS_TO = "leads_to"           # cluster A often precedes B in customer journey
     RELATED_TO = "related_to"       # general semantic relation
     SUBSET_OF = "subset_of"         # A is a specialization of B
     OPPOSES = "opposes"             # opposite stance (e.g. complaint vs satisfaction)
     CAUSED_BY = "caused_by"         # A is a downstream effect of B
     CO_OCCURS = "co_occurs"         # frequently appear in same call
+
+    # --- Entity relations (call knowledge graph) -------------------------- #
+    RECEIVED_CALL = "received_call"     # lead->call
+    HANDLED_BY = "handled_by"           # call->agent
+    HAS_DISPOSITION = "has_disposition"  # call->disposition
+    HAS_SENTIMENT = "has_sentiment"     # call->sentiment
+    ABOUT_PRODUCT = "about_product"     # call->product
+    INTERESTED_IN = "interested_in"     # lead->product
+    IN_CAMPAIGN = "in_campaign"         # lead->campaign
+    SIMILAR_TO = "similar_to"           # lead->lead (declared; not emitted by the pure builder)
 
 
 class CallDisposition(StrEnum):
