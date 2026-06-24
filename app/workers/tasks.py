@@ -230,7 +230,8 @@ def load_transcript(self, call_id: str) -> None:
 
             load_transcript_to_utterances(call_id)
         transcripts_loaded.labels(status="ok").inc()
-        _next("v2t.extract", call_id)
+        from app.core.config import get_settings
+        _next(_first_analysis_stage(get_settings().pipeline_mode), call_id)
         log.info("load_transcript_done")
     except Exception as exc:
         if _is_transient(exc):
@@ -302,7 +303,8 @@ def transcribe_call(self, call_id: str) -> None:
                 set_call_status(session, call_id, CallStatus.DIARIZATION_DONE.value)
 
         sarvam_transcribed.labels(status="ok").inc()
-        _next("v2t.extract", call_id)
+        from app.core.config import get_settings
+        _next(_first_analysis_stage(get_settings().pipeline_mode), call_id)
         log.info("transcribe_done", n_utterances=len(utterances))
     except Exception as exc:
         if _is_transient(exc):
@@ -979,10 +981,70 @@ def _persist_memory_edges(session, edges: Iterable[Any]) -> None:
     )
 
 
+def _call_analysis_metadata(result) -> dict:
+    a = result.analysis
+    return {
+        "lead": a.lead.model_dump(),
+        "disposition": a.disposition.value,
+        "disposition_confidence": a.disposition_confidence,
+        "disposition_rationale": a.disposition_rationale,
+        "sentiment": a.sentiment.value,
+        "sentiment_confidence": a.sentiment_confidence,
+        "escalation": a.escalation,
+        "model": result.used_model,
+    }
+
+
+def _persist_call_analysis(session, call_id, result) -> None:
+    from sqlalchemy import text
+    session.execute(
+        text(
+            "UPDATE calls SET metadata = jsonb_set("
+            "COALESCE(metadata, '{}'::jsonb), '{analysis}', :payload::jsonb, true) "
+            "WHERE id = :cid"
+        ),
+        {"payload": __import__("json").dumps(_call_analysis_metadata(result)),
+         "cid": str(call_id)},
+    )
+
+
+def _first_analysis_stage(mode: str) -> str:
+    return "v2t.analyze" if mode in ("lead", "both") else "v2t.extract"
+
+
+@celery_app.task(bind=True, name="v2t.analyze", acks_late=True)
+def analyze_call(self, call_id: str) -> None:
+    _bind(call_id, stage="analyze")
+    log.info("analyze_start")
+    try:
+        with _stage("analyze"):
+            with sync_session() as session:
+                set_call_status(session, call_id, CallStatus.ANALYSIS_RUNNING.value)
+                utterances = _load_utterances(session, call_id)
+            from app.services.factories import make_call_analyzer
+            analyzer = make_call_analyzer()
+            result = run_async(analyzer.analyze(UUID(str(call_id)), utterances))
+            with sync_session() as session:
+                _persist_call_analysis(session, call_id, result)
+                set_call_status(session, call_id, CallStatus.ANALYSIS_DONE.value)
+        from app.core.config import get_settings
+        if get_settings().pipeline_mode == "both":
+            _next("v2t.extract", call_id)
+        log.info("analyze_done", disposition=result.analysis.disposition.value)
+    except Exception as exc:
+        if _is_transient(exc):
+            log.warning("analyze_retry", error=str(exc))
+            raise self.retry(exc=exc)
+        log.exception("analyze_failed")
+        _mark_failed(call_id, str(exc))
+        raise
+
+
 __all__ = [
     "ingest_call",
     "stt_call",
     "diarize_call",
+    "analyze_call",
     "extract_call",
     "embed_call",
     "cluster_call",

@@ -36,6 +36,7 @@ from app.services.canonicalization.faq import (
     FAQCanonicalizer,
 )
 from app.services.embedding.e5 import EmbeddingService
+from app.services.extraction.call_analysis import CallAnalyzer
 from app.services.extraction.llm_extractor import LLMExtractor
 from app.services.llm.groq_client import GroqClient
 from app.services.memory_graph.builder import (
@@ -74,6 +75,10 @@ def get_embedding_service() -> EmbeddingService:
 # ---------------------------------------------------------------------------
 def make_llm_extractor() -> LLMExtractor:
     return LLMExtractor(get_llm_client())
+
+
+def make_call_analyzer() -> CallAnalyzer:
+    return CallAnalyzer(get_llm_client())
 
 
 # ---------------------------------------------------------------------------
@@ -540,6 +545,7 @@ __all__ = [
     "get_llm_client",
     "get_embedding_service",
     "make_llm_extractor",
+    "make_call_analyzer",
     "make_faq_canonicalizer",
     "make_memory_graph_builder",
     "make_cluster_engine",

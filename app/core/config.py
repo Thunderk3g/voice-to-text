@@ -133,6 +133,12 @@ class Settings(BaseSettings):
     # if a future model legitimately paraphrases raw_text.
     extraction_drop_ungrounded: bool = True
 
+    # ---- Pipeline mode ----
+    # "lead": transcribe -> analyze (lead/disposition/sentiment), skip the FAQ
+    # clustering tail. "faq": legacy customer-question + clustering pipeline.
+    # "both": run analyze then continue into extraction/clustering.
+    pipeline_mode: Literal["lead", "faq", "both"] = "lead"
+
     # ---- Embeddings ----
     # Provider dispatch lives in app/services/embedding/e5.py. "local" uses
     # SentenceTransformer (needs the model on disk + optionally a GPU).
