@@ -319,6 +319,103 @@ export interface AnalyticsSummary {
 }
 
 // ============================================================================
+// Call Analysis & Detail
+// ============================================================================
+export interface SentimentBreakdown {
+  negative: number;
+  neutral: number;
+  positive: number;
+}
+
+export interface Violation {
+  time: number;
+  title: string;
+  severity: "LOW" | "MEDIUM" | "HIGH";
+  quote: string;
+  note?: string | null;
+}
+
+export interface TranscriptSegmentDetail {
+  time_start: number;
+  time_end: number;
+  speaker: Speaker;
+  text: string;
+  flagged: boolean;
+}
+
+export interface CallDetailResponse {
+  id: UUIDString;
+  agent_name?: string | null;
+  customer_name?: string | null;
+  date?: string | null;
+  duration?: number | null;
+  risk_score: number;
+  risk_level: "LOW" | "MEDIUM" | "HIGH";
+  confidence: number;
+  tone?: string | null;
+  violation_count: number;
+  sentiment: SentimentBreakdown;
+  summary?: string | null;
+  violations: Violation[];
+  transcript: TranscriptSegmentDetail[];
+  audio_url: string;
+}
+
+export interface TranscriptSegment {
+  speaker: Speaker;
+  text: string;
+  start_ts: number;
+  end_ts: number;
+}
+
+export interface TranscriptionResponse {
+  call_id: UUIDString;
+  audio_url: string;
+  transcript_with_timing: TranscriptSegment[];
+  language?: Language | null;
+  duration_seconds?: number | null;
+}
+
+export const SentimentLabel = {
+  POSITIVE: "positive",
+  NEUTRAL: "neutral",
+  NEGATIVE: "negative",
+} as const;
+export type SentimentLabel = (typeof SentimentLabel)[keyof typeof SentimentLabel];
+
+export const CallDisposition = {
+  RESOLVED: "resolved",
+  ESCALATED: "escalated",
+  CALLBACK: "callback",
+  OTHER: "other",
+} as const;
+export type CallDisposition = (typeof CallDisposition)[keyof typeof CallDisposition];
+
+export interface Lead {
+  score: number;
+  quality: "high" | "medium" | "low";
+  reasoning?: string | null;
+}
+
+export interface CallAnalysisResponse {
+  call_id: UUIDString;
+  sentiment: SentimentLabel;
+  sentiment_confidence: number;
+  disposition: CallDisposition;
+  disposition_confidence: number;
+  disposition_rationale?: string | null;
+  intent?: Intent | null;
+  secondary_intents: Intent[];
+  escalation: boolean;
+  lead: Lead;
+  keywords: string[];
+  quality_score: number;
+  call_metadata: CallMetadata;
+  language?: Language | null;
+  duration_seconds?: number | null;
+}
+
+// ============================================================================
 // Display helpers
 // ============================================================================
 export const LANGUAGE_LABEL: Record<Language, string> = {

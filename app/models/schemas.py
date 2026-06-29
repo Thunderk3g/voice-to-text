@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.enums import (
     CallDisposition,
@@ -308,6 +308,102 @@ class SearchResponse(BaseModel):
 
 
 # ============================================================================
+# Transcription (audio playback support)
+# ============================================================================
+class TranscriptSegment(BaseModel):
+    """One speaker utterance with precise timing."""
+
+    speaker: Speaker
+    text: str
+    start_ts: float = Field(..., description="Seconds from call start.")
+    end_ts: float = Field(..., description="Seconds from call start.")
+
+
+class TranscriptionResponse(BaseModel):
+    """Unified response for audio playback + text sync."""
+
+    call_id: UUID
+    audio_url: str = Field(..., description="MinIO presigned URL (expires in 7 days).")
+    transcript_with_timing: list[TranscriptSegment]
+    language: Language | None = None
+    duration_seconds: float | None = None
+
+
+# ============================================================================
+# PII Redaction
+# ============================================================================
+class PIISegment(BaseModel):
+    """One detected PII entity with location and replacement."""
+
+    type: Literal["SSN", "PHONE", "EMAIL", "NAME", "POLICY_NO", "AADHAR", "PAN"] = Field(
+        ..., description="Standardized PII type."
+    )
+    value: str = Field(..., description="Original detected value.")
+    start_idx: int = Field(..., description="Character index in transcript where PII starts.")
+    end_idx: int = Field(..., description="Character index where PII ends (exclusive).")
+    replacement: str = Field(..., description="Masked/removed replacement (e.g., '***-**-1234' or '').")
+
+
+class PIISummary(BaseModel):
+    """Count of PII entities by type."""
+
+    count_by_type: dict[str, int] = Field(
+        default_factory=dict, description="e.g. {'SSN': 2, 'PHONE': 1, 'EMAIL': 1}"
+    )
+    total_count: int = 0
+
+
+class RedactRequest(BaseModel):
+    """Payload for PII redaction."""
+
+    redaction_method: Literal["mask", "remove"] = Field(
+        default="mask",
+        description="'mask' replaces with X's or *, 'remove' deletes entirely.",
+    )
+
+
+class RedactResponse(BaseModel):
+    """Result of PII redaction on full transcript."""
+
+    call_id: UUID
+    redacted_transcript: str
+    pii_segments: list[PIISegment] = Field(default_factory=list)
+    pii_summary: PIISummary = Field(default_factory=PIISummary)
+    redaction_method: Literal["mask", "remove"]
+
+
+# ============================================================================
+# Unified call analysis
+# ============================================================================
+class CallAnalysisResponse(BaseModel):
+    """Unified analysis response combining lead + disposition + sentiment + metadata."""
+
+    call_id: UUID
+    sentiment: SentimentLabel = SentimentLabel.NEUTRAL
+    sentiment_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    disposition: CallDisposition = CallDisposition.OTHER
+    disposition_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    disposition_rationale: str | None = None
+    intent: Intent | None = None
+    secondary_intents: list[Intent] = Field(default_factory=list)
+    escalation: bool = False
+    lead: Lead = Field(default_factory=Lead)
+    keywords: list[str] = Field(
+        default_factory=list,
+        description="Top extracted keywords/topics from call (computed from questions).",
+    )
+    quality_score: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Overall call quality (0-1), based on sentiment, disposition, and escalation.",
+    )
+    call_metadata: CallMetadata = Field(default_factory=CallMetadata)
+    language: Language | None = None
+    duration_seconds: float | None = None
+
+
+# ============================================================================
 # Analytics
 # ============================================================================
 class AnalyticsSummary(BaseModel):
@@ -319,3 +415,118 @@ class AnalyticsSummary(BaseModel):
     top_clusters: list[dict[str, Any]]
     cluster_growth: list[dict[str, Any]]  # {date, new_clusters, churned_clusters}
     emerging_topics: list[dict[str, Any]]  # for drift detection
+
+
+# ============================================================================
+# Call List (Aether Flow: Call List view)
+# ============================================================================
+class CallListItem(BaseModel):
+    """Single call in the call list view."""
+
+    id: UUID
+    agent_name: str | None = None
+    customer_name: str | None = None
+    duration_seconds: float | None = None
+    sentiment: SentimentLabel = SentimentLabel.NEUTRAL
+    risk_score: int = Field(default=50, ge=0, le=100, description="0-100 risk meter")
+    violation_count: int = 0
+
+
+class CallListResponse(BaseModel):
+    """Response for GET /calls endpoint."""
+
+    calls: list[CallListItem]
+
+
+# ============================================================================
+# Call Violations (Aether Flow: Call Detail view)
+# ============================================================================
+class Violation(BaseModel):
+    """Single flagged violation in a call."""
+
+    time: float = Field(..., description="Seconds from call start")
+    title: str = Field(..., description="Violation title (e.g., 'Compliance Breach')")
+    severity: Literal["LOW", "MEDIUM", "HIGH"] = "MEDIUM"
+    quote: str = Field(..., description="Relevant transcript snippet")
+    note: str | None = None
+
+
+# ============================================================================
+# Sentiment Breakdown (Aether Flow: Call Detail view)
+# ============================================================================
+class SentimentBreakdown(BaseModel):
+    """Sentiment distribution across the call."""
+
+    negative: float = Field(default=0.0, ge=0.0, le=100.0, description="Negative %")
+    neutral: float = Field(default=50.0, ge=0.0, le=100.0, description="Neutral %")
+    positive: float = Field(default=50.0, ge=0.0, le=100.0, description="Positive %")
+
+
+# ============================================================================
+# Call Detail (Aether Flow: Call Detail view)
+# ============================================================================
+class TranscriptSegmentDetail(BaseModel):
+    """Transcript segment with flagged status for detail view."""
+
+    time_start: float = Field(..., description="Seconds from call start")
+    time_end: float = Field(..., description="Seconds from call start")
+    speaker: Speaker
+    text: str
+    flagged: bool = False
+
+    @field_validator('time_end')
+    @classmethod
+    def validate_time_range(cls, v, info):
+        if info.data.get('time_start') and v < info.data['time_start']:
+            raise ValueError('time_end must be >= time_start')
+        return v
+
+
+class CallDetailResponse(BaseModel):
+    """Unified response for GET /calls/{id}/detail."""
+
+    id: UUID
+    agent_name: str | None = None
+    customer_name: str | None = None
+    date: datetime | None = None
+    duration: float | None = None
+    risk_score: int = Field(default=50, ge=0, le=100)
+    risk_level: Literal["LOW", "MEDIUM", "HIGH"] = "MEDIUM"
+    confidence: float = Field(default=0.0, ge=0.0, le=100.0, description="Confidence %")
+    tone: str | None = None
+    violation_count: int = 0
+    sentiment: SentimentBreakdown = Field(default_factory=SentimentBreakdown)
+    summary: str | None = None
+    violations: list[Violation] = Field(default_factory=list)
+    transcript: list[TranscriptSegmentDetail] = Field(default_factory=list)
+    audio_url: str = ""
+
+
+# ============================================================================
+# Waveform (Aether Flow: Audio player)
+# ============================================================================
+class WaveformBar(BaseModel):
+    """Single bar in waveform visualization."""
+
+    height: int = Field(default=5, ge=1, le=30, description="Bar height 1-30")
+    flagged: bool = False
+    played: bool = False
+
+
+class WaveformResponse(BaseModel):
+    """Response for GET /calls/{id}/waveform."""
+
+    call_id: UUID
+    bars: list[WaveformBar]
+
+
+# ============================================================================
+# Call Stats (Aether Flow: List header)
+# ============================================================================
+class CallStatsResponse(BaseModel):
+    """Summary statistics for call list header."""
+
+    total: int = 0
+    avg_risk: float = Field(default=50.0, ge=0.0, le=100.0, description="Average risk score")
+    avg_confidence: float = Field(default=75.0, ge=0.0, le=100.0, description="Average confidence %")
+    flagged_percent: float = Field(default=20.0, ge=0.0, le=100.0, description="% of calls with violations")
