@@ -24,7 +24,13 @@ import logging
 from pydantic import BaseModel, ValidationError
 from ..config import settings
 import httpx
-from openai import AsyncOpenAI, APIConnectionError, APIStatusError
+from openai import AsyncOpenAI, AsyncAzureOpenAI, APIConnectionError, APIStatusError
+try:
+    from azure.cognitiveservices.speech import SpeechConfig, AudioConfig
+    from azure.cognitiveservices.speech import SpeechRecognizer
+    AZURE_SPEECH_AVAILABLE = True
+except ImportError:
+    AZURE_SPEECH_AVAILABLE = False
 from app.core.tracing import get_azure_tracer
 tracer = get_azure_tracer(__name__)
 
@@ -97,29 +103,47 @@ class LLMService:
         providers WITHOUT a restart: ``settings_service.apply_and_reconfigure``
         pushes new values onto the in-memory ``settings`` object and then calls
         this method on the process-wide ``llm_service`` singleton. It re-reads
-        ``settings``, rebuilds the chat ``AsyncOpenAI`` client, and resets the
-        lazy embedding client so the next embed call rebuilds it against the
-        new endpoint. Idempotent — safe to call at startup and on every save.
+        ``settings``, rebuilds the chat client, and resets the lazy embedding
+        client so the next embed call rebuilds it. Supports Azure OpenAI and
+        standard OpenAI. Idempotent — safe to call at startup and on every save.
         """
         self.api_key = settings.llm_api_key
         self.base_url = settings.llm_base_url
         self.model = settings.llm_model
         self.compliance_model = settings.llm_compliance_model
         self.transcription_model = settings.llm_transcription_model
+        self.llm_provider = getattr(settings, 'llm_provider', 'openai').lower()
+        self.stt_provider = getattr(settings, 'stt_provider', 'sarvam').lower()
 
-        # Initialize OpenAI client
+        # Initialize LLM client (Azure or OpenAI)
         if not self.api_key:
              logger.warning("LLM_API_KEY is not set. LLM service will fail.")
 
-        client_kwargs = {
-            "api_key": self.api_key,
-            "base_url": self.base_url,
-            "timeout": settings.llm_request_timeout_s,
-        }
+        http_client = None
         if settings.llm_insecure_tls:
             logger.warning("WARNING: LLM_INSECURE_TLS=true -- TLS cert verification is DISABLED. Dev use only.")
-            client_kwargs["http_client"] = httpx.AsyncClient(verify=False, timeout=settings.llm_request_timeout_s)
-        self.client = AsyncOpenAI(**client_kwargs)
+            http_client = httpx.AsyncClient(verify=False, timeout=settings.llm_request_timeout_s)
+
+        if self.llm_provider == 'azure':
+            # Azure OpenAI client
+            self.client = AsyncAzureOpenAI(
+                api_key=self.api_key,
+                api_version=getattr(settings, 'llm_azure_api_version', '2025-04-01-preview'),
+                azure_endpoint=self.base_url,
+                http_client=http_client,
+                timeout=settings.llm_request_timeout_s,
+            )
+            logger.info(f"Initialized Azure OpenAI client (endpoint={self.base_url}, model={self.model})")
+        else:
+            # Standard OpenAI-compatible client
+            client_kwargs = {
+                "api_key": self.api_key,
+                "base_url": self.base_url,
+                "timeout": settings.llm_request_timeout_s,
+                "http_client": http_client,
+            }
+            self.client = AsyncOpenAI(**client_kwargs)
+            logger.info(f"Initialized OpenAI-compatible client (endpoint={self.base_url}, model={self.model})")
 
         # Embedding-specific creds + lazy client. Chat base_url (Groq/Gemini)
         # usually can't serve embedding models, so we keep a dedicated client.
@@ -795,16 +819,79 @@ Return ONLY the JSON array, no other text.
         mime_type: str,
         filename: str = "audio",
     ) -> Dict[str, Any]:
-        """Transcribe audio via the configured provider's Whisper-compatible endpoint.
+        """Transcribe audio via the configured STT provider (Sarvam or Azure Speech).
 
         Returns a dict with at minimum:
             - "text": full transcript string
             - "segments": list of {start, end, text} chunks (may be empty if the
-              provider does not return verbose_json segments)
+              provider does not return segments)
             - "language": detected ISO language code (may be None)
 
-        Raises whatever the underlying SDK raises on transport/auth failure;
+        Routes to Sarvam (Indian languages) or Azure Speech Services based on
+        STT_PROVIDER environment variable. Raises on transport/auth failure;
         callers decide whether to fall back.
+        """
+        # Route to appropriate STT provider
+        if self.stt_provider == 'azure':
+            return await self._transcribe_audio_azure(audio_bytes, mime_type, filename)
+        else:
+            # Default to Sarvam (or Whisper via OpenAI-compatible endpoint)
+            return await self._transcribe_audio_whisper(audio_bytes, mime_type, filename)
+
+    async def _transcribe_audio_azure(
+        self,
+        audio_bytes: bytes,
+        mime_type: str,
+        filename: str = "audio",
+    ) -> Dict[str, Any]:
+        """Transcribe audio using Azure Speech Services."""
+        if not AZURE_SPEECH_AVAILABLE:
+            logger.error("Azure Speech SDK not available. Install: pip install azure-cognitiveservices-speech")
+            raise RuntimeError("Azure Speech Services SDK not installed")
+
+        try:
+            import io
+            # Azure Speech Services uses SpeechConfig + AudioConfig
+            speech_key = getattr(settings, 'azure_speech_key')
+            speech_region = getattr(settings, 'azure_speech_region', 'eastus')
+
+            if not speech_key:
+                raise ValueError("AZURE_SPEECH_KEY not configured")
+
+            speech_config = SpeechConfig(subscription=speech_key, region=speech_region)
+            speech_config.speech_recognition_language = getattr(settings, 'azure_speech_language', 'en-US')
+
+            # Create audio config from bytes
+            audio_stream = io.BytesIO(audio_bytes)
+            audio_config = AudioConfig(use_default_microphone=False)
+            audio_config.stream = audio_stream
+
+            recognizer = SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+
+            # Perform recognition
+            result = recognizer.recognize_once()
+
+            if result.reason.name == 'RecognizedSpeech':
+                return {
+                    "text": result.text,
+                    "segments": [],  # Azure doesn't return detailed segments
+                    "language": speech_config.speech_recognition_language,
+                }
+            else:
+                logger.error(f"Azure Speech recognition failed: {result.reason}")
+                raise RuntimeError(f"Speech recognition failed: {result.reason}")
+
+        except Exception as e:
+            logger.error(f"Azure Speech transcription failed: {str(e)}")
+            raise
+
+    async def _transcribe_audio_whisper(
+        self,
+        audio_bytes: bytes,
+        mime_type: str,
+        filename: str = "audio",
+    ) -> Dict[str, Any]:
+        """Transcribe audio using Whisper-compatible endpoint (Sarvam or OpenAI).
 
         Note on language handling: Whisper auto-detect frequently labels Hindi
         customer-service calls as Urdu/Persian/Arabic because of shared
